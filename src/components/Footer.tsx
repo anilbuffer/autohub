@@ -48,28 +48,28 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
+                <Link href="/register" className="text-autohub-red hover:underline font-bold">
+                  Open Trade Account (NZBN)
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="hover:text-white transition">
+                  Trade Account Sign In
+                </Link>
+              </li>
+              <li>
+                <Link href="/forgot-password" className="hover:text-white transition">
+                  Forgot Password / Reset
+                </Link>
+              </li>
+              <li>
                 <Link href="/portal" className="hover:text-white transition">
                   Customer Trade Portal
                 </Link>
               </li>
               <li>
-                <Link href="/portal/new-request" className="hover:text-white transition">
-                  Submit New Part Request
-                </Link>
-              </li>
-              <li>
-                <Link href="/register" className="hover:text-white transition">
-                  Trade Customer Registration (NZBN)
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-white transition">
-                  Staff Sourcing & Logistics Desks
-                </Link>
-              </li>
-              <li>
                 <Link href="/terms" className="hover:text-white transition">
-                  Procurement Terms & Conditions
+                  Procurement Terms & Conditions (v2025.2)
                 </Link>
               </li>
               <li>
