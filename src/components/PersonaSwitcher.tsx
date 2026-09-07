@@ -57,7 +57,15 @@ const ROLES: {
   },
 ];
 
-export const PersonaSwitcher: React.FC = () => {
+interface PersonaSwitcherProps {
+  variant?: "dark" | "light";
+  className?: string;
+}
+
+export const PersonaSwitcher: React.FC<PersonaSwitcherProps> = ({
+  variant = "dark",
+  className = "",
+}) => {
   const [currentRole, setCurrentRole] = useState<UserRole>("CUSTOMER");
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -80,23 +88,38 @@ export const PersonaSwitcher: React.FC = () => {
   const activeConfig = ROLES.find((r) => r.id === currentRole) || ROLES[0];
   const ActiveIcon = activeConfig.icon;
 
+  const isLight = variant === "light";
+
   return (
-    <div className="relative inline-block text-left z-50">
+    <div className={`relative inline-block text-left z-50 ${className}`}>
       {/* Switcher Button */}
       <button
         id="persona-switcher-button"
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 text-white hover:bg-slate-800 transition shadow-sm border border-slate-700 text-xs font-medium"
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition shadow-xs text-xs font-medium ${
+          isLight
+            ? "bg-slate-100 hover:bg-slate-200/90 text-slate-800 border border-slate-300"
+            : "bg-slate-900/90 text-white hover:bg-slate-800 border border-slate-700"
+        }`}
         title="1-Click Role Switcher for Procurly B2B Demonstration"
       >
         <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-        <span className="text-slate-400 font-normal">Active Role:</span>
-        <span className="font-semibold text-white flex items-center gap-1.5">
-          <ActiveIcon className="w-3.5 h-3.5 text-autohub-red" />
+        <span className={isLight ? "text-slate-500 font-normal" : "text-slate-400 font-normal"}>
+          Role:
+        </span>
+        <span className={`font-semibold flex items-center gap-1.5 ${isLight ? "text-slate-900" : "text-white"}`}>
+          <ActiveIcon className="w-3.5 h-3.5 text-rose-600" />
           {activeConfig.label}
         </span>
-        <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded ml-1 border border-slate-700">
-          Switch
+        <span
+          className={`text-[10px] px-1.5 py-0.5 rounded ml-1 font-bold ${
+            isLight
+              ? "bg-white text-slate-700 border border-slate-300"
+              : "bg-slate-800 text-slate-300 border border-slate-700"
+          }`}
+        >
+          Switch ▾
         </span>
       </button>
 
@@ -104,7 +127,7 @@ export const PersonaSwitcher: React.FC = () => {
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/10"
+            className="fixed inset-0 z-40 bg-black/20"
             onClick={() => setIsOpen(false)}
           />
           <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 py-2.5 px-2 animate-in fade-in zoom-in-95 duration-150">
@@ -125,15 +148,16 @@ export const PersonaSwitcher: React.FC = () => {
                 return (
                   <button
                     key={r.id}
+                    type="button"
                     onClick={() => handleSelectRole(r.id, r.deskUrl)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition-all ${
+                    className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-3 transition-all ${
                       isCurrent
-                        ? "bg-autohub-navy/10 border border-autohub-navy/30 text-autohub-navy"
+                        ? "bg-rose-50 border border-rose-200 text-slate-900"
                         : "hover:bg-slate-50 text-slate-700 border border-transparent"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${r.color}`}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${r.color}`}
                     >
                       <Icon className="w-4 h-4" />
                     </div>
@@ -141,7 +165,7 @@ export const PersonaSwitcher: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold truncate">{r.label}</span>
                         {isCurrent && (
-                          <span className="text-[10px] bg-autohub-navy text-white px-1.5 py-0.2 rounded font-medium">
+                          <span className="text-[9px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
                             Active
                           </span>
                         )}
@@ -155,14 +179,20 @@ export const PersonaSwitcher: React.FC = () => {
               })}
             </div>
 
-            <div className="mt-2 pt-2 border-t border-slate-100 px-3 flex justify-between items-center text-[11px] text-slate-400">
-              <span>Procurly B2B Role Engine</span>
+            <div className="mt-2 pt-2 border-t border-slate-100 px-3 flex justify-between items-center text-[11px] text-slate-500">
+              <Link
+                href="/"
+                onClick={() => setIsOpen(false)}
+                className="text-slate-700 hover:text-slate-900 font-semibold hover:underline flex items-center gap-1"
+              >
+                <span>← Public Site</span>
+              </Link>
               <Link
                 href="/login"
                 onClick={() => setIsOpen(false)}
-                className="text-autohub-red hover:underline font-semibold"
+                className="text-rose-600 hover:underline font-semibold"
               >
-                Go to Login Page
+                Sign In Page →
               </Link>
             </div>
           </div>

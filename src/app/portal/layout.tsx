@@ -27,7 +27,10 @@ import {
   X,
   Sparkles,
   LucideIcon,
+  Home,
+  Compass,
 } from "lucide-react";
+import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import {
   getStoredCustomers,
   getStoredRequests,
@@ -351,6 +354,33 @@ export default function CustomerPortalLayout({
               </Link>
 
               <Link
+                href="/procurement"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
+              >
+                <Compass className="w-3.5 h-3.5 text-amber-400" />
+                <span>Procurement Sourcing Desk</span>
+              </Link>
+
+              <Link
+                href="/admin"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
+              >
+                <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Operations Admin Desk</span>
+              </Link>
+
+              <Link
+                href="/"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
+              >
+                <Home className="w-3.5 h-3.5 text-slate-400" />
+                <span>Public Website</span>
+              </Link>
+
+              <Link
                 href="/login"
                 onClick={() => {
                   setUserMenuOpen(false);
@@ -381,10 +411,30 @@ export default function CustomerPortalLayout({
       {/* ================= RIGHT MAIN LAYOUT ================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 h-16 px-4 sm:px-8 flex items-center justify-between gap-4">
-          {/* Left Title */}
-          <div className="flex items-center gap-3">
-            <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+        <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 min-h-[64px] py-2.5 px-4 sm:px-8 flex items-center justify-between gap-4">
+          {/* Left Title & Breadcrumbs */}
+          <div className="flex flex-col justify-center min-w-0">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-0.5 leading-none">
+              <Link
+                href="/"
+                className="hover:text-slate-900 transition flex items-center gap-1 text-slate-500"
+                title="Return to Public Website"
+              >
+                <span>Home</span>
+              </Link>
+              <span className="text-slate-400">/</span>
+              <Link
+                href="/portal"
+                className="hover:text-slate-900 transition text-slate-600 font-medium"
+              >
+                Customer Portal
+              </Link>
+              <span className="text-slate-400">/</span>
+              <span className="text-rose-600 font-semibold truncate">
+                {getPageTitle()}
+              </span>
+            </div>
+            <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
               {getPageTitle()}
             </h1>
           </div>
@@ -406,10 +456,34 @@ export default function CustomerPortalLayout({
             </button>
           </div>
 
-          {/* Right: Actions (Credit info, Help, Notifications) */}
-          <div className="flex items-center gap-3">
+          {/* Right: Actions (Cross-Portal Links, PersonaSwitcher, Credit info, Help, Notifications) */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            {/* Quick Sourcing Desk Link */}
+            <Link
+              href="/procurement"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
+              title="Open Procurement Sourcing Desk"
+            >
+              <Compass className="w-3.5 h-3.5 text-amber-600" />
+              <span>Sourcing Desk</span>
+            </Link>
+
+            <Link
+              href="/"
+              className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
+              title="Return to Public Website"
+            >
+              <Home className="w-3.5 h-3.5 text-slate-500" />
+              <span>Website</span>
+            </Link>
+
+            {/* Persona Switcher */}
+            <div className="hidden sm:block">
+              <PersonaSwitcher variant="light" />
+            </div>
+
             {/* Quick Credit Status Chip */}
-            <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+            <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span className="text-slate-500 text-[11px]">Trade Credit:</span>
               <span className="font-bold text-slate-800">

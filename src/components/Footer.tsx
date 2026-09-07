@@ -180,6 +180,9 @@ export const Footer: React.FC = () => {
                 <Link href="/#how-it-works" className="hover:text-white transition">How Procurly Works</Link>
               </li>
               <li>
+                <Link href="/about" className="hover:text-white transition">About Autohub Heritage</Link>
+              </li>
+              <li>
                 <Link href="/portal/new-request" className="hover:text-white transition flex items-center gap-1 text-red-400 font-semibold">
                   <span>Submit Part Request</span>
                   <span className="text-[10px]">↗</span>
@@ -190,9 +193,6 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/login" className="hover:text-white transition">Trade Portal Sign In</Link>
-              </li>
-              <li>
-                <Link href="/#heritage" className="hover:text-white transition">About Autohub Heritage</Link>
               </li>
               <li>
                 <Link href="/contact" className="hover:text-white transition">Contact Support</Link>
@@ -207,22 +207,22 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs text-slate-400">
               <li>
-                <Link href="/portal" className="hover:text-white transition">Dealer Portal</Link>
+                <Link href="/portal" className="hover:text-white transition">Trade Customer Portal</Link>
               </li>
               <li>
-                <Link href="/portal/dashboard" className="hover:text-white transition">Procurement Console</Link>
+                <Link href="/procurement" className="hover:text-white transition">Sourcing Desk Console</Link>
               </li>
               <li>
-                <Link href="/portal/logistics" className="hover:text-white transition">Operations &amp; Freight</Link>
+                <Link href="/procurement/queue" className="hover:text-white transition">Sourcing Queue &amp; Quotes</Link>
               </li>
               <li>
-                <Link href="/portal/invoices" className="hover:text-white transition">Finance &amp; Accounts</Link>
+                <Link href="/admin/logistics" className="hover:text-white transition">Operations &amp; Freight Desk</Link>
               </li>
               <li>
-                <Link href="/portal/quotes" className="hover:text-white transition">Quote Comparison Matrix</Link>
+                <Link href="/admin/finance" className="hover:text-white transition">Finance &amp; Credit Gate</Link>
               </li>
               <li>
-                <Link href="/portal/requests/AH-P-000125" className="hover:text-white transition">Consignment Tracker</Link>
+                <Link href="/portal/shipments" className="hover:text-white transition">Consignment Tracker</Link>
               </li>
             </ul>
           </div>

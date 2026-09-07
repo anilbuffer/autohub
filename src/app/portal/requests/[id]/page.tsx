@@ -82,18 +82,32 @@ export default function RequestDetailPage() {
 
   if (!request) {
     return (
-      <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm max-w-lg mx-auto my-12 space-y-4">
+      <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200 shadow-sm max-w-lg mx-auto my-12 space-y-4">
         <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
         <h2 className="text-lg font-bold text-slate-900">Request Not Found</h2>
         <p className="text-xs text-slate-500">
-          The requested reference <strong>{requestId}</strong> could not be located in the database.
+          The requested reference <strong>{requestId}</strong> could not be located or may have been archived.
         </p>
-        <Link
-          href="/portal"
-          className="inline-block px-4 py-2 bg-autohub-navy text-white text-xs font-bold rounded-xl"
-        >
-          Return to Dashboard
-        </Link>
+        <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+          <Link
+            href="/portal/requests/REQ-000140"
+            className="w-full sm:w-auto px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+          >
+            View Sample Request (AH-P-000140)
+          </Link>
+          <Link
+            href="/portal/requests"
+            className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition"
+          >
+            All Requests
+          </Link>
+          <Link
+            href="/portal"
+            className="w-full sm:w-auto px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition"
+          >
+            Dashboard
+          </Link>
+        </div>
       </div>
     );
   }

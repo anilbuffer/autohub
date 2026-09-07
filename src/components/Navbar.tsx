@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { PersonaSwitcher } from "./PersonaSwitcher";
+
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -28,6 +30,7 @@ export const Navbar: React.FC = () => {
     { label: "Home", href: "/" },
     { label: "How It Works", href: "/#how-it-works" },
     { label: "About", href: "/about" },
+    { label: "Sourcing Desk", href: "/procurement" },
     { label: "Contact", href: "/contact" },
   ];
 
@@ -44,15 +47,18 @@ export const Navbar: React.FC = () => {
             <span className="text-slate-200">Verified Fitment Guarantees &amp; Landed NZD Quotes</span>
           </div>
 
-          {/* Right: Hotline & Status */}
-          <div className="flex items-center gap-4 text-slate-300 text-[11px]">
-            <a href="tel:08002886482" className="hover:text-white transition">
+          {/* Right: Hotline, Status & Persona Switcher */}
+          <div className="flex items-center gap-3 text-slate-300 text-[11px]">
+            <a href="tel:08002886482" className="hover:text-white transition hidden md:inline">
               <span>Toll Free: </span>
               <span className="font-semibold text-white font-mono">0800 288 6482</span>
             </a>
-            <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+            <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>Direct Freight Active</span>
+            </div>
+            <div className="border-l border-slate-800 pl-3">
+              <PersonaSwitcher />
             </div>
           </div>
         </div>

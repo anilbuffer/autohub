@@ -13,6 +13,8 @@ import {
   LayoutDashboard,
   Search,
   Bell,
+  Home,
+  Building2,
 } from "lucide-react";
 import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import { getStoredRequests, subscribeToStore } from "@/lib/store";
@@ -62,13 +64,17 @@ export default function AdminLayout({
       <div className="bg-slate-900 text-white border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 md:px-0 py-3.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-autohub-red text-white flex items-center justify-center font-bold shadow-sm">
+            <Link
+              href="/"
+              className="flex items-center gap-3 group hover:opacity-90 transition text-left"
+              title="Return to Public Website"
+            >
+              <div className="w-9 h-9 rounded-xl bg-autohub-red text-white flex items-center justify-center font-bold shadow-sm flex-shrink-0">
                 <Shield className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold tracking-tight text-white">
+                  <h2 className="text-sm font-bold tracking-tight text-white group-hover:text-red-400 transition">
                     Autohub Operations Administration
                   </h2>
                   <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700 font-mono">
@@ -79,10 +85,34 @@ export default function AdminLayout({
                   Coordination Layer • Sourcing Desk • Freight Dispatch • IRD Billing
                 </p>
               </div>
-            </div>
+            </Link>
 
-            <div className="flex items-center gap-3">
-              <PersonaSwitcher />
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/procurement"
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold border border-slate-700 transition"
+                title="Open Procurement Sourcing Desk"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Sourcing Desk</span>
+              </Link>
+              <Link
+                href="/portal"
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold border border-slate-700 transition"
+                title="Open Customer Portal"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Customer Portal</span>
+              </Link>
+              <Link
+                href="/"
+                className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition"
+                title="Return to Public Website"
+              >
+                <Home className="w-3.5 h-3.5 text-slate-400" />
+                <span>Website</span>
+              </Link>
+              <PersonaSwitcher variant="dark" />
             </div>
           </div>
 

@@ -34,13 +34,14 @@ import {
   getStoredSuppliers,
   subscribeToStore,
 } from "@/lib/store";
+import { initialRequests, initialSuppliers } from "@/lib/mockData";
 import { PartRequest, SupplierProfile, RequestStatus } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AIQuoteModal } from "@/components/AIQuoteModal";
 
 export default function ProcurementCommandCenterPage() {
-  const [requests, setRequests] = useState<PartRequest[]>(getStoredRequests);
-  const [suppliers, setSuppliers] = useState<SupplierProfile[]>(getStoredSuppliers);
+  const [requests, setRequests] = useState<PartRequest[]>(initialRequests);
+  const [suppliers, setSuppliers] = useState<SupplierProfile[]>(initialSuppliers);
   const [selectedFunnelStage, setSelectedFunnelStage] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAiModal, setShowAiModal] = useState(false);

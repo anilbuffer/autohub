@@ -21,32 +21,29 @@ import {
   ArrowRight,
   ExternalLink,
   ChevronRight,
+  ArrowLeft,
+  Search,
 } from "lucide-react";
 import {
   getStoredRequests,
   markOrderedFromSupplier,
   subscribeToStore,
 } from "@/lib/store";
+import { initialRequests } from "@/lib/mockData";
 import { PartRequest, RequestStatus } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 
 export default function SupplierOrdersPage() {
-  const [requests, setRequests] = useState<PartRequest[]>(getStoredRequests);
+  const [requests, setRequests] = useState<PartRequest[]>(initialRequests);
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
   const [tabFilter, setTabFilter] = useState<"READY" | "TRANSMITTED" | "ALL">("READY");
+  const [searchQuery, setSearchQuery] = useState("");
   const [poNotes, setPoNotes] = useState("Priority packaging and air waybill dispatch. Export Bay: Centrair Nagoya Terminal.");
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     const loaded = getStoredRequests();
     setRequests(loaded);
-
-    const paymentCleared = loaded.filter((r) => r.status === "PAYMENT_CONFIRMED");
-    if (paymentCleared.length > 0) {
-      setSelectedRequestId(paymentCleared[0].id);
-    } else if (loaded.length > 0) {
-      setSelectedRequestId(loaded[0].id);
-    }
 
     const unsub = subscribeToStore(() => {
       const refreshed = getStoredRequests();
@@ -198,282 +195,326 @@ export default function SupplierOrdersPage() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="bg-white rounded-3xl p-2 border border-slate-200 shadow-sm flex items-center gap-2 max-w-md">
-        <button
-          type="button"
-          onClick={() => setTabFilter("READY")}
-          className={`flex-1 py-2 rounded-2xl text-xs font-bold transition ${
-            tabFilter === "READY"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          Ready to Order ({readyForPoQueue.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTabFilter("TRANSMITTED")}
-          className={`flex-1 py-2 rounded-2xl text-xs font-bold transition ${
-            tabFilter === "TRANSMITTED"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          Transmitted ({transmittedQueue.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTabFilter("ALL")}
-          className={`flex-1 py-2 rounded-2xl text-xs font-bold transition ${
-            tabFilter === "ALL"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          All Orders ({requests.length})
-        </button>
-      </div>
-
-      {/* Main Split-Screen Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Order Selection List (5 cols) */}
-        <div className="lg:col-span-5 space-y-3">
-          {displayedRequests.length === 0 ? (
-            <div className="bg-white rounded-3xl p-8 text-center text-xs text-slate-400 border border-slate-200">
-              No orders found in this category.
+      {/* Main Content: Full-Width Table List or Full PO Details */}
+      {!selectedRequestId || !activeReq ? (
+        <div className="space-y-4">
+          {/* Filter Toolbar: Tabs + Search */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Filter Tabs */}
+            <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={() => setTabFilter("READY")}
+                className={`flex-1 md:flex-initial px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  tabFilter === "READY"
+                    ? "bg-white text-emerald-950 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Ready to Order ({readyForPoQueue.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTabFilter("TRANSMITTED")}
+                className={`flex-1 md:flex-initial px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  tabFilter === "TRANSMITTED"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Transmitted ({transmittedQueue.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTabFilter("ALL")}
+                className={`flex-1 md:flex-initial px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  tabFilter === "ALL"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                All Orders ({requests.length})
+              </button>
             </div>
-          ) : (
-            displayedRequests.map((req) => {
-              const isSelected = activeReq?.id === req.id;
-              const isPaid = req.status === "PAYMENT_CONFIRMED";
 
-              return (
-                <div
-                  key={req.id}
-                  onClick={() => setSelectedRequestId(req.id)}
-                  className={`p-4 sm:p-5 rounded-3xl border transition cursor-pointer relative ${
-                    isSelected
-                      ? "bg-white border-emerald-500 shadow-md ring-2 ring-emerald-500/10"
-                      : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-black text-xs text-slate-900">
-                          {req.referenceNumber}
-                        </span>
-                        <StatusBadge status={req.status} />
-                      </div>
-                      <div className="text-xs font-bold text-slate-800 mt-1">
-                        {req.part.partName}
-                      </div>
-                    </div>
+            {/* Search Input */}
+            <div className="relative w-full md:w-80">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search PO ref, VIN, part, customer..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
+            </div>
+          </div>
 
-                    <div className="text-right">
-                      <div className="font-mono font-black text-xs text-slate-900">
-                        ${req.invoice?.totalNzd ? req.invoice.totalNzd.toFixed(2) : "1,280.00"} NZD
-                      </div>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-0.5">
-                        {req.invoice?.paymentMethod === "TRADE_CREDIT" ? "Trade Credit Approved" : "Bank Transfer Cleared"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-[11px] text-slate-500 mt-2">
-                    {req.vehicle.year} {req.vehicle.make} {req.vehicle.model} • Customer: {req.customerName}
-                  </div>
-
-                  {req.invoice?.receiptNumber && (
-                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400 font-mono">
-                        Receipt: {req.invoice.receiptNumber}
-                      </span>
-                      <span className="text-emerald-700 font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Funds Cleared</span>
-                      </span>
-                    </div>
+          {/* Full-Width Orders Table */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="p-4 pl-6">PO Reference &amp; Date</th>
+                    <th className="p-4">Requested Part</th>
+                    <th className="p-4">Target Vehicle &amp; VIN</th>
+                    <th className="p-4">Customer &amp; Payment</th>
+                    <th className="p-4">Total (NZD)</th>
+                    <th className="p-4">Gate Status</th>
+                    <th className="p-4 pr-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-800">
+                  {displayedRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-12 text-center text-slate-400">
+                        No orders found in this category.
+                      </td>
+                    </tr>
+                  ) : (
+                    displayedRequests.map((req) => {
+                      const isPaid = req.status === "PAYMENT_CONFIRMED";
+                      return (
+                        <tr key={req.id} className="hover:bg-slate-50/70 transition group">
+                          <td className="p-4 pl-6">
+                            <div className="font-mono font-bold text-slate-900">
+                              PO-{req.referenceNumber.replace("AH-P-", "")}
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-400">
+                              {req.referenceNumber}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-slate-900">{req.part.partName}</div>
+                            <div className="font-mono text-[11px] text-slate-400">
+                              {req.part.oemPartNumber || "OEM Genuine Spec"}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-slate-800">{req.vehicle.year} {req.vehicle.make} {req.vehicle.model}</div>
+                            <div className="font-mono text-[10px] text-slate-400">VIN: {req.vehicle.vin}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-slate-700">{req.customerName}</div>
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                              {req.invoice?.paymentMethod === "TRADE_CREDIT" ? "Trade Credit" : "Bank Transfer"}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-mono font-bold text-slate-900">
+                              ${req.invoice?.totalNzd ? req.invoice.totalNzd.toFixed(2) : "1,280.00"} NZD
+                            </div>
+                            <div className="text-[10px] text-emerald-700 font-medium">Funds Cleared</div>
+                          </td>
+                          <td className="p-4">
+                            <StatusBadge status={req.status} />
+                          </td>
+                          <td className="p-4 pr-6 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRequestId(req.id)}
+                              className={`px-3.5 py-2 rounded-xl font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5 ${
+                                isPaid
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  : "bg-slate-900 hover:bg-slate-800 text-white"
+                              }`}
+                            >
+                              <span>{isPaid ? "Review & Transmit" : "View PO Details"}</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
-                </div>
-              );
-            })
-          )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+      ) : (
+        /* ================= FULL-WIDTH PO DETAILS & TRANSMISSION CONSOLE ================= */
+        <div className="space-y-6 animate-fadeIn">
+          {/* Top Return Navigation Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setSelectedRequestId("")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition self-start"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Purchase Orders</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs font-bold text-slate-500">
+                PO: PO-{activeReq.referenceNumber.replace("AH-P-", "")}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-xs font-bold text-slate-700">Ref: {activeReq.referenceNumber}</span>
+              <StatusBadge status={activeReq.status} />
+            </div>
+          </div>
 
-        {/* Right Column: Official Supplier Purchase Order Preview & Transmission Console (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          {activeReq ? (
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-              {/* Payment Cleared Gate Guarantee Pill */}
-              <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-emerald-950">
-                      Payment Confirmed Gate Cleared
-                    </div>
-                    <div className="text-[11px] text-emerald-800">
-                      Receipt {activeReq.invoice?.receiptNumber || "REC-2026-00842"} verified • Funds held in Autohub Trust Account
-                    </div>
-                  </div>
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+            {/* Payment Cleared Gate Guarantee Pill */}
+            <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
-
-                <div className="text-right flex-shrink-0">
-                  <div className="text-xs font-mono font-bold text-emerald-900">
-                    ${activeReq.invoice?.totalNzd ? activeReq.invoice.totalNzd.toFixed(2) : "1,280.00"} NZD
+                <div>
+                  <div className="text-xs font-bold text-emerald-950">
+                    Payment Confirmed Gate Cleared
                   </div>
-                  <div className="text-[10px] text-emerald-700">100% Cleared</div>
-                </div>
-              </div>
-
-              {/* Official PO Header & Export Details */}
-              <div className="border border-slate-200 rounded-2xl p-6 space-y-4 bg-slate-50/40">
-                <div className="flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-4 gap-4">
-                  <div>
-                    <div className="text-xs font-black tracking-tight text-slate-900">
-                      AUTOHUB NEW ZEALAND LIMITED — GLOBAL PROCUREMENT DESK
-                    </div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                      Nagoya Port Logistics Bay (JP) • Auckland Trade HQ (NZBN 9429038472910)
-                    </div>
-                  </div>
-
-                  <div className="text-left sm:text-right">
-                    <div className="text-xs font-mono font-black text-rose-600">
-                      PURCHASE ORDER: PO-{activeReq.referenceNumber.replace("AH-P-", "")}
-                    </div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                      DATE: {new Date().toLocaleDateString("en-NZ")}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Vendor & Delivery Hub Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      SUPPLIER VENDOR:
-                    </span>
-                    <div className="font-bold text-slate-900 mt-0.5">
-                      {activeQuote ? activeQuote.supplierName : "Nagoya Auto Direct K.K."}
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      Export Hub: {activeQuote ? activeQuote.supplierCountry : "Japan"} • Trading Currency: {activeQuote ? activeQuote.partCostCurrency : "JPY"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      EXPORT BAY &amp; FREIGHT TERMS:
-                    </span>
-                    <div className="font-bold text-slate-900 mt-0.5">
-                      FOB Nagoya Export Terminal Bay 4
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      Consignee: Autohub Logistics NZ (Cathay Priority Airfreight)
-                    </div>
-                  </div>
-                </div>
-
-                {/* PO Line Items Table */}
-                <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-100 border-b border-slate-200 text-slate-500 text-[10px] uppercase font-bold">
-                      <tr>
-                        <th className="p-3">Part Description &amp; Fitment</th>
-                        <th className="p-3">OEM / Tariff Code</th>
-                        <th className="p-3 text-right">Qty</th>
-                        <th className="p-3 text-right">Vendor Cost</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      <tr>
-                        <td className="p-3">
-                          <div className="font-bold text-slate-900">{activeReq.part.partName}</div>
-                          <div className="text-[11px] text-slate-500">
-                            Vehicle VIN: {activeReq.vehicle.vin} ({activeReq.vehicle.year} {activeReq.vehicle.make} {activeReq.vehicle.model})
-                          </div>
-                        </td>
-                        <td className="p-3 font-mono text-[11px]">
-                          <div>{activeReq.part.oemPartNumber || "OEM SPEC"}</div>
-                          <div className="text-slate-400 text-[10px]">HS 8708.80.00</div>
-                        </td>
-                        <td className="p-3 text-right font-bold">
-                          {activeReq.part.quantity}
-                        </td>
-                        <td className="p-3 text-right font-mono font-bold text-slate-900">
-                          {activeQuote ? `${activeQuote.partCostForeign.toLocaleString()} ${activeQuote.partCostCurrency}` : "¥58,000 JPY"}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Sourcing Specialist Signature Line */}
-                <div className="pt-2 flex items-center justify-between text-xs text-slate-500">
-                  <div>
-                    <span className="font-bold text-slate-700">Authorized Specialist:</span> Nathan Cole (Desk AH-PROC-084)
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-400">
-                    STATUS: {activeReq.status.replace(/_/g, " ")}
+                  <div className="text-[11px] text-emerald-800">
+                    Receipt {activeReq.invoice?.receiptNumber || "REC-2026-00842"} verified • Funds held in Autohub Trust Account
                   </div>
                 </div>
               </div>
 
-              {/* Special Packaging & Dispatch Notes */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-800">
-                  Export Packaging &amp; Terminal Dispatch Instructions:
-                </label>
-                <input
-                  type="text"
-                  value={poNotes}
-                  onChange={(e) => setPoNotes(e.target.value)}
-                  className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
+              <div className="text-right flex-shrink-0">
+                <div className="text-xs font-mono font-bold text-emerald-900">
+                  ${activeReq.invoice?.totalNzd ? activeReq.invoice.totalNzd.toFixed(2) : "1,280.00"} NZD
+                </div>
+                <div className="text-[10px] text-emerald-700">100% Cleared</div>
+              </div>
+            </div>
+
+            {/* Official PO Header & Export Details */}
+            <div className="border border-slate-200 rounded-2xl p-6 space-y-4 bg-slate-50/40">
+              <div className="flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-4 gap-4">
+                <div>
+                  <div className="text-xs font-black tracking-tight text-slate-900">
+                    AUTOHUB NEW ZEALAND LIMITED — GLOBAL PROCUREMENT DESK
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                    Nagoya Port Logistics Bay (JP) • Auckland Trade HQ (NZBN 9429038472910)
+                  </div>
+                </div>
+
+                <div className="text-left sm:text-right">
+                  <div className="text-xs font-mono font-black text-rose-600">
+                    PURCHASE ORDER: PO-{activeReq.referenceNumber.replace("AH-P-", "")}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    DATE: {new Date().toLocaleDateString("en-NZ")}
+                  </div>
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleTransmitPo}
-                  disabled={activeReq.status === "ORDERED_FROM_SUPPLIER"}
-                  className={`flex-1 w-full py-3.5 rounded-2xl font-bold text-xs shadow-lg transition flex items-center justify-center gap-2 ${
-                    activeReq.status === "ORDERED_FROM_SUPPLIER"
-                      ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                      : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/30"
-                  }`}
-                >
-                  <Send className="w-4 h-4" />
-                  <span>
-                    {activeReq.status === "ORDERED_FROM_SUPPLIER"
-                      ? "PO Already Transmitted to Vendor"
-                      : "Transmit Official PO to Overseas Vendor"}
+              {/* Vendor & Delivery Hub Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Overseas Supplier (Vendor):
                   </span>
-                </button>
+                  <div className="font-bold text-slate-900 mt-1">
+                    {activeQuote?.supplierName || "Toyota Nagoya Wholesale Distribution Center"}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Terminal Hub: {activeQuote?.supplierCountry || "Japan"} • Currency: {activeQuote?.partCostCurrency || "JPY"}
+                  </div>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition flex items-center gap-2"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Print PO PDF</span>
-                </button>
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Destination &amp; Freight Consolidation:
+                  </span>
+                  <div className="font-bold text-slate-900 mt-1">
+                    Autohub Logistics Center — Auckland Terminal Bay 4
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Method: {activeReq.quote?.selectedFreightMethod === "AIR_EXPRESS" ? "Priority Air Express (Cathay / Air NZ)" : "Ocean Consolidation (Toyofuji)"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Line Item Table */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100 text-slate-600 font-bold uppercase text-[10px]">
+                    <tr>
+                      <th className="p-3">Item / OEM Part Number</th>
+                      <th className="p-3">Fitment Target</th>
+                      <th className="p-3">Qty</th>
+                      <th className="p-3 text-right">Unit Ex-Hub Cost</th>
+                      <th className="p-3 text-right">Total Landed (NZD)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr>
+                      <td className="p-3 font-bold text-slate-900">
+                        {activeReq.part.partName}
+                        <span className="block font-mono text-[10px] text-slate-400">
+                          {activeReq.part.oemPartNumber || "OEM Genuine Spec"}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-600">
+                        {activeReq.vehicle.year} {activeReq.vehicle.make} {activeReq.vehicle.model}
+                        <span className="block font-mono text-[10px] text-slate-400">
+                          VIN: {activeReq.vehicle.vin}
+                        </span>
+                      </td>
+                      <td className="p-3 font-mono font-bold">1</td>
+                      <td className="p-3 text-right font-mono font-bold">
+                        {activeQuote?.partCostForeign ? `${activeQuote.partCostCurrency} ${activeQuote.partCostForeign.toLocaleString()}` : "¥48,000 JPY"}
+                      </td>
+                      <td className="p-3 text-right font-mono font-black text-slate-900">
+                        ${activeQuote?.partCostNzd ? activeQuote.partCostNzd.toFixed(2) : "518.40"} NZD
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-3xl p-12 text-center text-slate-400 border border-slate-200">
-              Select an order to review PO generation.
+
+            {/* PO Dispatch Instructions & Notes */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span>Export Packaging &amp; Carrier Waybill Dispatch Instructions:</span>
+                <span className="text-[10px] text-slate-400">Transmitted directly to overseas vendor</span>
+              </label>
+              <textarea
+                rows={2}
+                value={poNotes}
+                onChange={(e) => setPoNotes(e.target.value)}
+                className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
             </div>
-          )}
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+              <button
+                type="button"
+                onClick={handleTransmitPo}
+                disabled={activeReq.status === "ORDERED_FROM_SUPPLIER"}
+                className={`flex-1 w-full py-3.5 rounded-2xl font-bold text-xs shadow-lg transition flex items-center justify-center gap-2 ${
+                  activeReq.status === "ORDERED_FROM_SUPPLIER"
+                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/30"
+                }`}
+              >
+                <Send className="w-4 h-4" />
+                <span>
+                  {activeReq.status === "ORDERED_FROM_SUPPLIER"
+                    ? "PO Already Transmitted to Vendor"
+                    : "Transmit Official PO to Overseas Vendor"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print PO PDF</span>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

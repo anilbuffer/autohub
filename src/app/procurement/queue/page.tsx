@@ -32,6 +32,7 @@ import {
   User,
   ShieldCheck,
   Percent,
+  ArrowLeft,
 } from "lucide-react";
 import {
   getStoredRequests,
@@ -41,6 +42,10 @@ import {
   subscribeToStore,
   updateRequestStatus,
 } from "@/lib/store";
+import {
+  initialRequests,
+  initialSuppliers,
+} from "@/lib/mockData";
 import {
   PartRequest,
   SupplierQuotation,
@@ -55,8 +60,8 @@ export default function SourcingQueuePage() {
   const searchParams = useSearchParams();
   const initialReqParam = searchParams.get("req");
 
-  const [requests, setRequests] = useState<PartRequest[]>(getStoredRequests);
-  const [suppliers, setSuppliers] = useState<SupplierProfile[]>(getStoredSuppliers);
+  const [requests, setRequests] = useState<PartRequest[]>(initialRequests);
+  const [suppliers, setSuppliers] = useState<SupplierProfile[]>(initialSuppliers);
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
 
   // Filters
@@ -98,17 +103,9 @@ export default function SourcingQueuePage() {
     setRequests(loaded);
     setSuppliers(getStoredSuppliers());
 
-    // Sourcing queue requests
-    const sourcingReqs = loaded.filter((r) => r.status === "SOURCING" || r.status === "SUBMITTED");
-
     if (initialReqParam) {
       const match = loaded.find((r) => r.id === initialReqParam || r.referenceNumber === initialReqParam);
       if (match) setSelectedRequestId(match.id);
-      else if (sourcingReqs.length > 0) setSelectedRequestId(sourcingReqs[0].id);
-    } else if (sourcingReqs.length > 0) {
-      setSelectedRequestId(sourcingReqs[0].id);
-    } else if (loaded.length > 0) {
-      setSelectedRequestId(loaded[0].id);
     }
 
     const unsub = subscribeToStore(() => {
@@ -320,123 +317,151 @@ export default function SourcingQueuePage() {
         </div>
       )}
 
-      {/* Main Split-Screen Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* ================= LEFT COLUMN: REQUEST SELECTION QUEUE (5 COLS) ================= */}
-        <div className="lg:col-span-5 space-y-4">
+      {/* Main Content: Table List or Full Details View */}
+      {!selectedRequestId || !activeReq ? (
+        /* ================= FULL-WIDTH SOURCING QUEUE TABLE LIST ================= */
+        <div className="space-y-4">
           {/* Triage Filter Bar */}
-          <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800">
-                Sourcing Queue ({filteredQueue.length})
-              </span>
-              <div className="flex items-center gap-1 text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => setUrgencyFilter("ALL")}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition ${
-                    urgencyFilter === "ALL"
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-500 hover:bg-slate-100"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUrgencyFilter("URGENT")}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition ${
-                    urgencyFilter === "URGENT"
-                      ? "bg-rose-600 text-white"
-                      : "text-slate-500 hover:bg-slate-100"
-                  }`}
-                >
-                  Urgent OEM
-                </button>
-              </div>
-            </div>
-
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Search Input */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative w-full md:w-96">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter by ref, vehicle, part name, customer..."
-                className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
+            </div>
+
+            {/* Urgency Filter Chips */}
+            <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+              <span className="text-xs font-bold text-slate-500 hidden sm:inline">Filter:</span>
+              <div className="flex items-center gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setUrgencyFilter("ALL")}
+                  className={`px-3.5 py-1.5 rounded-xl font-bold transition ${
+                    urgencyFilter === "ALL"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  All Requests ({filteredQueue.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUrgencyFilter("URGENT")}
+                  className={`px-3.5 py-1.5 rounded-xl font-bold transition ${
+                    urgencyFilter === "URGENT"
+                      ? "bg-red-600 text-white shadow-xs"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  Urgent OEM Only
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Request Cards List */}
-          <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
-            {filteredQueue.length === 0 ? (
-              <div className="bg-white rounded-3xl p-8 text-center text-xs text-slate-400 border border-slate-200">
-                No active requests matching criteria.
-              </div>
-            ) : (
-              filteredQueue.map((req) => {
-                const isSelected = activeReq?.id === req.id;
-                const quoteCount = req.supplierQuotes ? req.supplierQuotes.length : 0;
-
-                return (
-                  <div
-                    key={req.id}
-                    onClick={() => setSelectedRequestId(req.id)}
-                    className={`p-4 rounded-3xl border transition cursor-pointer relative ${
-                      isSelected
-                        ? "bg-white border-rose-500 shadow-md ring-2 ring-rose-500/10"
-                        : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-black text-xs text-slate-900">
-                            {req.referenceNumber}
-                          </span>
-                          <StatusBadge status={req.status} />
-                        </div>
-                        <div className="text-xs font-bold text-slate-800 mt-1">
-                          {req.part.partName}
-                        </div>
-                      </div>
-
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                          quoteCount > 0
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
-                      >
-                        {quoteCount} {quoteCount === 1 ? "Quote" : "Quotes"}
-                      </span>
-                    </div>
-
-                    <div className="text-[11px] text-slate-500 mt-2">
-                      {req.vehicle.year} {req.vehicle.make} {req.vehicle.model} • VIN: {req.vehicle.vin}
-                    </div>
-
-                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400 font-medium">
-                        {req.customerName}
-                      </span>
-                      <span className="font-mono text-slate-500">
-                        {req.part.oemPartNumber || "OEM Spec"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+          {/* Full Width Table View */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="p-4 pl-6">Reference &amp; Date</th>
+                    <th className="p-4">Requested Part</th>
+                    <th className="p-4">Target Vehicle &amp; VIN</th>
+                    <th className="p-4">Customer</th>
+                    <th className="p-4">Quotes Recorded</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 pr-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-800">
+                  {filteredQueue.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-12 text-center text-slate-400">
+                        No active sourcing requests matching filter criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredQueue.map((req) => {
+                      const quoteCount = req.supplierQuotes ? req.supplierQuotes.length : 0;
+                      return (
+                        <tr key={req.id} className="hover:bg-slate-50/70 transition group">
+                          <td className="p-4 pl-6">
+                            <div className="font-mono font-bold text-slate-900">{req.referenceNumber}</div>
+                            <div className="text-[11px] text-slate-400">{new Date(req.createdAt).toLocaleDateString()}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-slate-900">{req.part.partName}</div>
+                            <div className="font-mono text-[11px] text-slate-400">{req.part.oemPartNumber || "OEM Genuine Spec"}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-slate-800">{req.vehicle.year} {req.vehicle.make} {req.vehicle.model}</div>
+                            <div className="font-mono text-[10px] text-slate-400">VIN: {req.vehicle.vin}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-slate-700">{req.customerName}</div>
+                            <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md mt-0.5 ${req.part.genuinePreference === "URGENT" ? "bg-red-50 text-red-700 font-bold" : "bg-slate-100 text-slate-600"}`}>
+                              {req.part.genuinePreference}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${quoteCount > 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500"}`}>
+                              {quoteCount} {quoteCount === 1 ? "Quote" : "Quotes"}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <StatusBadge status={req.status} />
+                          </td>
+                          <td className="p-4 pr-6 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRequestId(req.id)}
+                              className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5"
+                            >
+                              <span>Source &amp; Quote</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      ) : (
+        /* ================= FULL-WIDTH SOURCING DETAILS VIEW ================= */
+        <div className="space-y-6 animate-fadeIn">
+          {/* Top Return Navigation Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setSelectedRequestId("")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition self-start"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Sourcing Queue</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs font-bold text-slate-500">Ref: {activeReq.referenceNumber}</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-xs font-bold text-slate-700">Customer: {activeReq.customerName}</span>
+              <StatusBadge status={activeReq.status} />
+            </div>
+          </div>
 
-        {/* ================= RIGHT COLUMN: SOURCING & QUOTATION WORKSPACE (7 COLS) ================= */}
-        <div className="lg:col-span-7 space-y-6">
-          {activeReq ? (
-            <>
+          {/* Full-Width Workspace Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left: Part & Fitment Specs (5 Cols) */}
+            <div className="lg:col-span-5 space-y-6">
               {/* Part & Fitment Specifications Card */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -459,288 +484,317 @@ export default function SourcingQueuePage() {
                     <button
                       type="button"
                       onClick={() => setShowExceptionModal(true)}
-                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-bold flex items-center gap-1.5 transition"
                     >
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      <span>Raise Exception</span>
+                      <span>Flag Exception</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Technical Specifications Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3 rounded-2xl bg-slate-50">
+                {/* Specs Grid */}
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      Target Vehicle
+                    </span>
+                    <span className="font-bold text-slate-800 mt-0.5 block">
+                      {activeReq.vehicle.year} {activeReq.vehicle.make} {activeReq.vehicle.model}
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      {activeReq.vehicle.chassisSeries || "Series N/A"} • {activeReq.vehicle.transmission || "Auto"}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      VIN / Chassis Code
+                    </span>
+                    <span className="font-mono font-bold text-slate-800 mt-0.5 block truncate" title={activeReq.vehicle.vin}>
+                      {activeReq.vehicle.vin}
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Verified Japanese JDM Spec
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      Part Category &amp; Side
+                    </span>
+                    <span className="font-bold text-slate-800 mt-0.5 block">
+                      {activeReq.part.category}
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Placement: {activeReq.part.sideOrPosition || "Universal/Center"}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">
                       OEM Part Number
                     </span>
-                    <span className="font-mono font-bold text-slate-800 mt-0.5 block truncate">
-                      {activeReq.part.oemPartNumber || "Pending Sourcing"}
+                    <span className="font-mono font-bold text-rose-600 mt-0.5 block">
+                      {activeReq.part.oemPartNumber || "Sourcing Specialist to verify"}
                     </span>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-slate-50">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Vehicle VIN
-                    </span>
-                    <span className="font-mono font-bold text-slate-800 mt-0.5 block truncate">
-                      {activeReq.vehicle.vin}
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-slate-50">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Preference
-                    </span>
-                    <span className="font-bold text-slate-800 mt-0.5 block truncate">
-                      {activeReq.part.genuinePreference.replace(/_/g, " ")}
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-slate-50">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Weight Estimate
-                    </span>
-                    <span className="font-bold text-slate-800 mt-0.5 block truncate">
-                      {activeReq.part.weightEstKg ? `${activeReq.part.weightEstKg} kg` : "Est. 5.0 kg"}
+                    <span className="text-[11px] text-slate-500">
+                      Genuine catalog match
                     </span>
                   </div>
                 </div>
 
+                {/* Customer Remarks */}
                 {activeReq.part.descriptionNotes && (
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/60 text-xs text-slate-600">
-                    <span className="font-bold text-slate-700 mr-1.5">Customer Notes:</span>
-                    {activeReq.part.descriptionNotes}
+                  <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200/60 text-xs">
+                    <span className="font-bold text-amber-900 block text-[11px]">
+                      Customer Sourcing Notes:
+                    </span>
+                    <p className="text-slate-700 mt-0.5 italic">
+                      "{activeReq.part.descriptionNotes}"
+                    </p>
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Side-by-Side Supplier Quotations Matrix */}
+            {/* Right: Quotation Workspace & Landed Margin Calculator (7 Cols) */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* Supplier Quotes Comparison Panel */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">
-                      Recorded Supplier Quotes ({activeReq.supplierQuotes ? activeReq.supplierQuotes.length : 0})
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-slate-700" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      Supplier Quotes Recorded ({activeReq.supplierQuotes?.length || 0})
                     </h3>
-                    <p className="text-xs text-slate-500">
-                      Select winning quote to feed into Landed Cost &amp; Margin Builder
-                    </p>
                   </div>
+
                   <button
                     type="button"
                     onClick={() => setShowAddSupplierQuote(true)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition flex items-center gap-1.5"
+                    className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add Quote</span>
                   </button>
                 </div>
 
-                {!activeReq.supplierQuotes || activeReq.supplierQuotes.length === 0 ? (
-                  <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
-                    <Building2 className="w-8 h-8 text-slate-400 mx-auto" />
-                    <div className="text-xs font-bold text-slate-700">No Supplier Quotes Recorded Yet</div>
-                    <p className="text-[11px] text-slate-500">
-                      Contact international vendors or click &quot;Record Supplier Quote&quot; above to enter vendor pricing.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {activeReq.supplierQuotes.map((sq) => {
-                      const isSelected = selectedSupplierQuoteId === sq.id;
+                {/* Quotation Cards Grid */}
+                <div className="space-y-3">
+                  {!activeReq.supplierQuotes || activeReq.supplierQuotes.length === 0 ? (
+                    <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-center text-xs text-slate-400">
+                      <p>No supplier quotes recorded yet for this request.</p>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddSupplierQuote(true)}
+                        className="mt-2 text-rose-600 font-bold hover:underline inline-block"
+                      >
+                        + Record overseas vendor quote
+                      </button>
+                    </div>
+                  ) : (
+                    activeReq.supplierQuotes.map((sq) => {
+                      const isWinning = selectedSupplierQuoteId === sq.id;
+
                       return (
                         <div
                           key={sq.id}
                           onClick={() => setSelectedSupplierQuoteId(sq.id)}
-                          className={`p-4 rounded-2xl border transition cursor-pointer relative ${
-                            isSelected
-                              ? "bg-slate-900 text-white border-slate-900 shadow-md"
-                              : "bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300"
+                          className={`p-4 rounded-2xl border transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                            isWinning
+                              ? "bg-rose-50/40 border-rose-500 ring-2 ring-rose-500/10"
+                              : "bg-white border-slate-200 hover:border-slate-300"
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="text-xs font-bold">{sq.supplierName}</div>
-                              <div className={`text-[10px] mt-0.5 ${isSelected ? "text-slate-400" : "text-slate-500"}`}>
-                                {sq.supplierCountry} • Lead Time: {sq.availabilityDays} days
-                              </div>
-                            </div>
-
-                            {sq.isRecommendedByAi && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                <span>AI Pick</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-xs text-slate-900">
+                                {sq.supplierName}
                               </span>
-                            )}
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                {sq.supplierCountry}
+                              </span>
+                              {sq.isRecommendedByAi && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 flex items-center gap-1">
+                                  <Sparkles className="w-2.5 h-2.5" />
+                                  Best SLA
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="text-[11px] text-slate-500 mt-1">
+                              Lead Time: {sq.availabilityDays} days • Notes: {sq.notes || "None"}
+                            </div>
                           </div>
 
-                          <div className="mt-3 pt-3 border-t border-slate-200/40 flex items-baseline justify-between">
-                            <div>
-                              <div className="text-[10px] opacity-70">Overseas Cost</div>
-                              <div className="font-mono font-bold text-xs">
-                                {sq.partCostForeign.toLocaleString()} {sq.partCostCurrency}
-                              </div>
+                          <div className="flex sm:flex-col sm:items-end justify-between items-center">
+                            <div className="font-mono font-bold text-xs text-slate-900">
+                              {sq.partCostCurrency} {sq.partCostForeign.toLocaleString()}
                             </div>
-                            <div className="text-right">
-                              <div className="text-[10px] opacity-70">Landed NZD</div>
-                              <div className="font-mono font-black text-sm">
-                                ${(sq.partCostNzd + sq.domesticFreightNzd).toFixed(2)} NZD
-                              </div>
+                            <div className="font-mono text-[11px] text-rose-600 font-bold">
+                              ${sq.partCostNzd.toFixed(2)} NZD
                             </div>
+                            <span className="text-[10px] text-slate-400">
+                              Rate: {sq.exchangeRateToNzd}
+                            </span>
                           </div>
-
-                          {sq.notes && (
-                            <div className={`mt-2 text-[10px] line-clamp-1 ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
-                              {sq.notes}
-                            </div>
-                          )}
                         </div>
                       );
-                    })}
-                  </div>
-                )}
+                    })
+                  )}
+                </div>
               </div>
 
-              {/* Interactive Customer Landed Cost & Margin Builder */}
+              {/* Quote Builder & Landed Margin Calculator */}
               {winningQuote && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5">
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900">
-                        Customer Landed Cost &amp; Margin Builder
+                    <div className="flex items-center gap-2">
+                      <Percent className="w-4 h-4 text-slate-700" />
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                        Landed Cost &amp; Margin Calculator (NZD)
                       </h3>
-                      <p className="text-xs text-slate-500">
-                        Synthesize verified NZ trade customer quotation
-                      </p>
                     </div>
-
-                    <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-xl bg-slate-100 text-slate-800">
-                      Selected: {winningQuote.supplierName}
+                    <span className="text-[11px] font-mono text-slate-500">
+                      Base Part: ${baseCostNzd.toFixed(2)} NZD
                     </span>
                   </div>
 
-                  {/* Target Margin Slider */}
-                  <div className="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-700 flex items-center gap-1.5">
-                        <Percent className="w-4 h-4 text-rose-600" />
-                        Target Sourcing Margin:
-                      </span>
-                      <span className="font-mono font-black text-rose-600 text-sm">
-                        {targetMargin.toFixed(1)}% (+${calculatedMarginAmount.toFixed(2)} NZD)
-                      </span>
+                  {/* Calculator Sliders & Selectors */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Target Margin % */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-700">Target Gross Margin:</span>
+                        <span className="font-mono font-black text-rose-600 text-sm">
+                          {targetMargin}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="10"
+                        max="35"
+                        step="0.5"
+                        value={targetMargin}
+                        onChange={(e) => setTargetMargin(parseFloat(e.target.value))}
+                        className="w-full accent-rose-600"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-400">
+                        <span>10% (Floor)</span>
+                        <span>18% (Target)</span>
+                        <span>35% (Premium)</span>
+                      </div>
                     </div>
-                    <input
-                      type="range"
-                      min="10"
-                      max="35"
-                      step="0.5"
-                      value={targetMargin}
-                      onChange={(e) => setTargetMargin(parseFloat(e.target.value))}
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
-                    />
-                    <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                      <span>10.0% (High-Volume Trade)</span>
-                      <span>18.0% (Standard Benchmark)</span>
-                      <span>35.0% (Prestige / Rare OEM)</span>
+
+                    {/* Procurement Coordination Fee */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-700">Procurement Fee:</span>
+                        <span className="font-mono font-black text-slate-900 text-sm">
+                          ${procurementFee.toFixed(2)} NZD
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="30"
+                        max="150"
+                        step="5"
+                        value={procurementFee}
+                        onChange={(e) => setProcurementFee(parseFloat(e.target.value))}
+                        className="w-full accent-slate-800"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-400">
+                        <span>$30</span>
+                        <span>$60 (Std)</span>
+                        <span>$150</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Freight Selector */}
+                  {/* Freight Method Options */}
                   <div className="space-y-2">
-                    <span className="text-xs font-bold text-slate-800">
-                      Primary International Freight Channel:
+                    <span className="text-xs font-bold text-slate-700 block">
+                      Freight Options Included for Customer Selection:
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <label
-                        className={`p-3.5 rounded-2xl border cursor-pointer transition flex items-center justify-between ${
+                      {/* Priority Air */}
+                      <div
+                        onClick={() => setSelectedFreightOption("AIR_EXPRESS")}
+                        className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-between ${
                           selectedFreightOption === "AIR_EXPRESS"
-                            ? "bg-rose-50/70 border-rose-400 text-slate-900 shadow-sm"
-                            : "bg-slate-50 border-slate-200 text-slate-700"
+                            ? "bg-rose-50/50 border-rose-500 ring-1 ring-rose-500"
+                            : "bg-white border-slate-200"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="freight"
-                            checked={selectedFreightOption === "AIR_EXPRESS"}
-                            onChange={() => setSelectedFreightOption("AIR_EXPRESS")}
-                            className="accent-rose-600"
-                          />
+                        <div className="flex items-center gap-2.5">
+                          <Plane className="w-4 h-4 text-rose-600" />
                           <div>
-                            <div className="text-xs font-bold flex items-center gap-1.5">
-                              <Plane className="w-3.5 h-3.5 text-rose-600" />
-                              <span>Air Express Priority</span>
-                            </div>
-                            <div className="text-[10px] text-slate-500">3 - 5 business days</div>
+                            <div className="font-bold text-xs text-slate-900">Priority Airfreight</div>
+                            <div className="text-[10px] text-slate-400">3 - 5 business days</div>
                           </div>
                         </div>
-                        <span className="font-mono font-bold text-xs">${airFreightCost.toFixed(2)} NZD</span>
-                      </label>
+                        <div className="font-mono font-bold text-xs text-slate-900">
+                          ${airFreightCost.toFixed(2)} NZD
+                        </div>
+                      </div>
 
-                      <label
-                        className={`p-3.5 rounded-2xl border cursor-pointer transition flex items-center justify-between ${
+                      {/* Ocean Consolidation */}
+                      <div
+                        onClick={() => setSelectedFreightOption("SEA_FREIGHT")}
+                        className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-between ${
                           selectedFreightOption === "SEA_FREIGHT"
-                            ? "bg-rose-50/70 border-rose-400 text-slate-900 shadow-sm"
-                            : "bg-slate-50 border-slate-200 text-slate-700"
+                            ? "bg-blue-50/50 border-blue-500 ring-1 ring-blue-500"
+                            : "bg-white border-slate-200"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="freight"
-                            checked={selectedFreightOption === "SEA_FREIGHT"}
-                            onChange={() => setSelectedFreightOption("SEA_FREIGHT")}
-                            className="accent-rose-600"
-                          />
+                        <div className="flex items-center gap-2.5">
+                          <Anchor className="w-4 h-4 text-blue-600" />
                           <div>
-                            <div className="text-xs font-bold flex items-center gap-1.5">
-                              <Anchor className="w-3.5 h-3.5 text-blue-600" />
-                              <span>Sea Freight Consolidated</span>
-                            </div>
-                            <div className="text-[10px] text-slate-500">14 - 18 business days</div>
+                            <div className="font-bold text-xs text-slate-900">Ocean Consolidation</div>
+                            <div className="text-[10px] text-slate-400">14 - 18 business days</div>
                           </div>
                         </div>
-                        <span className="font-mono font-bold text-xs">${seaFreightCost.toFixed(2)} NZD</span>
-                      </label>
+                        <div className="font-mono font-bold text-xs text-slate-900">
+                          ${seaFreightCost.toFixed(2)} NZD
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Pricing Breakdown Summary Table */}
-                  <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5 text-xs font-mono">
-                    <div className="flex justify-between text-slate-400">
-                      <span>Landed Part Cost (Ex-Supplier Hub):</span>
+                  {/* Landed Cost Breakdown Summary Table */}
+                  <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2 text-xs font-mono">
+                    <div className="flex justify-between text-slate-300">
+                      <span>Base Landed Foreign Part:</span>
                       <span>${landedCostNzd.toFixed(2)} NZD</span>
                     </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Sourcing Margin ({targetMargin.toFixed(1)}%):</span>
-                      <span className="text-rose-400">+${calculatedMarginAmount.toFixed(2)} NZD</span>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Target Margin Amount ({targetMargin}%):</span>
+                      <span className="text-emerald-400">+${calculatedMarginAmount.toFixed(2)} NZD</span>
                     </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Procurement Facilitation Fee:</span>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Procurement &amp; Documentation:</span>
                       <span>+${procurementFee.toFixed(2)} NZD</span>
                     </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>International Freight ({selectedFreightOption === "AIR_EXPRESS" ? "Air" : "Sea"}):</span>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Selected Freight ({selectedFreightOption}):</span>
                       <span>+${activeFreightCost.toFixed(2)} NZD</span>
                     </div>
-                    <div className="pt-2 border-t border-slate-800 flex justify-between font-bold text-slate-300">
-                      <span>Subtotal (excl. GST):</span>
-                      <span>${subtotalBeforeGst.toFixed(2)} NZD</span>
-                    </div>
-                    <div className="flex justify-between text-slate-400">
+                    <div className="flex justify-between text-slate-300">
                       <span>NZ GST (15%):</span>
                       <span>+${gstAmount.toFixed(2)} NZD</span>
                     </div>
-                    <div className="pt-2 border-t border-slate-700 flex justify-between font-black text-sm text-white">
-                      <span>Total Customer Quote (incl. GST):</span>
-                      <span className="text-emerald-400">${grandTotal.toFixed(2)} NZD</span>
+                    <div className="pt-2 border-t border-slate-800 flex justify-between text-sm font-bold font-sans text-white">
+                      <span>Total Customer Quote (NZD):</span>
+                      <span className="text-rose-400 font-mono text-base">
+                        ${grandTotal.toFixed(2)} NZD
+                      </span>
                     </div>
                   </div>
 
-                  {/* Notes to Customer Input */}
+                  {/* Specialist Note to Customer */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-800">
-                      Sourcing Specialist Advisory Notes to Customer:
+                    <label className="text-xs font-bold text-slate-700">
+                      Sourcing Specialist Advisory Note:
                     </label>
                     <textarea
                       rows={2}
@@ -754,21 +808,17 @@ export default function SourcingQueuePage() {
                   <button
                     type="button"
                     onClick={handleIssueQuote}
-                    className="w-full py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-900/30 transition flex items-center justify-center gap-2"
+                    className="w-full py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-lg shadow-red-900/30 transition flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" />
                     <span>Issue Verified Customer Quote (${grandTotal.toFixed(2)} NZD)</span>
                   </button>
                 </div>
               )}
-            </>
-          ) : (
-            <div className="bg-white rounded-3xl p-12 text-center text-slate-400 border border-slate-200">
-              Select a request from the queue to start quotation.
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ================= RECORD SUPPLIER QUOTE MODAL ================= */}
       {showAddSupplierQuote && (

@@ -24,13 +24,22 @@ import {
   DollarSign,
   LucideIcon,
   RefreshCw,
+  Home,
+  Globe,
+  ExternalLink,
 } from "lucide-react";
+import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import {
   getStoredRequests,
   getStoredSuppliers,
   getStoredNotifications,
   subscribeToStore,
 } from "@/lib/store";
+import {
+  initialRequests,
+  initialSuppliers,
+  initialNotifications,
+} from "@/lib/mockData";
 import { PartRequest, SupplierProfile, CustomerNotification } from "@/lib/types";
 
 interface NavItem {
@@ -55,12 +64,13 @@ export default function ProcurementPortalLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  const [requests, setRequests] = useState<PartRequest[]>(getStoredRequests);
-  const [suppliers, setSuppliers] = useState<SupplierProfile[]>(getStoredSuppliers);
-  const [notifications, setNotifications] = useState<CustomerNotification[]>(getStoredNotifications);
+  const [requests, setRequests] = useState<PartRequest[]>(initialRequests);
+  const [suppliers, setSuppliers] = useState<SupplierProfile[]>(initialSuppliers);
+  const [notifications, setNotifications] = useState<CustomerNotification[]>(initialNotifications);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [actionDropdownOpen, setActionDropdownOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [helpModalOpen, setHelpModalOpen] = useState(false);
@@ -89,6 +99,7 @@ export default function ProcurementPortalLayout({
         setSearchModalOpen(false);
         setUserMenuOpen(false);
         setNotifDropdownOpen(false);
+        setActionDropdownOpen(false);
         setHelpModalOpen(false);
       }
     };
@@ -125,7 +136,7 @@ export default function ProcurementPortalLayout({
 
   // Derive dynamic page title
   const getPageTitle = () => {
-    if (pathname === "/procurement") return "Sourcing Desk Command Center";
+    if (pathname === "/procurement") return "Procurement Dashboard";
     if (pathname === "/procurement/queue") return "Sourcing Queue & Quotation Desk";
     if (pathname === "/procurement/suppliers") return "Global Supplier Reference Directory";
     if (pathname === "/procurement/orders") return "Purchase Orders (Payment Cleared Gate)";
@@ -373,6 +384,33 @@ export default function ProcurementPortalLayout({
                 <span>Profile Settings</span>
               </Link>
 
+              <Link
+                href="/portal"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
+              >
+                <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                <span>Trade Customer Portal</span>
+              </Link>
+
+              <Link
+                href="/admin"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
+              >
+                <Compass className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Operations Admin Desk</span>
+              </Link>
+
+              <Link
+                href="/"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
+              >
+                <Home className="w-3.5 h-3.5 text-slate-400" />
+                <span>Public Website</span>
+              </Link>
+
               <button
                 type="button"
                 onClick={() => {
@@ -391,81 +429,147 @@ export default function ProcurementPortalLayout({
 
       {/* ================= RIGHT MAIN LAYOUT ================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 h-16 px-4 sm:px-8 flex items-center justify-between gap-4">
-          {/* Left Title */}
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              Sourcing Desk
-            </span>
-            <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight truncate">
+        {/* Top Header Bar matching user reference */}
+        <header className="sticky top-0 z-20 bg-white border-b border-slate-200/90 min-h-[64px] py-2.5 px-4 sm:px-8 flex items-center justify-between gap-4">
+          {/* Left: Breadcrumb & Title */}
+          <div className="flex flex-col justify-center min-w-0">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-0.5 leading-none">
+              <Link
+                href="/"
+                className="hover:text-slate-900 transition flex items-center gap-1 text-slate-500"
+                title="Return to Public Website"
+              >
+                <span>Home</span>
+              </Link>
+              <span className="text-slate-400">/</span>
+              <Link
+                href="/procurement"
+                className="hover:text-slate-900 transition text-slate-600 font-medium"
+              >
+                Procurement
+              </Link>
+              <span className="text-slate-400">/</span>
+              <span className="text-blue-600 font-semibold truncate">
+                {getPageTitle()}
+              </span>
+            </div>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight truncate">
               {getPageTitle()}
             </h1>
           </div>
 
-          {/* Center: Global Search Bar */}
-          <div className="flex-1 max-w-md hidden md:block">
+          {/* Right: Search, Quick Portal Links, PersonaSwitcher, New Action, Notifications */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            {/* Quick Cross-Portal Links */}
+            <Link
+              href="/portal"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
+              title="Open Trade Customer Portal"
+            >
+              <Building2 className="w-3.5 h-3.5 text-blue-600" />
+              <span>Customer Portal</span>
+            </Link>
+
+            <Link
+              href="/"
+              className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
+              title="Return to Public Website"
+            >
+              <Home className="w-3.5 h-3.5 text-slate-500" />
+              <span>Website</span>
+            </Link>
+
+            {/* Persona Switcher */}
+            <div className="hidden sm:block">
+              <PersonaSwitcher variant="light" />
+            </div>
+            {/* Global Search Bar */}
             <button
               type="button"
               onClick={() => setSearchModalOpen(true)}
-              className="w-full py-2 pl-3.5 pr-3 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-left text-xs text-slate-500 flex items-center justify-between transition group"
+              className="flex items-center justify-between w-56 sm:w-72 lg:w-80 px-3.5 py-2 rounded-xl bg-slate-50/80 hover:bg-slate-100/90 border border-slate-200 text-left transition group shadow-2xs"
             >
-              <div className="flex items-center gap-2.5">
-                <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
-                <span>Search requests, VINs, parts, or suppliers...</span>
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <Search className="w-4 h-4 text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
+                <span className="text-xs text-slate-400 truncate font-normal">
+                  Search requests, parts, POs, VIN...
+                </span>
               </div>
-              <kbd className="px-1.5 py-0.5 rounded bg-white text-[10px] font-mono font-bold text-slate-400 shadow-sm border border-slate-200">
+              <kbd className="flex-shrink-0 px-1.5 py-0.5 rounded bg-white text-[10px] font-mono font-bold text-slate-400 border border-slate-200 shadow-2xs ml-2">
                 ⌘K
               </kbd>
             </button>
-          </div>
 
-          {/* Right: Actions (FX Rates Ticker, Help, Notifications) */}
-          <div className="flex items-center gap-3">
-            {/* Live FX Ticker Chip */}
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-slate-500 text-[11px]">FX (NZD):</span>
-              <span className="font-mono font-bold text-slate-800 text-[11px]">
-                JPY: 0.0108 • USD: 1.68 • EUR: 1.82
-              </span>
+            {/* Primary Action Button: + New Action ▾ */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setActionDropdownOpen(!actionDropdownOpen)}
+                className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm shadow-red-600/25 transition active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>New Action</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    actionDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Action Dropdown Menu */}
+              {actionDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl p-1.5 z-50 animate-scaleIn text-xs">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                    Quick Actions
+                  </div>
+                  <Link
+                    href="/procurement/queue"
+                    onClick={() => setActionDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-medium transition"
+                  >
+                    <Compass className="w-4 h-4 text-red-600" />
+                    <span>Process Sourcing Queue</span>
+                  </Link>
+                  <Link
+                    href="/procurement/orders"
+                    onClick={() => setActionDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-medium transition"
+                  >
+                    <CheckSquare className="w-4 h-4 text-emerald-600" />
+                    <span>Create Purchase Order</span>
+                  </Link>
+                  <Link
+                    href="/procurement/suppliers"
+                    onClick={() => setActionDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-medium transition"
+                  >
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                    <span>Add Global Supplier</span>
+                  </Link>
+                  <Link
+                    href="/procurement/exceptions"
+                    onClick={() => setActionDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-medium transition"
+                  >
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <span>Log Sourcing Exception</span>
+                  </Link>
+                </div>
+              )}
             </div>
-
-            {/* Quick Sourcing Pill */}
-            <Link
-              href="/procurement/queue"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs text-amber-900 font-semibold transition"
-            >
-              <Compass className="w-3.5 h-3.5 text-amber-600" />
-              <span>{sourcingQueueCount} to Source</span>
-            </Link>
-
-            {/* Help Question Icon */}
-            <button
-              type="button"
-              onClick={() => setHelpModalOpen(true)}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1 text-xs font-semibold"
-              title="Procurement SOP & Guidelines"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">SOP</span>
-            </button>
 
             {/* Notifications Bell with Badge */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition relative"
+                className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition relative flex items-center justify-center"
                 title="Notifications"
               >
-                <Bell className="w-4 h-4" />
-                {unreadNotifsCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
-                    {unreadNotifsCount}
-                  </span>
-                )}
+                <Bell className="w-5 h-5 text-slate-700" />
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
+                  24
+                </span>
               </button>
 
               {/* Notifications Dropdown Drawer */}
