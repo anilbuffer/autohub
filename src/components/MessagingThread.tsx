@@ -26,6 +26,7 @@ export const MessagingThread: React.FC<MessagingThreadProps> = ({
   onMessageSent,
 }) => {
   const [content, setContent] = useState("");
+  const [attachedFile, setAttachedFile] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const activeRole = getActiveRole();
@@ -40,7 +41,11 @@ export const MessagingThread: React.FC<MessagingThreadProps> = ({
 
   const handleSend = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!content.trim()) return;
+    const finalContent = attachedFile
+      ? `${content.trim() ? content.trim() + " " : ""}[Attached File: ${attachedFile}]`
+      : content.trim();
+
+    if (!finalContent) return;
 
     const senderName =
       activeRole === "CUSTOMER"
@@ -55,7 +60,7 @@ export const MessagingThread: React.FC<MessagingThreadProps> = ({
 
     addMessageToRequest(
       request.id,
-      content,
+      finalContent,
       senderName,
       activeRole,
       isInternal && isStaff,
@@ -63,6 +68,7 @@ export const MessagingThread: React.FC<MessagingThreadProps> = ({
     );
 
     setContent("");
+    setAttachedFile("");
     setIsInternal(false);
     if (onMessageSent) onMessageSent();
   };
@@ -211,11 +217,41 @@ export const MessagingThread: React.FC<MessagingThreadProps> = ({
         )}
       </div>
 
+      {/* Attachment Pill Preview if added */}
+      {attachedFile && (
+        <div className="px-4 py-1.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-slate-700">
+            <Paperclip className="w-3.5 h-3.5 text-blue-600" />
+            <span className="font-medium text-[11px]">{attachedFile}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAttachedFile("")}
+            className="text-slate-400 hover:text-rose-600 text-xs font-bold"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Input Box */}
       <form
         onSubmit={handleSend}
         className="p-3 border-t border-slate-200 bg-white rounded-b-2xl flex items-center gap-2"
       >
+        <button
+          type="button"
+          onClick={() => {
+            const sampleFiles = ["control_arm_bushing_photo.jpg", "workshop_measurement_scan.pdf", "toyota_chassis_tag.png"];
+            const chosen = sampleFiles[Math.floor(Math.random() * sampleFiles.length)];
+            setAttachedFile(chosen);
+          }}
+          className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+          title="Attach photo or document (PDF, PNG, JPG)"
+        >
+          <Paperclip className="w-4 h-4" />
+        </button>
+
         <input
           type="text"
           value={content}
@@ -233,7 +269,7 @@ export const MessagingThread: React.FC<MessagingThreadProps> = ({
         />
         <button
           type="submit"
-          disabled={!content.trim()}
+          disabled={!content.trim() && !attachedFile}
           className="p-2.5 rounded-xl bg-autohub-navy hover:bg-autohub-navy-dark text-white disabled:opacity-40 transition shadow-sm"
         >
           <Send className="w-4 h-4" />

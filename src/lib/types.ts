@@ -262,6 +262,26 @@ export interface TradeCustomer {
     privacyPolicyConsentDate: string;
     nzPrivacyActAcknowledged: boolean;
   };
+  organizationUsers?: CustomerOrgUser[];
+}
+
+export interface CustomerOrgUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "Account Admin" | "Workshop Manager" | "Parts Specialist" | "Accounts Payable";
+  status: "ACTIVE" | "INVITED" | "SUSPENDED";
+  addedDate: string;
+}
+
+export interface CustomerNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  type: "QUOTE" | "PAYMENT" | "SHIPMENT" | "SECURITY" | "INFO";
+  read: boolean;
+  linkUrl?: string;
 }
 
 export interface SystemSettings {

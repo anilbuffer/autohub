@@ -9,15 +9,25 @@ import {
   FreightMethod,
   MessageItem,
   SupplierProfile,
+  CustomerNotification,
+  CustomerOrgUser,
 } from "./types";
-import { initialRequests, initialCustomers, initialSuppliers, initialSystemSettings } from "./mockData";
+import {
+  initialRequests,
+  initialCustomers,
+  initialSuppliers,
+  initialSystemSettings,
+  initialNotifications,
+} from "./mockData";
 
 const STORAGE_KEYS = {
-  REQUESTS: "autohub_procurly_requests_v1",
-  CUSTOMERS: "autohub_procurly_customers_v1",
-  SUPPLIERS: "autohub_procurly_suppliers_v1",
-  SETTINGS: "autohub_procurly_settings_v1",
-  ACTIVE_ROLE: "autohub_procurly_active_role_v1",
+  REQUESTS: "autohub_procurly_requests_v2",
+  CUSTOMERS: "autohub_procurly_customers_v2",
+  SUPPLIERS: "autohub_procurly_suppliers_v2",
+  SETTINGS: "autohub_procurly_settings_v2",
+  ACTIVE_ROLE: "autohub_procurly_active_role_v2",
+  NOTIFICATIONS: "autohub_procurly_notifications_v2",
+  LOCKOUT: "autohub_procurly_lockout_v2",
 };
 
 // Simple event bus for reactivity
@@ -603,13 +613,15 @@ export function updateShipmentStage(
   saveRequests([...requests]);
 }
 
-// Add message to request thread
-export function addMessageToRequest(
+// Add message to request with sender details and optional attachments
+export function addRequestMessage(
   requestId: string,
-  content: string,
+  senderId: string,
   senderName: string,
   senderRole: UserRole,
+  content: string,
   isInternalOnly: boolean = false,
+  attachments?: string[],
   isAiGenerated: boolean = false
 ) {
   const requests = getStoredRequests();
@@ -621,13 +633,14 @@ export function addMessageToRequest(
 
   const newMessage: MessageItem = {
     id: `MSG-${Date.now()}`,
-    senderId: senderRole === "CUSTOMER" ? current.customerId : "STAFF",
+    senderId: senderId || (senderRole === "CUSTOMER" ? current.customerId : "STAFF"),
     senderName,
     senderRole,
     timestamp: now,
     content,
     isInternalOnly,
     isAiGenerated,
+    attachments,
   };
 
   const updated: PartRequest = {
@@ -638,6 +651,28 @@ export function addMessageToRequest(
 
   requests[index] = updated;
   saveRequests([...requests]);
+}
+
+// Add message to request thread
+export function addMessageToRequest(
+  requestId: string,
+  content: string,
+  senderName: string,
+  senderRole: UserRole,
+  isInternalOnly: boolean = false,
+  isAiGenerated: boolean = false,
+  attachments?: string[]
+) {
+  addRequestMessage(
+    requestId,
+    senderRole === "CUSTOMER" ? "" : "STAFF",
+    senderName,
+    senderRole,
+    content,
+    isInternalOnly,
+    attachments,
+    isAiGenerated
+  );
 }
 
 // Approve pending trade customer account
@@ -659,3 +694,234 @@ export function approveCustomerAccount(customerId: string, creditLimitNzd: numbe
 
   saveCustomers([...customers]);
 }
+
+// Reject Customer Quote
+export function rejectCustomerQuote(requestId: string, reason: string, customerName: string) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+
+  const updated: PartRequest = {
+    ...current,
+    status: "CUSTOMER_REJECTED",
+    updatedDate: now,
+    quote: current.quote
+      ? {
+          ...current.quote,
+          status: "REJECTED",
+          customerFeedback: reason,
+        }
+      : undefined,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: current.customerId,
+        senderName: customerName,
+        senderRole: "CUSTOMER",
+        timestamp: now,
+        content: `Customer declined quotation. Reason: ${reason}`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName: customerName,
+        actorRole: "CUSTOMER",
+        action: "Quote Rejected",
+        previousState: current.status,
+        newState: "CUSTOMER_REJECTED",
+        details: reason,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Request Quote Revision / More Info
+export function requestQuoteRevision(requestId: string, notes: string, customerName: string) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+
+  const updated: PartRequest = {
+    ...current,
+    status: "SOURCING",
+    updatedDate: now,
+    quote: current.quote
+      ? {
+          ...current.quote,
+          status: "REVISION_REQUESTED",
+          customerFeedback: notes,
+        }
+      : undefined,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: current.customerId,
+        senderName: customerName,
+        senderRole: "CUSTOMER",
+        timestamp: now,
+        content: `Customer requested quotation revision: ${notes}`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName: customerName,
+        actorRole: "CUSTOMER",
+        action: "Revision Requested",
+        previousState: current.status,
+        newState: "SOURCING",
+        details: notes,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Notifications management
+export function getStoredNotifications(): CustomerNotification[] {
+  if (!isBrowser()) return initialNotifications;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(initialNotifications));
+      return initialNotifications;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialNotifications;
+  }
+}
+
+export function saveNotifications(notifs: CustomerNotification[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifs));
+  notifyListeners();
+}
+
+export function markNotificationAsRead(id: string) {
+  const notifs = getStoredNotifications();
+  const updated = notifs.map((n) => (n.id === id ? { ...n, read: true } : n));
+  saveNotifications(updated);
+}
+
+export function markAllNotificationsAsRead() {
+  const notifs = getStoredNotifications();
+  const updated = notifs.map((n) => ({ ...n, read: true }));
+  saveNotifications(updated);
+}
+
+// Account Lockout & Security
+interface LockoutData {
+  failedAttempts: number;
+  lockedUntil: number | null;
+}
+
+export function getLockoutStatus(): { isLocked: boolean; remainingMinutes: number; failedAttempts: number } {
+  if (!isBrowser()) return { isLocked: false, remainingMinutes: 0, failedAttempts: 0 };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.LOCKOUT);
+    if (!raw) return { isLocked: false, remainingMinutes: 0, failedAttempts: 0 };
+    const data: LockoutData = JSON.parse(raw);
+    if (data.lockedUntil && Date.now() < data.lockedUntil) {
+      const remainingMs = data.lockedUntil - Date.now();
+      return {
+        isLocked: true,
+        remainingMinutes: Math.ceil(remainingMs / 60000),
+        failedAttempts: data.failedAttempts,
+      };
+    }
+    return { isLocked: false, remainingMinutes: 0, failedAttempts: data.failedAttempts || 0 };
+  } catch {
+    return { isLocked: false, remainingMinutes: 0, failedAttempts: 0 };
+  }
+}
+
+export function recordFailedLogin(): { isLocked: boolean; remainingMinutes: number; failedAttempts: number } {
+  if (!isBrowser()) return { isLocked: false, remainingMinutes: 0, failedAttempts: 1 };
+  try {
+    const current = getLockoutStatus();
+    const attempts = current.failedAttempts + 1;
+    let lockedUntil: number | null = null;
+    if (attempts >= 5) {
+      lockedUntil = Date.now() + 15 * 60 * 1000; // 15 mins
+    }
+    const data: LockoutData = { failedAttempts: attempts, lockedUntil };
+    localStorage.setItem(STORAGE_KEYS.LOCKOUT, JSON.stringify(data));
+    return {
+      isLocked: attempts >= 5,
+      remainingMinutes: attempts >= 5 ? 15 : 0,
+      failedAttempts: attempts,
+    };
+  } catch {
+    return { isLocked: false, remainingMinutes: 0, failedAttempts: 1 };
+  }
+}
+
+export function clearFailedLogins() {
+  if (!isBrowser()) return;
+  localStorage.removeItem(STORAGE_KEYS.LOCKOUT);
+}
+
+// Organization User Management
+export function addOrganizationUser(user: Omit<CustomerOrgUser, "id" | "addedDate">) {
+  const customers = getStoredCustomers();
+  if (customers.length === 0) return;
+  const customer = customers[0];
+  const newUser: CustomerOrgUser = {
+    ...user,
+    id: `USR-${Date.now()}`,
+    addedDate: new Date().toISOString().split("T")[0],
+  };
+  const updatedCustomer: TradeCustomer = {
+    ...customer,
+    organizationUsers: [...(customer.organizationUsers || []), newUser],
+  };
+  customers[0] = updatedCustomer;
+  saveCustomers([...customers]);
+}
+
+export function removeOrganizationUser(userId: string) {
+  const customers = getStoredCustomers();
+  if (customers.length === 0) return;
+  const customer = customers[0];
+  const updatedUsers = (customer.organizationUsers || []).filter((u) => u.id !== userId);
+  const updatedCustomer: TradeCustomer = {
+    ...customer,
+    organizationUsers: updatedUsers,
+  };
+  customers[0] = updatedCustomer;
+  saveCustomers([...customers]);
+}
+
+export function updateCustomerProfile(profile: Partial<TradeCustomer>) {
+  const customers = getStoredCustomers();
+  if (customers.length === 0) return;
+  const customer = customers[0];
+  const updatedCustomer: TradeCustomer = {
+    ...customer,
+    ...profile,
+  };
+  customers[0] = updatedCustomer;
+  saveCustomers([...customers]);
+}
+

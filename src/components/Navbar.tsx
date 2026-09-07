@@ -22,6 +22,11 @@ export const Navbar: React.FC = () => {
 
   const isPortal = pathname.startsWith("/portal");
   const isAdmin = pathname.startsWith("/admin");
+  const isLogin = pathname === "/login";
+
+  if (isPortal || isLogin) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
@@ -58,9 +63,9 @@ export const Navbar: React.FC = () => {
                 <span className="text-2xl sm:text-3xl font-black tracking-tight text-autohub-navy">
                   AUTO<span className="text-autohub-red">HUB</span>
                 </span>
-                <span className="ml-2 text-xs font-black uppercase tracking-widest bg-gradient-to-r from-autohub-red to-autohub-navy text-white px-2 py-0.5 rounded shadow-sm">
+                {/* <span className="ml-2 text-xs font-black uppercase tracking-widest bg-gradient-to-r from-autohub-red to-autohub-navy text-white px-2 py-0.5 rounded shadow-sm">
                   PROURLY
-                </span>
+                </span> */}
               </div>
             </Link>
 
@@ -68,13 +73,12 @@ export const Navbar: React.FC = () => {
             <nav className="hidden lg:flex items-center gap-1 text-sm font-semibold text-slate-600">
               <Link
                 href="/"
-                className={`px-3 py-2 rounded-lg transition ${
-                  pathname === "/"
-                    ? "text-autohub-navy bg-slate-100 font-bold"
-                    : "hover:text-autohub-navy hover:bg-slate-50"
-                }`}
+                className={`px-3 py-2 rounded-lg transition ${pathname === "/"
+                  ? "text-autohub-navy bg-slate-100 font-bold"
+                  : "hover:text-autohub-navy hover:bg-slate-50"
+                  }`}
               >
-                Overview
+                Home
               </Link>
               <Link
                 href="/#how-it-works"
@@ -86,35 +90,32 @@ export const Navbar: React.FC = () => {
                 href="/#landed-calculator"
                 className="px-3 py-2 rounded-lg transition hover:text-autohub-navy hover:bg-slate-50"
               >
-                Landed Calculator
+                Calculator
               </Link>
               <Link
                 href="/about"
-                className={`px-3 py-2 rounded-lg transition ${
-                  pathname === "/about"
-                    ? "text-autohub-navy bg-slate-100 font-bold"
-                    : "hover:text-autohub-navy hover:bg-slate-50"
-                }`}
+                className={`px-3 py-2 rounded-lg transition ${pathname === "/about"
+                  ? "text-autohub-navy bg-slate-100 font-bold"
+                  : "hover:text-autohub-navy hover:bg-slate-50"
+                  }`}
               >
-                About Procurly
+                About
               </Link>
               <Link
                 href="/terms"
-                className={`px-3 py-2 rounded-lg transition ${
-                  pathname === "/terms"
-                    ? "text-autohub-navy bg-slate-100 font-bold"
-                    : "hover:text-autohub-navy hover:bg-slate-50"
-                }`}
+                className={`px-3 py-2 rounded-lg transition ${pathname === "/terms"
+                  ? "text-autohub-navy bg-slate-100 font-bold"
+                  : "hover:text-autohub-navy hover:bg-slate-50"
+                  }`}
               >
-                Compliance & NZTA
+                Compliance
               </Link>
               <Link
                 href="/contact"
-                className={`px-3 py-2 rounded-lg transition ${
-                  pathname === "/contact"
-                    ? "text-autohub-navy bg-slate-100 font-bold"
-                    : "hover:text-autohub-navy hover:bg-slate-50"
-                }`}
+                className={`px-3 py-2 rounded-lg transition ${pathname === "/contact"
+                  ? "text-autohub-navy bg-slate-100 font-bold"
+                  : "hover:text-autohub-navy hover:bg-slate-50"
+                  }`}
               >
                 Contact
               </Link>

@@ -25,12 +25,15 @@ import {
 import {
   getRequestById,
   acceptCustomerQuote,
+  rejectCustomerQuote,
+  requestQuoteRevision,
   confirmPayment,
   updateRequestStatus,
   subscribeToStore,
   getActiveRole,
+  getStoredCustomers,
 } from "@/lib/store";
-import { PartRequest, FreightMethod } from "@/lib/types";
+import { PartRequest, FreightMethod, TradeCustomer } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { LifecycleTracker } from "@/components/LifecycleTracker";
 import { InvoiceViewer } from "@/components/InvoiceViewer";
@@ -43,20 +46,36 @@ export default function RequestDetailPage() {
   const requestId = params?.id as string;
 
   const [request, setRequest] = useState<PartRequest | undefined>(undefined);
+  const [customer, setCustomer] = useState<TradeCustomer | null>(null);
   const [activeTab, setActiveTab] = useState<"quote" | "payment" | "logistics" | "messages" | "audit">("quote");
   const [selectedFreight, setSelectedFreight] = useState<FreightMethod>("AIR_EXPRESS");
   const [termsConfirmed, setTermsConfirmed] = useState(true);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showAiQuoteModal, setShowAiQuoteModal] = useState(false);
+
+  // Modals for Quote Acceptance & Rejection
+  const [showPreAcceptModal, setShowPreAcceptModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [revisionNotes, setRevisionNotes] = useState("");
+  const [selectedAddressId, setSelectedAddressId] = useState("ADDR-1");
+  const [copiedRef, setCopiedRef] = useState(false);
 
   useEffect(() => {
     if (requestId) {
       setRequest(getRequestById(requestId));
     }
+    const custs = getStoredCustomers();
+    setCustomer(custs[0] || null);
+
     const unsub = subscribeToStore(() => {
       if (requestId) {
         setRequest(getRequestById(requestId));
       }
+      const updatedCusts = getStoredCustomers();
+      setCustomer(updatedCusts[0] || null);
     });
     return unsub;
   }, [requestId]);
@@ -476,34 +495,31 @@ export default function RequestDetailPage() {
                 {/* Quote Action Buttons */}
                 {isAwaitingApproval && (
                   <div className="space-y-4 pt-2">
-                    <label className="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={termsConfirmed}
-                        onChange={(e) => setTermsConfirmed(e.target.checked)}
-                        className="w-4 h-4 text-autohub-navy rounded mt-0.5"
-                      />
-                      <span>
-                        I confirm vehicle compatibility, delivery address, and agree to the Autohub procurement conditions.
-                      </span>
-                    </label>
-
                     <div className="flex flex-wrap items-center gap-3">
                       <button
                         id="customer-accept-quote-button"
-                        onClick={handleAcceptQuote}
-                        disabled={!termsConfirmed}
-                        className="flex-1 py-3 bg-autohub-red hover:bg-autohub-red-dark text-white rounded-xl text-xs font-bold transition shadow flex items-center justify-center gap-2"
+                        type="button"
+                        onClick={() => setShowPreAcceptModal(true)}
+                        className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center gap-2"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Accept Quote & Proceed to Payment</span>
+                        <span>Accept Quote (Verify & Sign)</span>
                       </button>
 
                       <button
-                        onClick={() => updateRequestStatus(request.id, "CUSTOMER_REJECTED", request.customerName, "CUSTOMER", "Customer rejected quotation")}
-                        className="px-4 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold"
+                        type="button"
+                        onClick={() => setShowRevisionModal(true)}
+                        className="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition"
                       >
-                        Decline
+                        Request Revision / More Info
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowRejectModal(true)}
+                        className="px-4 py-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition"
+                      >
+                        Decline Quote
                       </button>
                     </div>
                   </div>
@@ -512,24 +528,55 @@ export default function RequestDetailPage() {
                 {quote.status === "ACCEPTED" && (
                   <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-xs text-emerald-900 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                       <div>
                         <span className="font-bold block">Quotation Accepted</span>
                         <span className="text-[11px] text-emerald-700">
-                          Selected {quote.selectedFreightMethod === "AIR_EXPRESS" ? "Air Express Priority" : "Sea Freight"}.
+                          Selected {quote.selectedFreightMethod === "AIR_EXPRESS" ? "Air Express Priority (3-5 days)" : "Sea Freight Consolidated (14-18 days)"}.
                         </span>
                       </div>
                     </div>
                     {isAwaitingPayment && (
                       <button
                         onClick={() => setActiveTab("payment")}
-                        className="px-3 py-1.5 bg-emerald-700 text-white font-bold rounded-lg text-xs"
+                        className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition shadow-sm"
                       >
-                        Go to Payment Gate
+                        Go to Payment Gate →
                       </button>
                     )}
                   </div>
                 )}
+
+                {quote.status === "REJECTED" && (
+                  <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl text-xs text-rose-900">
+                    <div className="flex items-center gap-2 font-bold mb-1">
+                      <AlertTriangle className="w-4 h-4 text-rose-600" />
+                      <span>Quotation Declined by Customer</span>
+                    </div>
+                    {quote.customerFeedback && (
+                      <p className="text-[11px] text-rose-700">Reason: {quote.customerFeedback}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Quotation History */}
+                <div className="pt-4 border-t border-slate-100 space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Quotation Revision History
+                  </h4>
+                  <div className="bg-slate-50 rounded-xl p-3 text-xs space-y-2 text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-slate-900">Rev 1.0 (Current)</span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {new Date(quote.createdAt).toLocaleString("en-NZ", { dateStyle: "medium", timeStyle: "short" })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span>Landed NZD: <strong>${quote.totalNzd.toFixed(2)}</strong></span>
+                      <span className="text-emerald-700 font-semibold font-mono">Status: {quote.status}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -593,11 +640,28 @@ export default function RequestDetailPage() {
                       Option A: Direct Bank Transfer (NZ)
                     </h4>
                   </div>
-                  <div className="space-y-1 text-xs text-slate-600">
+                  <div className="space-y-1.5 text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200">
                     <p><strong>Bank:</strong> ANZ Bank New Zealand Ltd</p>
-                    <p><strong>Account:</strong> Autohub NZ Ltd — Procurly</p>
-                    <p className="font-mono text-slate-900"><strong>Number:</strong> 06-0801-0498210-00</p>
-                    <p className="text-autohub-red font-bold font-mono"><strong>Ref:</strong> {request.referenceNumber}</p>
+                    <p><strong>Account:</strong> Autohub NZ Ltd — Procurly Trust</p>
+                    <p className="font-mono text-slate-900"><strong>Account No:</strong> 06-0801-0498210-00</p>
+                    <p className="font-mono text-slate-500"><strong>SWIFT / BIC:</strong> ANZBNZ22</p>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Mandatory Reference:</span>
+                        <strong className="text-rose-600 font-mono text-xs">{request.referenceNumber}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(request.referenceNumber);
+                          setCopiedRef(true);
+                          setTimeout(() => setCopiedRef(false), 2000);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition"
+                      >
+                        {copiedRef ? "Copied!" : "Copy Ref"}
+                      </button>
+                    </div>
                   </div>
                   <button
                     id="confirm-bank-transfer-button"
@@ -618,7 +682,7 @@ export default function RequestDetailPage() {
                       </h4>
                     </div>
                     <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">
-                      Instant order release. Billed on your monthly trade statement (20th of the following month).
+                      Instant procurement release. Billed on your monthly trade statement (20th of the following month).
                     </p>
                     <div className="mt-3 text-xs bg-white p-2.5 rounded-xl border border-blue-200 text-slate-700">
                       <span>Available Credit: </span>
@@ -629,30 +693,43 @@ export default function RequestDetailPage() {
                   <button
                     id="pay-via-credit-line-button"
                     onClick={handlePayTradeCredit}
-                    className="w-full py-2.5 bg-autohub-red hover:bg-autohub-red-dark text-white rounded-xl text-xs font-bold transition shadow flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5"
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    <span>Authorize with Trade Credit</span>
+                    <span>Place Order Against Approved Credit</span>
                   </button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-3">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-4">
               <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-              <h4 className="text-sm font-bold text-emerald-950">
-                Payment Gate Unlocked & Confirmed
-              </h4>
-              <p className="text-xs text-emerald-800 max-w-md mx-auto">
-                Payment verified. Purchase order has been cleared for international supplier procurement and shipping allocation.
-              </p>
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-emerald-950">
+                  Payment Gate Unlocked & Confirmed
+                </h4>
+                <p className="text-xs text-emerald-800 max-w-md mx-auto">
+                  Payment verified. Purchase order has been cleared for international supplier procurement and shipping allocation.
+                </p>
+              </div>
+
               {request.invoice && (
-                <button
-                  onClick={() => setShowInvoiceModal(true)}
-                  className="px-4 py-2 bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-emerald-800 transition"
-                >
-                  Download Receipt & Tax Invoice
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => setShowInvoiceModal(true)}
+                    className="px-4 py-2.5 bg-autohub-navy hover:bg-autohub-navy-dark text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Download Tax Invoice (NZ GST)</span>
+                  </button>
+                  <button
+                    onClick={() => setShowReceiptModal(true)}
+                    className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Download Official Receipt</span>
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -811,6 +888,355 @@ export default function RequestDetailPage() {
         isOpen={showAiQuoteModal}
         onClose={() => setShowAiQuoteModal(false)}
       />
+
+      {/* Pre-Acceptance Verification Modal */}
+      {showPreAcceptModal && quote && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-100 space-y-5 my-8 animate-scaleIn">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm">
+                  ✓
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">Pre-Acceptance Verification</h3>
+                  <p className="text-[11px] text-slate-500">Please verify details before releasing overseas procurement</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPreAcceptModal(false)}
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-400 flex items-center justify-center text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* 1. Vehicle Verification */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-900 block text-[11px] uppercase tracking-wider">
+                  1. Vehicle Compatibility Match
+                </span>
+                <div className="text-slate-700">
+                  <strong>{request.vehicle.year} {request.vehicle.make} {request.vehicle.model}</strong>
+                </div>
+                <div className="font-mono text-[11px] text-slate-500">
+                  VIN / Chassis: {request.vehicle.vin} {request.vehicle.registrationPlate ? `• Rego: ${request.vehicle.registrationPlate}` : ""}
+                </div>
+              </div>
+
+              {/* 2. Part Specification */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-900 block text-[11px] uppercase tracking-wider">
+                  2. Sourced Part & Condition
+                </span>
+                <div className="text-slate-700 font-semibold">{request.part.partName}</div>
+                <div className="text-[11px] text-slate-500">
+                  OEM Part#: {request.part.oemPartNumber || "Factory Specified"} • Condition: {request.part.conditionRequirement} • Quantity: {request.part.quantity}
+                </div>
+              </div>
+
+              {/* 3. Delivery Address Selection */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-900 block text-[11px] uppercase tracking-wider">
+                  3. Select Delivery Workshop Depot
+                </label>
+                <select
+                  value={selectedAddressId}
+                  onChange={(e) => setSelectedAddressId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                >
+                  {customer?.deliveryAddresses?.map((addr) => (
+                    <option key={addr.id} value={addr.id}>
+                      {addr.label} — {addr.street}, {addr.suburb}, {addr.city} {addr.isDefault ? "(Default)" : ""}
+                    </option>
+                  )) || (
+                    <option value="ADDR-1">Main Service Center — 42 Great South Road, Penrose, Auckland</option>
+                  )}
+                </select>
+              </div>
+
+              {/* 4. Freight Choice Selection */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-900 block text-[11px] uppercase tracking-wider">
+                  4. Confirm Freight Transit Method
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setSelectedFreight("AIR_EXPRESS")}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition ${
+                      selectedFreight === "AIR_EXPRESS"
+                        ? "border-rose-600 bg-rose-50/40 text-rose-950 font-bold"
+                        : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <div className="text-xs font-bold">Air Express Priority</div>
+                    <div className="text-[10px] text-slate-500 font-normal">3 - 5 business days</div>
+                  </div>
+                  <div
+                    onClick={() => setSelectedFreight("SEA_FREIGHT")}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition ${
+                      selectedFreight === "SEA_FREIGHT"
+                        ? "border-rose-600 bg-rose-50/40 text-rose-950 font-bold"
+                        : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <div className="text-xs font-bold">Ocean Consolidated</div>
+                    <div className="text-[10px] text-slate-500 font-normal">14 - 18 business days</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Terms Acceptance */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="flex items-start gap-2.5 cursor-pointer text-slate-700 select-none">
+                  <input
+                    type="checkbox"
+                    checked={termsConfirmed}
+                    onChange={(e) => setTermsConfirmed(e.target.checked)}
+                    className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 mt-0.5"
+                  />
+                  <span className="text-[11px] leading-relaxed">
+                    I confirm vehicle compatibility, accuracy of part numbers, and accept the Autohub procurement terms and landed cost agreement.
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowPreAcceptModal(false)}
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!termsConfirmed}
+                onClick={() => {
+                  handleAcceptQuote();
+                  setShowPreAcceptModal(false);
+                }}
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Confirm & Accept Quotation</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Quote Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100 space-y-4 animate-scaleIn">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-sm">Decline Quotation</h3>
+              <button
+                type="button"
+                onClick={() => setShowRejectModal(false)}
+                className="w-6 h-6 rounded-lg hover:bg-slate-100 text-slate-400 flex items-center justify-center text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Please share a reason for declining this quote so our sourcing specialists can assist with alternatives.
+            </p>
+
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Price exceeds budget",
+                  "Customer cancelled repair",
+                  "Found locally",
+                  "Lead time too long",
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setRejectReason(chip)}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] text-slate-700 transition"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Provide additional details or alternative target price..."
+                className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowRejectModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  rejectCustomerQuote(request.id, rejectReason || "Declined by customer", request.customerName);
+                  setShowRejectModal(false);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow"
+              >
+                Confirm Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request Revision Modal */}
+      {showRevisionModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100 space-y-4 animate-scaleIn">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-sm">Request Quote Revision / More Info</h3>
+              <button
+                type="button"
+                onClick={() => setShowRevisionModal(false)}
+                className="w-6 h-6 rounded-lg hover:bg-slate-100 text-slate-400 flex items-center justify-center text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Need sea freight, a refurbished part option, or warranty clarification? Send a note directly to our sourcing desk.
+            </p>
+
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Can you quote ocean sea freight?",
+                  "Can we get reconditioned OEM?",
+                  "Check ETA to Christchurch depot",
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setRevisionNotes(chip)}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] text-slate-700 transition"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                rows={3}
+                value={revisionNotes}
+                onChange={(e) => setRevisionNotes(e.target.value)}
+                placeholder="What revisions would you like our sourcing specialists to prepare?"
+                className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowRevisionModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  requestQuoteRevision(request.id, revisionNotes || "Revision requested", request.customerName);
+                  setShowRevisionModal(false);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-autohub-navy hover:bg-autohub-navy-dark text-white text-xs font-bold transition shadow"
+              >
+                Submit Revision Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official Payment Receipt Modal */}
+      {showReceiptModal && request.invoice && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-100 space-y-6 animate-scaleIn">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Official Payment Receipt</h3>
+                  <p className="text-[11px] font-mono text-slate-400">
+                    {request.invoice.receiptNumber || `REC-2026-${request.referenceNumber.replace("AH-P-", "")}`}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReceiptModal(false)}
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-400 flex items-center justify-center text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Issued To:</span>
+                <span className="font-bold text-slate-900">{request.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Customer NZBN:</span>
+                <span className="font-mono text-slate-700">{request.customerNzbn}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Procurement Ref:</span>
+                <span className="font-mono font-bold text-slate-900">{request.referenceNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Payment Method:</span>
+                <span className="font-bold text-slate-900">{request.invoice.paymentMethod === "TRADE_CREDIT" ? "Approved Trade Credit Line" : "Direct Bank Transfer (ANZ NZ)"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Date Settled:</span>
+                <span className="font-mono text-slate-700">{new Date(request.invoice.paidDate || Date.now()).toLocaleDateString("en-NZ")}</span>
+              </div>
+              <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-bold">
+                <span className="text-slate-900">Total Amount Settled (NZD):</span>
+                <span className="text-emerald-700 font-mono font-black">${request.invoice.totalNzd.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex-1 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5"
+              >
+                <span>Print / Save PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReceiptModal(false)}
+                className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition"
+              >
+                Close Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
