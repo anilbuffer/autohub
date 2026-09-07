@@ -1,0 +1,12 @@
+User-Agent: *
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /register
+Allow: /login
+Disallow: /admin/
+Disallow: /portal/
+
+Sitemap: https://procurly.autohub.co.nz/sitemap.xml
