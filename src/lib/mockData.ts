@@ -2282,7 +2282,7 @@ export const initialNotifications: CustomerNotification[] = [
     title: "Sourcing Allocation Active",
     message: "BMW X5 High-Pressure Fuel Pump (AH-P-000141) assigned to European OEM Desk.",
     timestamp: "Today • 09:20 AM",
-    type: "SYSTEM",
+    type: "INFO",
     read: false,
     linkUrl: "/portal/requests/REQ-000141",
   },

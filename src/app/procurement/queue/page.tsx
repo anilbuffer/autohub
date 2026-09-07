@@ -394,7 +394,7 @@ export default function SourcingQueuePage() {
                         <tr key={req.id} className="hover:bg-slate-50/70 transition group">
                           <td className="p-4 pl-6">
                             <div className="font-mono font-bold text-slate-900">{req.referenceNumber}</div>
-                            <div className="text-[11px] text-slate-400">{new Date(req.createdAt).toLocaleDateString()}</div>
+                            <div className="text-[11px] text-slate-400">{new Date(req.submittedDate).toLocaleDateString()}</div>
                           </td>
                           <td className="p-4">
                             <div className="font-bold text-slate-900">{req.part.partName}</div>
@@ -406,7 +406,7 @@ export default function SourcingQueuePage() {
                           </td>
                           <td className="p-4">
                             <div className="font-medium text-slate-700">{req.customerName}</div>
-                            <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md mt-0.5 ${req.part.genuinePreference === "URGENT" ? "bg-red-50 text-red-700 font-bold" : "bg-slate-100 text-slate-600"}`}>
+                            <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md mt-0.5 ${req.part.genuinePreference === "GENUINE_ONLY" ? "bg-red-50 text-red-700 font-bold" : "bg-slate-100 text-slate-600"}`}>
                               {req.part.genuinePreference}
                             </span>
                           </td>
@@ -502,7 +502,7 @@ export default function SourcingQueuePage() {
                       {activeReq.vehicle.year} {activeReq.vehicle.make} {activeReq.vehicle.model}
                     </span>
                     <span className="text-[11px] text-slate-500">
-                      {activeReq.vehicle.chassisSeries || "Series N/A"} • {activeReq.vehicle.transmission || "Auto"}
+                      {activeReq.vehicle.variant || "Series N/A"} • {activeReq.vehicle.transmission || "Auto"}
                     </span>
                   </div>
 
@@ -526,7 +526,7 @@ export default function SourcingQueuePage() {
                       {activeReq.part.category}
                     </span>
                     <span className="text-[11px] text-slate-500">
-                      Placement: {activeReq.part.sideOrPosition || "Universal/Center"}
+                      Placement: {activeReq.part.descriptionNotes || "Universal/Center"}
                     </span>
                   </div>
 

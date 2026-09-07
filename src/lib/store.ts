@@ -18,6 +18,8 @@ import {
   OfficialReceipt,
   CreditNote,
   TaxInvoice,
+  ShipmentDetails,
+  LogisticsMilestone,
 } from "./types";
 import {
   initialRequests,

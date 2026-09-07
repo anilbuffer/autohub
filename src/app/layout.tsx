@@ -5,6 +5,8 @@ import { Footer } from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
 import { SchemaMarkup } from "@/components/SchemaMarkup";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://procurly.autohub.co.nz"),
   title: {
