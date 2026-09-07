@@ -225,79 +225,23 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Column: Interactive Live Shipment Telemetry Graphic Card */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-slate-700/80 shadow-2xl p-6 backdrop-blur-xl">
-                {/* Glow & status badge */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-700/60">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
-                    <div>
-                      <span className="text-[11px] uppercase tracking-wider font-bold text-emerald-300 block">
-                        Live Shipment in Transit
-                      </span>
-                      <span className="text-xs font-mono text-slate-300">#AH-NZ-88219</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] bg-white/10 text-white font-mono px-2.5 py-1 rounded-full border border-white/15">
-                    AIR EXPRESS
-                  </span>
-                </div>
+            {/* Right Column: Autohub Global Air Logistics Showcase Card */}
+            <div className="lg:col-span-5 flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-[500px] group">
+                {/* Ambient dynamic backlight glow */}
+                <div className="absolute inset-4 bg-gradient-to-r from-red-600/30 via-emerald-500/20 to-sky-500/25 rounded-3xl blur-2xl opacity-60 group-hover:opacity-90 transition duration-700 pointer-events-none" />
 
-                {/* Cargo Detail */}
-                <div className="py-4 space-y-3">
-                  <div>
-                    <span className="text-[11px] text-slate-400 block uppercase font-semibold">
-                      Consigned Automotive Assembly
-                    </span>
-                    <h4 className="text-base font-bold text-white">
-                      BMW M4 Competition (G82) Carbon-Ceramic Front Calipers
-                    </h4>
-                  </div>
-
-                  {/* Route progress */}
-                  <div className="p-3.5 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-2.5">
-                    <div className="flex items-center justify-between text-[11px] text-slate-300">
-                      <span className="font-mono text-white font-bold">NRT (Tokyo)</span>
-                      <Plane className="w-3.5 h-3.5 text-sky-400" />
-                      <span className="font-mono text-white font-bold">AKL (Auckland)</span>
-                      <Truck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-300 font-semibold">Penrose Hoist Bay</span>
-                    </div>
-
-                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                      <div className="bg-gradient-to-r from-autohub-red via-amber-400 to-emerald-400 h-2 rounded-full w-[88%]" />
-                    </div>
-
-                    <div className="flex justify-between items-center text-[10px] text-slate-400">
-                      <span>Status: Cleared MPI Biosecurity</span>
-                      <span className="text-emerald-300 font-bold">ETA: Tomorrow 9:30 AM</span>
-                    </div>
-                  </div>
-
-                  {/* Cost Savings Highlight Badge */}
-                  <div className="p-3 bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-500/30 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block">
-                        Verified Trade Savings
-                      </span>
-                      <span className="text-sm font-black text-white">$2,840 NZD Saved</span>
-                    </div>
-                    <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-xl font-bold">
-                      -36% vs NZ Distributor
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <Link
-                    href="/portal/requests/AH-P-000125"
-                    className="text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition"
-                  >
-                    <span>Inspect Live Tracking Telemetry</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-autohub-red" />
-                  </Link>
-                </div>
+                <Link
+                  href="/portal/requests/AH-P-000125"
+                  className="block relative transition-transform duration-300 hover:scale-[1.02]"
+                >
+                  <img
+                    src="/hero-air-logistics.png"
+                    alt="Autohub Global Air Logistics - In Transit Live Tracking"
+                    className="w-full h-auto block select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+                    loading="eager"
+                  />
+                </Link>
               </div>
             </div>
           </div>

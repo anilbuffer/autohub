@@ -6,6 +6,7 @@ interface ProcurlyLogoProps {
   theme?: "light" | "dark";
   showSubtitle?: boolean;
   subtitle?: string;
+  variant?: "titlecase" | "styled";
 }
 
 export const ProcurlyLogo: React.FC<ProcurlyLogoProps> = ({
@@ -14,6 +15,7 @@ export const ProcurlyLogo: React.FC<ProcurlyLogoProps> = ({
   theme = "light",
   showSubtitle = true,
   subtitle = "BY AUTOHUB",
+  variant = "titlecase",
 }) => {
   const iconSizeClasses = {
     sm: "w-7 h-7 rounded-xl",
@@ -37,15 +39,15 @@ export const ProcurlyLogo: React.FC<ProcurlyLogoProps> = ({
   }[size];
 
   const subtitleSizeClasses = {
-    sm: "text-[7.5px]",
-    md: "text-[9px]",
-    lg: "text-[10px]",
+    sm: "text-[7px]",
+    md: "text-[8px] sm:text-[8.5px]",
+    lg: "text-[9.5px]",
     xl: "text-xs",
   }[size];
 
   const procurColor = theme === "dark" ? "text-white" : "text-slate-900";
   const lyColor = "text-autohub-red";
-  const subColor = theme === "dark" ? "text-slate-400" : "text-slate-500";
+  const subColor = theme === "dark" ? "text-slate-400" : "text-[#1e3a8a]/75";
 
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
@@ -71,12 +73,18 @@ export const ProcurlyLogo: React.FC<ProcurlyLogoProps> = ({
       {/* Brand Typography */}
       <div className="flex flex-col">
         <div className={`${titleSizeClasses} font-black tracking-tight leading-none`}>
-          <span className={procurColor}>PROCUR</span>
-          <span className={lyColor}>ly</span>
+          {variant === "styled" ? (
+            <>
+              <span className={procurColor}>PROCUR</span>
+              <span className={lyColor}>ly</span>
+            </>
+          ) : (
+            <span className={procurColor}>Procurly</span>
+          )}
         </div>
         {showSubtitle && (
           <div
-            className={`${subtitleSizeClasses} font-extrabold uppercase tracking-[0.2em] ${subColor} mt-1 leading-none`}
+            className={`${subtitleSizeClasses} font-extrabold uppercase tracking-[0.16em] ${subColor} mt-1 leading-none`}
           >
             {subtitle}
           </div>
