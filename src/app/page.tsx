@@ -254,6 +254,50 @@ export default function HomePage() {
     }
   };
 
+  // Hero Showcase Card Data & Interactive Part State
+  const [heroActivePart, setHeroActivePart] = useState(0);
+  const heroPartsData = [
+    {
+      id: "headlamp",
+      chipLabel: "OEM LED Matrix Headlamp (L/H)",
+      code: "OEM #81110-0KP80 • TOKYO OEM DEPOT",
+      name: "OEM LED Matrix Headlamp (L/H)",
+      price: "$1,840 NZD",
+      flight: "Air Cargo NZ90 (NRT ✈ AKL)",
+      eta: "ETA Workshop: Tomorrow 11:30 AM",
+      progress: 78,
+      origin: "Tokyo Export Depot",
+      milestone: "NZ Customs & MPI Pre-Cleared",
+      destination: "Penrose Delivery",
+    },
+    {
+      id: "turbo",
+      chipLabel: "Twin-Scroll Turbocharger Assembly",
+      code: "OEM #14411-AA710 • HAMBURG OEM HUB",
+      name: "Twin-Scroll Turbocharger Assembly",
+      price: "$2,450 NZD",
+      flight: "Air Cargo LH840 (FRA ✈ AKL)",
+      eta: "ETA Workshop: Friday 9:00 AM",
+      progress: 60,
+      origin: "Frankfurt Air Hub",
+      milestone: "Biosecurity Manifest Logged",
+      destination: "Middleton Delivery",
+    },
+    {
+      id: "caliper",
+      chipLabel: "Monobloc 4-Piston Caliper Kit",
+      code: "OEM #34116-799469 • NAGOYA LOGISTICS DEPOT",
+      name: "Monobloc 4-Piston Caliper Kit",
+      price: "$1,620 NZD",
+      flight: "Air Cargo JL093 (NGO ✈ AKL)",
+      eta: "ETA Workshop: Tomorrow 2:00 PM",
+      progress: 85,
+      origin: "Nagoya Air Cargo",
+      milestone: "Auckland Courier Dispatched",
+      destination: "Albany Trade Bay",
+    },
+  ];
+
   return (
     <div className="flex flex-col w-full">
       {/* 1. HERO SECTION */}
@@ -339,23 +383,149 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Column: Autohub Global Air Logistics Showcase Card */}
+            {/* Right Column: Autohub Global Air Logistics Showcase Card with Individual Imagery & Live Interactive Elements */}
             <div className="lg:col-span-5 flex justify-center lg:justify-end">
               <div className="relative w-full max-w-[500px] group">
                 {/* Ambient dynamic backlight glow */}
                 <div className="absolute inset-4 bg-gradient-to-r from-red-600/30 via-emerald-500/20 to-sky-500/25 rounded-3xl blur-2xl opacity-60 group-hover:opacity-90 transition duration-700 pointer-events-none" />
 
-                <Link
-                  href="/portal/requests/AH-P-000125"
-                  className="block relative transition-transform duration-300 hover:scale-[1.02]"
-                >
-                  <img
-                    src="/hero-air-logistics.png"
-                    alt="Autohub Global Air Logistics - In Transit Live Tracking"
-                    className="w-full h-auto block select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
-                    loading="eager"
-                  />
-                </Link>
+                {/* Main Showcase Card Container */}
+                <div className="relative rounded-3xl overflow-hidden bg-[#0c1222] border border-slate-700/60 shadow-2xl transition duration-300">
+                  {/* 1. Top Header Bar */}
+                  <div className="p-4 sm:p-4.5 flex items-center justify-between gap-3 border-b border-slate-800/80 bg-[#0d1424]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 flex-shrink-0 shadow-inner">
+                        <Plane className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs sm:text-sm font-black text-white tracking-wider uppercase">
+                            AUTOHUB GLOBAL AIR LOGISTICS
+                          </h3>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
+                          </span>
+                        </div>
+                        <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5">
+                          Tokyo Depot (NRT) ✈ Auckland Hub (AKL) • Flight NZ90
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[11px] sm:text-xs font-bold shadow-xs flex-shrink-0">
+                      <span className="text-[10px] sm:text-xs tracking-tighter">((•))</span>
+                      <span>In Transit</span>
+                    </div>
+                  </div>
+
+                  {/* 2. Middle Imagery Area (Clean Photography + Interactive Live Overlays) */}
+                  <div className="relative aspect-[16/10] sm:aspect-[16/9.5] overflow-hidden bg-slate-950">
+                    <img
+                      src="/hero-air-cargo-clean.jpg"
+                      alt="Autohub Global Air Logistics Cargo Apron"
+                      className="w-full h-full object-cover block transition duration-700 ease-out group-hover:scale-[1.02]"
+                      loading="eager"
+                    />
+
+                    {/* Gradient protective overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c1222] via-transparent to-[#0c1222]/30 pointer-events-none" />
+
+                    {/* Top-Left Individual Badge */}
+                    <div className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 px-2.5 py-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/10 shadow-lg flex items-center gap-2 select-none">
+                      <div className="w-4 h-4 rounded-full border border-emerald-400 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] sm:text-xs font-bold text-white block leading-none">
+                          Quality Assurance Passed
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] text-slate-300 font-medium block mt-0.5">
+                          Lot #0324 • Certified OEM
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Individual Chip Selectors */}
+                    <div className="absolute bottom-3 left-3 right-3 sm:bottom-3.5 sm:left-3.5 sm:right-3.5 flex flex-wrap gap-1.5 sm:gap-2">
+                      {heroPartsData.map((partItem, idx) => {
+                        const isSelected = heroActivePart === idx;
+                        return (
+                          <button
+                            key={partItem.id}
+                            type="button"
+                            onClick={() => setHeroActivePart(idx)}
+                            className={`px-3 py-1 sm:py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none ${
+                              isSelected
+                                ? "bg-red-600 text-white shadow-lg shadow-red-600/50 scale-[1.02]"
+                                : "bg-slate-950/80 backdrop-blur-md border border-white/15 text-slate-200 hover:text-white hover:border-slate-400"
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isSelected ? "bg-white" : "bg-emerald-400"
+                              }`}
+                            />
+                            <span>{partItem.chipLabel}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 3. Bottom Dynamic Details & Telemetry Area */}
+                  <div className="p-4 sm:p-5 space-y-3.5 bg-[#0c1222]">
+                    {/* Part Code & Price */}
+                    <div className="flex items-end justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-wider text-red-400 block mb-1">
+                          {heroPartsData[heroActivePart].code}
+                        </span>
+                        <h4 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
+                          {heroPartsData[heroActivePart].name}
+                        </h4>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span className="text-xl sm:text-2xl font-black text-white font-mono block leading-none">
+                          {heroPartsData[heroActivePart].price}
+                        </span>
+                        <span className="inline-block mt-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
+                          100% Guaranteed
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Live Transit Telemetry Track */}
+                    <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] sm:text-xs">
+                        <div className="flex items-center gap-1.5 text-sky-400 font-semibold">
+                          <Plane className="w-3.5 h-3.5 text-sky-400" />
+                          <span>{heroPartsData[heroActivePart].flight}</span>
+                        </div>
+                        <span className="font-bold text-emerald-400">
+                          {heroPartsData[heroActivePart].eta}
+                        </span>
+                      </div>
+
+                      {/* Progress Bar Track */}
+                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-emerald-300 rounded-full transition-all duration-500"
+                          style={{ width: `${heroPartsData[heroActivePart].progress}%` }}
+                        />
+                      </div>
+
+                      {/* Milestones */}
+                      <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-400 font-medium">
+                        <span>{heroPartsData[heroActivePart].origin}</span>
+                        <span className="text-emerald-400 font-bold">
+                          {heroPartsData[heroActivePart].milestone}
+                        </span>
+                        <span>{heroPartsData[heroActivePart].destination}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -815,7 +985,7 @@ export default function HomePage() {
 
       {/* 6. INTERACTIVE LANDED COST ESTIMATOR / PRICING TRANSPARENCY */}
       <section id="landed-calculator" className="py-20 bg-slate-50/70 border-b border-slate-200/80 relative">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-10">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
@@ -867,11 +1037,10 @@ export default function HomePage() {
                         key={vehicle.id}
                         type="button"
                         onClick={() => setSelectedVehicleId(vehicle.id)}
-                        className={`text-xs font-bold px-4 py-2 rounded-xl transition ${
-                          isSelected
+                        className={`text-xs font-bold px-4 py-2 rounded-xl transition ${isSelected
                             ? "bg-[#1e3a8a] text-white shadow-sm"
                             : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
-                        }`}
+                          }`}
                       >
                         {vehicle.label}
                       </button>
@@ -935,22 +1104,20 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={() => setPartCondition("NEW")}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition text-center ${
-                        partCondition === "NEW"
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition text-center ${partCondition === "NEW"
                           ? "bg-[#1e3a8a] text-white shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
-                      }`}
+                        }`}
                     >
                       New OEM
                     </button>
                     <button
                       type="button"
                       onClick={() => setPartCondition("USED")}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition text-center ${
-                        partCondition === "USED"
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition text-center ${partCondition === "USED"
                           ? "bg-[#1e3a8a] text-white shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
-                      }`}
+                        }`}
                     >
                       Grade A Used
                     </button>
@@ -976,11 +1143,10 @@ export default function HomePage() {
                   {/* Card 1: Priority Air Freight */}
                   <div
                     onClick={() => setSelectedFreightMethod("AIR")}
-                    className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border-2 relative ${
-                      selectedFreightMethod === "AIR"
+                    className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border-2 relative ${selectedFreightMethod === "AIR"
                         ? "border-red-500 bg-white shadow-sm"
                         : "border-slate-200 bg-white hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-slate-900">
@@ -1039,11 +1205,10 @@ export default function HomePage() {
                   {/* Card 2: Consolidated Sea Freight */}
                   <div
                     onClick={() => setSelectedFreightMethod("SEA")}
-                    className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border-2 relative ${
-                      selectedFreightMethod === "SEA"
+                    className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border-2 relative ${selectedFreightMethod === "SEA"
                         ? "border-[#1e3a8a] bg-white shadow-sm"
                         : "border-slate-200 bg-white hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-slate-900">
@@ -1262,15 +1427,43 @@ export default function HomePage() {
       <section id="heritage" className="py-20 bg-white border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Left Column: Workshop Bay Photo Card */}
+            {/* Left Column: Workshop Bay Photo Card with Individual Imagery & Live Text Elements */}
             <div className="lg:col-span-6 flex justify-center">
-              <div className="relative w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-200/80 group">
+              <div className="relative w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-200/80 group bg-slate-900 aspect-square sm:aspect-[467/492]">
+                {/* 1. Imagery: Clean Workshop Bay Background Photograph */}
                 <img
-                  src="/heritage-workshop.png"
-                  alt="Active NZ Trade Network Bay - NZ Workshop Quality Standard"
-                  className="w-full h-auto object-cover block rounded-3xl transition duration-500 group-hover:scale-[1.01]"
+                  src="/heritage-workshop-clean.jpg"
+                  alt="Active NZ Trade Network Automotive Workshop Bay"
+                  className="w-full h-full object-cover block transition duration-700 ease-out group-hover:scale-105"
                   loading="lazy"
                 />
+
+                {/* Subtle protective gradient overlay for readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/20 pointer-events-none" />
+
+                {/* 2. Top-Left Individual Badge */}
+                <div className="absolute top-4 left-4 sm:top-5 sm:left-5 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#141f33]/85 backdrop-blur-md border border-white/10 shadow-lg select-none">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+                  </span>
+                  <span className="text-xs font-bold text-white tracking-tight">
+                    Active NZ Trade Network Bay
+                  </span>
+                </div>
+
+                {/* 3. Bottom Individual Quality Standard Card */}
+                <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 p-4 sm:p-5 rounded-2xl bg-[#0f172a]/90 backdrop-blur-md border border-slate-700/60 shadow-2xl transition duration-300 group-hover:border-slate-600">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#ff5252] flex-shrink-0" />
+                    <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#ff5252]">
+                      NZ WORKSHOP QUALITY STANDARD
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-[13px] font-semibold text-slate-100 leading-snug sm:leading-relaxed">
+                    100% Fitment Certified prior to international air dispatch. Direct supply to Auckland, Christchurch &amp; regional repair hoists.
+                  </p>
+                </div>
               </div>
             </div>
 
