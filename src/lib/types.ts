@@ -182,9 +182,115 @@ export interface AuditLogEntry {
   details?: string;
 }
 
+export type PaymentStatus =
+  | "PENDING"
+  | "PARTIALLY_PAID"
+  | "PAID"
+  | "OVERDUE"
+  | "DISPUTED"
+  | "REFUNDED";
+
+export type TransactionType =
+  | "INVOICE_ISSUED"
+  | "PAYMENT_RECEIVED"
+  | "TRADE_CREDIT_UTILIZED"
+  | "REFUND_PROCESSED"
+  | "CREDIT_ADJUSTMENT"
+  | "CREDIT_NOTE_ISSUED";
+
+export interface FinancialTransaction {
+  id: string;
+  timestamp: string;
+  type: TransactionType;
+  referenceNumber: string;
+  invoiceNumber?: string;
+  receiptNumber?: string;
+  creditNoteNumber?: string;
+  customerName: string;
+  customerNzbn: string;
+  amountNzd: number;
+  paymentMethod: "BANK_TRANSFER" | "TRADE_CREDIT" | "CREDIT_ADJUSTMENT";
+  direction: "INFLOW" | "OUTFLOW" | "NEUTRAL";
+  officerName: string;
+  status: "SETTLED" | "PENDING_SETTLEMENT" | "REVERSED";
+  notes?: string;
+}
+
+export type ReconciliationStatus = "MATCHED" | "VARIANCE" | "UNALLOCATED" | "PENDING";
+
+export interface ReconciliationRecord {
+  id: string;
+  bankDate: string;
+  bankReference: string;
+  payerName: string;
+  bankAccount: string;
+  receivedAmountNzd: number;
+  invoiceNumber?: string;
+  requestReference?: string;
+  expectedAmountNzd?: number;
+  varianceNzd: number;
+  status: ReconciliationStatus;
+  notes?: string;
+  reconciledDate?: string;
+  reconciledBy?: string;
+}
+
+export interface RefundRecord {
+  id: string;
+  creditNoteNumber: string;
+  requestId: string;
+  requestReference: string;
+  customerName: string;
+  customerNzbn: string;
+  invoiceNumber: string;
+  amountNzd: number;
+  refundType: "FULL" | "PARTIAL" | "FREIGHT_CREDIT" | "GOODWILL";
+  reason: string;
+  refundMethod: "BANK_DIRECT_CREDIT" | "TRADE_CREDIT_BALANCE";
+  bankReference?: string;
+  officerName: string;
+  timestamp: string;
+  status: "COMPLETED" | "PENDING_APPROVAL";
+  notes?: string;
+}
+
+export interface OfficialReceipt {
+  receiptNumber: string;
+  invoiceNumber: string;
+  requestReference: string;
+  customerName: string;
+  customerNzbn: string;
+  customerGstNumber: string;
+  billingAddress: string;
+  partName: string;
+  amountPaidNzd: number;
+  balanceRemainingNzd: number;
+  paymentMethod: "BANK_TRANSFER" | "TRADE_CREDIT";
+  bankReference?: string;
+  datePaid: string;
+  officerName: string;
+}
+
+export interface CreditNote {
+  creditNoteNumber: string;
+  invoiceNumber: string;
+  requestReference: string;
+  dateIssued: string;
+  customerName: string;
+  customerNzbn: string;
+  customerGstNumber: string;
+  billingAddress: string;
+  originalInvoiceTotalNzd: number;
+  creditAmountNzd: number;
+  refundMethod: "BANK_DIRECT_CREDIT" | "TRADE_CREDIT_BALANCE";
+  reason: string;
+  officerName: string;
+}
+
 export interface TaxInvoice {
   invoiceNumber: string; // e.g. "INV-2026-00842"
   receiptNumber?: string; // e.g. "REC-2026-00842"
+  creditNoteNumber?: string; // e.g. "CN-2026-00104"
   dateIssued: string;
   dueDate: string;
   paidDate?: string;
@@ -198,7 +304,9 @@ export interface TaxInvoice {
   gstRate: number; // 0.15
   gstAmountNzd: number;
   totalNzd: number;
-  status: "PENDING" | "PAID" | "OVERDUE" | "REFUNDED";
+  partiallyPaidAmountNzd?: number;
+  status: PaymentStatus;
+  statusNotes?: string;
 }
 
 export interface PartRequest {

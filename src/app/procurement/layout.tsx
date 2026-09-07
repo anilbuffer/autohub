@@ -391,12 +391,21 @@ export default function ProcurementPortalLayout({
               </Link>
 
               <Link
-                href="/admin"
+                href="/finance"
                 onClick={() => setUserMenuOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
               >
-                <Compass className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Operations Admin Desk</span>
+                <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Finance &amp; Treasury Desk</span>
+              </Link>
+
+              <Link
+                href="/operations"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
+              >
+                <Truck className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Operations Logistics Desk</span>
               </Link>
 
               <Link

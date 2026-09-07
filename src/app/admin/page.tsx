@@ -136,10 +136,10 @@ export default function AdminOverviewPage() {
             </span>
           </div>
           <Link
-            href="/admin/finance"
+            href="/finance"
             className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded-xl text-xs font-bold text-center transition flex items-center justify-center gap-1"
           >
-            <span>Open Payments Queue</span>
+            <span>Open Finance Portal</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -163,7 +163,7 @@ export default function AdminOverviewPage() {
             </span>
           </div>
           <Link
-            href="/admin/logistics"
+            href="/operations"
             className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl text-xs font-bold text-center transition flex items-center justify-center gap-1"
           >
             <span>Open Logistics Desk</span>

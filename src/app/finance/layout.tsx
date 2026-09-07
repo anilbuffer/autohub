@@ -5,44 +5,41 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Truck,
-  Package,
-  Ship,
-  Plane,
-  Calculator,
-  Sliders,
-  AlertTriangle,
-  HelpCircle,
+  CreditCard,
+  FileText,
+  Landmark,
+  RotateCcw,
+  BookOpen,
+  TrendingUp,
+  Settings,
   Search,
   Plus,
   ChevronDown,
   LogOut,
-  Settings,
   Bell,
   X,
-  Sparkles,
-  ArrowRight,
-  LucideIcon,
-  RefreshCw,
-  Home,
-  Building2,
   Compass,
+  Building2,
+  Home,
   CheckCircle2,
   Clock,
   ShieldCheck,
-  Anchor,
+  Truck,
+  Scale,
   DollarSign,
+  Receipt,
+  LucideIcon,
+  AlertTriangle,
 } from "lucide-react";
 import {
   getStoredRequests,
+  getStoredCustomers,
+  getStoredTransactions,
+  getStoredReconciliations,
   getStoredNotifications,
   subscribeToStore,
 } from "@/lib/store";
-import {
-  initialRequests,
-  initialNotifications,
-} from "@/lib/mockData";
-import { PartRequest, CustomerNotification } from "@/lib/types";
+import { PartRequest, TradeCustomer, CustomerNotification, FinancialTransaction, ReconciliationRecord } from "@/lib/types";
 
 interface NavItem {
   label: string;
@@ -58,7 +55,7 @@ interface NavGroup {
   items: NavItem[];
 }
 
-export default function OperationsPortalLayout({
+export default function FinancePortalLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -66,28 +63,36 @@ export default function OperationsPortalLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  const [requests, setRequests] = useState<PartRequest[]>(initialRequests);
-  const [notifications, setNotifications] = useState<CustomerNotification[]>(initialNotifications);
+  const [requests, setRequests] = useState<PartRequest[]>([]);
+  const [customers, setCustomers] = useState<TradeCustomer[]>([]);
+  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [reconciliations, setReconciliations] = useState<ReconciliationRecord[]>([]);
+  const [notifications, setNotifications] = useState<CustomerNotification[]>([]);
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [actionDropdownOpen, setActionDropdownOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [helpModalOpen, setHelpModalOpen] = useState(false);
+
+  const refreshAll = () => {
+    setRequests(getStoredRequests());
+    setCustomers(getStoredCustomers());
+    setTransactions(getStoredTransactions());
+    setReconciliations(getStoredReconciliations());
+    setNotifications(getStoredNotifications());
+  };
 
   useEffect(() => {
-    setRequests(getStoredRequests());
-    setNotifications(getStoredNotifications());
-
+    refreshAll();
     const unsub = subscribeToStore(() => {
-      setRequests(getStoredRequests());
-      setNotifications(getStoredNotifications());
+      refreshAll();
     });
     return unsub;
   }, []);
 
-  // Keyboard shortcut for ⌘K / Ctrl+K
+  // Keyboard shortcut ⌘K / Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -99,78 +104,92 @@ export default function OperationsPortalLayout({
         setUserMenuOpen(false);
         setNotifDropdownOpen(false);
         setActionDropdownOpen(false);
-        setHelpModalOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Compute active badge counts for Operations
-  const activeShipmentsCount = requests.filter(
+  // Compute live badges
+  const awaitingPaymentCount = requests.filter(
     (r) =>
-      r.status === "ORDERED_FROM_SUPPLIER" ||
-      r.status === "SUPPLIER_DISPATCHED" ||
-      r.status === "RECEIVED_AT_SHIPPING_FACILITY" ||
-      r.status === "IN_TRANSIT" ||
-      r.status === "ARRIVED_IN_NZ" ||
-      r.status === "CUSTOMS_CLEARANCE" ||
-      r.status === "OUT_FOR_DELIVERY"
+      r.status === "AWAITING_PAYMENT" ||
+      (r.invoice && (r.invoice.status === "PENDING" || r.invoice.status === "PARTIALLY_PAID"))
   ).length;
 
-  const inTransitCount = requests.filter((r) => r.status === "IN_TRANSIT").length;
+  const unreconciledCount = reconciliations.filter(
+    (rec) => rec.status === "VARIANCE" || rec.status === "UNALLOCATED" || rec.status === "PENDING"
+  ).length;
 
-  const exceptionsCount = requests.filter(
-    (r) => r.status === "LOGISTICS_EXCEPTION"
+  const pendingCreditReviews = customers.filter(
+    (c) => c.billingDetails.status === "PENDING_APPROVAL" || c.billingDetails.status === "SUSPENDED"
   ).length;
 
   const unreadNotifsCount = notifications.filter((n) => !n.read).length || 2;
 
   // Derive dynamic page title
   const getPageTitle = () => {
-    if (pathname === "/operations") return "Operations Command Center";
-    if (pathname === "/operations/shipments") return "Active Consignments & Shipment Records";
-    if (pathname === "/operations/freight") return "Freight Management & Override Desk";
-    if (pathname === "/operations/lifecycle") return "Logistics Lifecycle & Milestones";
-    if (pathname === "/operations/exceptions") return "Logistics Exceptions & Resolution";
-    if (pathname === "/operations/settings") return "Logistics Hub & Carrier Settings";
-    return "Operations Portal";
+    if (pathname === "/finance") return "Finance Command Center & Treasury Desk";
+    if (pathname === "/finance/payments") return "Payments Queue & Bank Remittance Recording";
+    if (pathname === "/finance/reconciliation") return "Payment Reconciliation & Bank Match Desk";
+    if (pathname === "/finance/invoices") return "GST Tax Invoices & Payment Receipts";
+    if (pathname === "/finance/credit") return "Trade Credit Management & Validation Gate";
+    if (pathname === "/finance/refunds") return "Refund Processing & Credit Notes";
+    if (pathname === "/finance/transactions") return "Financial Transactions Register & General Ledger";
+    if (pathname === "/finance/reports") return "Financial Analytics, Revenue & Aging Reports";
+    if (pathname === "/finance/settings") return "Billing Gateway, Bank & GST Rules";
+    return "Finance Portal";
   };
 
   const navGroups: NavGroup[] = [
     {
-      group: "LOGISTICS COMMAND",
+      group: "BILLING & TREASURY",
       items: [
-        { label: "Dashboard", href: "/operations", icon: LayoutDashboard },
+        { label: "Dashboard", href: "/finance", icon: LayoutDashboard },
         {
-          label: "Consignments",
-          href: "/operations/shipments",
-          icon: Package,
-          badge: activeShipmentsCount,
+          label: "Payments Queue",
+          href: "/finance/payments",
+          icon: CreditCard,
+          badge: awaitingPaymentCount,
           badgeColor: "bg-[#ed2025]",
         },
         {
-          label: "Freight & Rates",
-          href: "/operations/freight",
-          icon: Calculator,
+          label: "Reconciliation",
+          href: "/finance/reconciliation",
+          icon: Scale,
+          badge: unreconciledCount > 0 ? unreconciledCount : undefined,
+          badgeColor: "bg-blue-600",
         },
         {
-          label: "Lifecycle Stepper",
-          href: "/operations/lifecycle",
-          icon: Truck,
-          badge: inTransitCount > 0 ? inTransitCount : undefined,
-          badgeColor: "bg-[#ed2025]",
+          label: "Invoices & Receipts",
+          href: "/finance/invoices",
+          icon: FileText,
         },
         {
-          label: "Logistics Exceptions",
-          href: "/operations/exceptions",
-          icon: AlertTriangle,
-          badge: exceptionsCount > 0 ? exceptionsCount : undefined,
-          badgeColor: "bg-rose-600",
+          label: "Trade Credit Accounts",
+          href: "/finance/credit",
+          icon: Landmark,
+          badge: pendingCreditReviews > 0 ? pendingCreditReviews : undefined,
+          badgeColor: "bg-purple-600",
         },
         {
-          label: "Carrier & Port Config",
-          href: "/operations/settings",
+          label: "Refunds & Credit Notes",
+          href: "/finance/refunds",
+          icon: RotateCcw,
+        },
+        {
+          label: "Transactions Ledger",
+          href: "/finance/transactions",
+          icon: BookOpen,
+        },
+        {
+          label: "Financial Reports",
+          href: "/finance/reports",
+          icon: TrendingUp,
+        },
+        {
+          label: "Finance Config",
+          href: "/finance/settings",
           icon: Settings,
         },
       ],
@@ -182,15 +201,13 @@ export default function OperationsPortalLayout({
     ? requests.filter(
         (r) =>
           r.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.part.partName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase()) ||
           r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (r.shipment?.trackingNumber &&
-            r.shipment.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (r.shipment?.carrier &&
-            r.shipment.carrier.toLowerCase().includes(searchQuery.toLowerCase()))
+          (r.invoice?.invoiceNumber &&
+            r.invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (r.invoice?.receiptNumber &&
+            r.invoice.receiptNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          r.part.partName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          r.vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
 
@@ -205,18 +222,18 @@ export default function OperationsPortalLayout({
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Top Brand Header */}
           <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-800/60">
-            <Link href="/operations" className="flex items-center gap-2.5 overflow-hidden">
-              {/* Autohub Red Cargo Logo */}
+            <Link href="/finance" className="flex items-center gap-2.5 overflow-hidden">
+              {/* Autohub Red / Emerald Finance Logo */}
               <div className="w-8 h-8 rounded-xl bg-[#ed2025] shadow-md shadow-red-600/30 flex items-center justify-center text-white flex-shrink-0">
-                <Truck className="w-4 h-4 text-white stroke-[2.2]" />
+                <DollarSign className="w-4 h-4 text-white stroke-[2.4]" />
               </div>
               {!sidebarCollapsed && (
                 <div>
                   <div className="text-base font-black tracking-tight text-white leading-none">
-                    OPERAT<span className="text-[#ed2025]">ions</span>
+                    FINAN<span className="text-[#ed2025]">ce</span>
                   </div>
                   <div className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
-                    LOGISTICS &amp; FREIGHT
+                    BILLING &amp; CREDIT PORTAL
                   </div>
                 </div>
               )}
@@ -233,21 +250,21 @@ export default function OperationsPortalLayout({
             </button>
           </div>
 
-          {/* Primary Action Button: + CREATE SHIPMENT */}
+          {/* Primary Action Button: RECORD PAYMENT */}
           <div className="p-3 sm:p-4">
             <Link
-              id="sidebar-create-shipment-button"
-              href="/operations/shipments?action=create"
+              id="sidebar-record-payment-button"
+              href="/finance/payments?action=record"
               className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${
                 sidebarCollapsed ? "px-2" : "px-4"
               }`}
             >
               <Plus className="w-4 h-4 flex-shrink-0 stroke-[2.5]" />
-              {!sidebarCollapsed && <span>CREATE SHIPMENT</span>}
+              {!sidebarCollapsed && <span>RECORD PAYMENT</span>}
             </Link>
           </div>
 
-          {/* Navigation Items by Group */}
+          {/* Navigation Items */}
           <div className="px-3 py-2 space-y-6 flex-1">
             {navGroups.map((grp) => (
               <div key={grp.group} className="space-y-1">
@@ -260,24 +277,6 @@ export default function OperationsPortalLayout({
                   {grp.items.map((nav) => {
                     const Icon = nav.icon;
                     const isActive = pathname === nav.href;
-
-                    if (nav.isModal) {
-                      return (
-                        <button
-                          key={nav.label}
-                          type="button"
-                          onClick={() => setHelpModalOpen(true)}
-                          className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                            sidebarCollapsed ? "justify-center" : ""
-                          } text-slate-400 hover:text-white hover:bg-slate-800/60`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Icon className="w-4 h-4 text-slate-400" />
-                            {!sidebarCollapsed && <span>{nav.label}</span>}
-                          </div>
-                        </button>
-                      );
-                    }
 
                     return (
                       <Link
@@ -318,24 +317,23 @@ export default function OperationsPortalLayout({
           </div>
         </div>
 
-        {/* Bottom User Profile Section (Liam Patel - Logistics Coordinator) */}
+        {/* Bottom User Profile Section (Clara Jenkins - Senior Finance Officer) */}
         <div className="p-3 sm:p-4 border-t border-slate-800/80 relative">
           <div
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             className="flex items-center justify-between p-2 rounded-2xl hover:bg-slate-800/60 cursor-pointer transition"
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
-              {/* Autohub Red Avatar LP */}
-              <div className="w-8 h-8 rounded-full bg-[#ed2025] text-white font-black text-xs flex items-center justify-center flex-shrink-0 shadow-sm">
-                LP
+              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0 shadow-sm">
+                CJ
               </div>
               {!sidebarCollapsed && (
                 <div className="overflow-hidden">
                   <div className="text-xs font-bold text-white truncate leading-tight">
-                    Liam Patel
+                    Clara Jenkins
                   </div>
-                  <div className="text-[10px] text-[#ed2025] font-semibold truncate">
-                    Logistics Coordinator
+                  <div className="text-[10px] text-emerald-400 font-semibold truncate">
+                    Senior Finance Officer
                   </div>
                 </div>
               )}
@@ -350,17 +348,19 @@ export default function OperationsPortalLayout({
           {userMenuOpen && (
             <div className="absolute bottom-16 left-3 right-3 bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-2xl space-y-1 text-xs text-slate-300 z-50 animate-scaleIn">
               <div className="px-3 py-2 border-b border-slate-800 text-[11px]">
-                <div className="font-bold text-white">Autohub International Logistics</div>
-                <div className="text-slate-400 font-mono text-[10px]">Hub: AKL Cargo &amp; Ports of Auckland</div>
+                <div className="font-bold text-white">Autohub New Zealand Limited</div>
+                <div className="text-slate-400 font-mono text-[10px]">
+                  ANZ Trust: 06-0801-0498210-00
+                </div>
               </div>
 
               <Link
-                href="/operations/settings"
+                href="/finance/settings"
                 onClick={() => setUserMenuOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
               >
                 <Settings className="w-3.5 h-3.5 text-[#ed2025]" />
-                <span>Logistics Settings</span>
+                <span>Finance &amp; GST Settings</span>
               </Link>
 
               <Link
@@ -373,12 +373,12 @@ export default function OperationsPortalLayout({
               </Link>
 
               <Link
-                href="/finance"
+                href="/operations"
                 onClick={() => setUserMenuOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
               >
-                <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Finance &amp; Treasury Desk</span>
+                <Truck className="w-3.5 h-3.5 text-blue-400" />
+                <span>Operations &amp; Freight Hub</span>
               </Link>
 
               <Link
@@ -386,7 +386,7 @@ export default function OperationsPortalLayout({
                 onClick={() => setUserMenuOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
               >
-                <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                <Building2 className="w-3.5 h-3.5 text-purple-400" />
                 <span>Trade Customer Portal</span>
               </Link>
 
@@ -417,7 +417,7 @@ export default function OperationsPortalLayout({
 
       {/* ================= RIGHT MAIN LAYOUT ================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Top Header Bar matching procurement aesthetic */}
+        {/* Top Header Bar */}
         <header className="sticky top-0 z-20 bg-white border-b border-slate-200/90 min-h-[64px] py-2.5 px-4 sm:px-8 flex items-center justify-between gap-4">
           {/* Left: Breadcrumb & Title */}
           <div className="flex flex-col justify-center min-w-0">
@@ -431,16 +431,16 @@ export default function OperationsPortalLayout({
               </Link>
               <span className="text-slate-400">/</span>
               <Link
-                href="/operations"
+                href="/finance"
                 className="hover:text-slate-900 transition text-slate-600 font-medium"
               >
-                Operations
+                Finance
               </Link>
-              {pathname !== "/operations" && (
+              {pathname !== "/finance" && (
                 <>
                   <span className="text-slate-400">/</span>
                   <span className="text-[#ed2025] font-semibold truncate max-w-[200px]">
-                    {pathname.replace("/operations/", "").toUpperCase()}
+                    {pathname.replace("/finance/", "").toUpperCase()}
                   </span>
                 </>
               )}
@@ -450,12 +450,12 @@ export default function OperationsPortalLayout({
             </h1>
           </div>
 
-          {/* Right Header Controls: Live status, Search, Bell, Quick Actions, Persona Switcher */}
+          {/* Right Header Controls */}
           <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-            {/* Live Corridor Status Indicator */}
+            {/* Live Gateway Status Indicator */}
             <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Air &amp; Sea Corridors Active</span>
+              <span>ANZ Remittance &amp; NZ IRD Gateway Active</span>
             </div>
 
             {/* Global Search Button (⌘K) */}
@@ -466,7 +466,7 @@ export default function OperationsPortalLayout({
               className="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-500 text-xs font-medium transition"
             >
               <Search className="w-3.5 h-3.5 text-slate-400" />
-              <span>Search waybill, VIN, part...</span>
+              <span>Search invoice, order ref, client...</span>
               <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white rounded border border-slate-300 text-slate-500 shadow-2xs">
                 ⌘K
               </kbd>
@@ -475,7 +475,7 @@ export default function OperationsPortalLayout({
             {/* Quick Actions Dropdown */}
             <div className="relative">
               <button
-                id="operations-quick-actions-button"
+                id="finance-quick-actions-button"
                 type="button"
                 onClick={() => setActionDropdownOpen(!actionDropdownOpen)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] text-white text-xs font-bold transition shadow-xs"
@@ -486,38 +486,46 @@ export default function OperationsPortalLayout({
               </button>
 
               {actionDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs space-y-1 animate-scaleIn">
+                <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs space-y-1 animate-scaleIn">
                   <Link
-                    href="/operations/shipments?action=create"
+                    href="/finance/payments?action=record"
                     onClick={() => setActionDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-50/50 text-slate-700 hover:text-[#ed2025] font-medium transition"
                   >
-                    <Package className="w-4 h-4 text-[#ed2025]" />
-                    <span>Create Shipment Record</span>
+                    <CreditCard className="w-4 h-4 text-[#ed2025]" />
+                    <span>Record Bank Remittance</span>
                   </Link>
                   <Link
-                    href="/operations/freight"
+                    href="/finance/credit"
                     onClick={() => setActionDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-50/50 text-slate-700 hover:text-[#ed2025] font-medium transition"
                   >
-                    <Sliders className="w-4 h-4 text-[#ed2025]" />
-                    <span>Override Freight Calculation</span>
+                    <Landmark className="w-4 h-4 text-purple-600" />
+                    <span>Validate Trade Credit Order</span>
                   </Link>
                   <Link
-                    href="/operations/lifecycle"
+                    href="/finance/reconciliation"
                     onClick={() => setActionDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-50/50 text-slate-700 hover:text-[#ed2025] font-medium transition"
                   >
-                    <Clock className="w-4 h-4 text-emerald-600" />
-                    <span>Update Lifecycle Milestone</span>
+                    <Scale className="w-4 h-4 text-blue-600" />
+                    <span>Reconcile Bank Statement Feed</span>
                   </Link>
                   <Link
-                    href="/operations/exceptions"
+                    href="/finance/invoices"
+                    onClick={() => setActionDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-50/50 text-slate-700 hover:text-[#ed2025] font-medium transition"
+                  >
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    <span>Generate GST Tax Invoice</span>
+                  </Link>
+                  <Link
+                    href="/finance/refunds"
                     onClick={() => setActionDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-50 text-slate-700 hover:text-rose-700 font-medium transition"
                   >
-                    <AlertTriangle className="w-4 h-4 text-rose-600" />
-                    <span>Raise Logistics Exception</span>
+                    <RotateCcw className="w-4 h-4 text-rose-600" />
+                    <span>Process Customer Refund</span>
                   </Link>
                 </div>
               )}
@@ -541,7 +549,7 @@ export default function OperationsPortalLayout({
                 <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 z-50 animate-scaleIn">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
                     <div className="font-bold text-slate-900 text-sm">
-                      Logistics Alerts &amp; Events
+                      Billing &amp; Treasury Alerts
                     </div>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-[#ed2025]">
                       Live Feed
@@ -571,11 +579,11 @@ export default function OperationsPortalLayout({
 
                   <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
                     <Link
-                      href="/operations/shipments"
+                      href="/finance/payments"
                       onClick={() => setNotifDropdownOpen(false)}
                       className="text-[#ed2025] hover:underline font-semibold"
                     >
-                      View All Consignments →
+                      View Payments Queue →
                     </Link>
                     <button
                       type="button"
@@ -588,7 +596,6 @@ export default function OperationsPortalLayout({
                 </div>
               )}
             </div>
-
           </div>
         </header>
 
@@ -609,7 +616,7 @@ export default function OperationsPortalLayout({
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search waybill, tracking number, VIN, vehicle or part name..."
+                placeholder="Search invoice number, order ref, client name, or VIN..."
                 className="w-full bg-transparent border-none outline-none text-slate-900 text-sm font-medium placeholder:text-slate-400"
               />
               <button
@@ -624,12 +631,13 @@ export default function OperationsPortalLayout({
             <div className="max-h-96 overflow-y-auto p-3">
               {searchQuery.trim() === "" ? (
                 <div className="p-6 text-center text-slate-400 text-xs">
-                  Type an order reference (e.g. <span className="font-mono text-[#ed2025]">AH-P-000125</span>),
-                  carrier, tracking number, or customer name to locate consignment records.
+                  Type an invoice number (e.g.{" "}
+                  <span className="font-mono text-[#ed2025]">INV-2026-00891</span>), order reference (e.g.{" "}
+                  <span className="font-mono text-[#ed2025]">AH-P-000123</span>), or client name to locate billing records.
                 </div>
               ) : searchResults.length === 0 ? (
                 <div className="p-6 text-center text-slate-500 text-xs">
-                  No logistics consignments found matching &ldquo;{searchQuery}&rdquo;.
+                  No billing records found matching &ldquo;{searchQuery}&rdquo;.
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -639,7 +647,7 @@ export default function OperationsPortalLayout({
                   {searchResults.map((r) => (
                     <Link
                       key={r.id}
-                      href={`/operations/lifecycle?id=${r.id}`}
+                      href={`/finance/payments?id=${r.id}`}
                       onClick={() => setSearchModalOpen(false)}
                       className="flex items-center justify-between p-3 rounded-2xl hover:bg-red-50/50 border border-slate-100 hover:border-red-200/80 transition group"
                     >
@@ -648,97 +656,34 @@ export default function OperationsPortalLayout({
                           <span className="font-mono font-bold text-xs text-slate-900 group-hover:text-[#ed2025]">
                             {r.referenceNumber}
                           </span>
+                          {r.invoice && (
+                            <span className="font-mono text-[11px] text-slate-500">
+                              • {r.invoice.invoiceNumber}
+                            </span>
+                          )}
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-                            {r.status.replace(/_/g, " ")}
+                            {r.invoice?.status || r.status.replace(/_/g, " ")}
                           </span>
                         </div>
                         <div className="text-xs font-semibold text-slate-800 truncate">
                           {r.part.partName}
                         </div>
                         <div className="text-[11px] text-slate-500 truncate">
-                          {r.vehicle.year} {r.vehicle.make} {r.vehicle.model} • {r.customerName}
+                          {r.customerName} • {r.vehicle.year} {r.vehicle.make} {r.vehicle.model}
                         </div>
                       </div>
+
                       <div className="text-right flex-shrink-0">
-                        {r.shipment ? (
-                          <div className="text-xs font-mono font-bold text-[#ed2025]">
-                            {r.shipment.carrier}
-                          </div>
-                        ) : (
-                          <div className="text-[10px] text-slate-400">No Waybill Yet</div>
-                        )}
-                        <span className="text-[10px] text-slate-400">Click to inspect →</span>
+                        <span className="font-mono font-black text-sm text-slate-900">
+                          ${(r.invoice?.totalNzd || r.quote?.totalNzd || 0).toFixed(2)}
+                        </span>
+                        <div className="text-[10px] text-slate-400 font-medium">NZD Total</div>
                       </div>
                     </Link>
                   ))}
                 </div>
               )}
             </div>
-
-            <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Press <kbd className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200">ESC</kbd> to close</span>
-              <span>Quick Logistics Lookup</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= HELP & SYSTEM INFO MODAL ================= */}
-      {helpModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-4 animate-scaleIn">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-red-50 text-[#ed2025] flex items-center justify-center font-bold">
-                  ?
-                </div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Operations &amp; Logistics Desk Guide
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setHelpModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                <div className="font-bold text-slate-900">Freight Management</div>
-                <p>
-                  Manage baseline transit times and NZD pricing for Air Express and Consolidated Sea Freight. Override calculations per request when bespoke charter or freight partner arrangements apply.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                <div className="font-bold text-slate-900">Consignments &amp; 6-Stage Lifecycle</div>
-                <p>
-                  Generate shipment records, specify international carrier and tracking waybill (displayed live to the trade customer), and advance through:
-                  <br />
-                  <span className="font-mono font-medium text-slate-700">
-                    Received At Facility → In Transit → Arrived In NZ → Customs Clearance → Out For Delivery → Delivered.
-                  </span>
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                <div className="font-bold text-slate-900">Delivery Confirmation &amp; Exceptions</div>
-                <p>
-                  Capture recipient signatures and POD docket numbers on arrival. Flag exceptions (Customs holds, flight delays, packaging damage) with reasons and resolution workflows.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setHelpModalOpen(false)}
-              className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition"
-            >
-              Close Guide
-            </button>
           </div>
         </div>
       )}

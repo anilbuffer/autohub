@@ -28,6 +28,7 @@ export const Footer: React.FC = () => {
     pathname?.startsWith("/portal") ||
     pathname?.startsWith("/procurement") ||
     pathname?.startsWith("/operations") ||
+    pathname?.startsWith("/finance") ||
     pathname?.startsWith("/admin");
 
   if (isPortal) {
@@ -223,10 +224,10 @@ export const Footer: React.FC = () => {
                 <Link href="/procurement/queue" className="hover:text-white transition">Sourcing Queue &amp; Quotes</Link>
               </li>
               <li>
-                <Link href="/admin/logistics" className="hover:text-white transition">Operations &amp; Freight Desk</Link>
+                <Link href="/operations" className="hover:text-white transition">Operations &amp; Freight Desk</Link>
               </li>
               <li>
-                <Link href="/admin/finance" className="hover:text-white transition">Finance &amp; Credit Gate</Link>
+                <Link href="/finance" className="hover:text-white transition">Finance &amp; Credit Gate</Link>
               </li>
               <li>
                 <Link href="/portal/shipments" className="hover:text-white transition">Consignment Tracker</Link>

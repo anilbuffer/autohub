@@ -11,6 +11,13 @@ import {
   SupplierProfile,
   CustomerNotification,
   CustomerOrgUser,
+  PaymentStatus,
+  FinancialTransaction,
+  ReconciliationRecord,
+  RefundRecord,
+  OfficialReceipt,
+  CreditNote,
+  TaxInvoice,
 } from "./types";
 import {
   initialRequests,
@@ -18,6 +25,10 @@ import {
   initialSuppliers,
   initialSystemSettings,
   initialNotifications,
+  initialTransactions,
+  initialReconciliations,
+  initialRefunds,
+  initialCreditNotes,
 } from "./mockData";
 
 const STORAGE_KEYS = {
@@ -28,6 +39,13 @@ const STORAGE_KEYS = {
   ACTIVE_ROLE: "autohub_procurly_active_role_v2",
   NOTIFICATIONS: "autohub_procurly_notifications_v2",
   LOCKOUT: "autohub_procurly_lockout_v2",
+  TRANSACTIONS: "autohub_procurly_transactions_v2",
+  RECONCILIATIONS: "autohub_procurly_reconciliations_v2",
+  REFUNDS: "autohub_procurly_refunds_v2",
+  CREDIT_NOTES: "autohub_procurly_credit_notes_v2",
+  INVOICE_SEQ: "autohub_procurly_inv_seq_v2",
+  RECEIPT_SEQ: "autohub_procurly_rec_seq_v2",
+  CREDIT_NOTE_SEQ: "autohub_procurly_cn_seq_v2",
 };
 
 // Simple event bus for reactivity
@@ -1569,4 +1587,787 @@ export function updateCustomerProfile(profile: Partial<TradeCustomer>) {
   customers[0] = updatedCustomer;
   saveCustomers([...customers]);
 }
+
+// ==========================================
+// FINANCE (BILLING & CREDIT) STORE METHODS
+// ==========================================
+
+// Sequential numbering helpers
+export function getNextInvoiceNumber(): string {
+  if (!isBrowser()) return `INV-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.INVOICE_SEQ);
+    let seq = raw ? parseInt(raw, 10) : 892;
+    seq += 1;
+    localStorage.setItem(STORAGE_KEYS.INVOICE_SEQ, seq.toString());
+    return `INV-2026-${seq.toString().padStart(5, "0")}`;
+  } catch {
+    return `INV-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  }
+}
+
+export function getNextReceiptNumber(): string {
+  if (!isBrowser()) return `REC-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.RECEIPT_SEQ);
+    let seq = raw ? parseInt(raw, 10) : 892;
+    seq += 1;
+    localStorage.setItem(STORAGE_KEYS.RECEIPT_SEQ, seq.toString());
+    return `REC-2026-${seq.toString().padStart(5, "0")}`;
+  } catch {
+    return `REC-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  }
+}
+
+export function getNextCreditNoteNumber(): string {
+  if (!isBrowser()) return `CN-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CREDIT_NOTE_SEQ);
+    let seq = raw ? parseInt(raw, 10) : 16;
+    seq += 1;
+    localStorage.setItem(STORAGE_KEYS.CREDIT_NOTE_SEQ, seq.toString());
+    return `CN-2026-${seq.toString().padStart(5, "0")}`;
+  } catch {
+    return `CN-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  }
+}
+
+// Transactions Register
+export function getStoredTransactions(): FinancialTransaction[] {
+  if (!isBrowser()) return initialTransactions;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(initialTransactions));
+      return initialTransactions;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialTransactions;
+  }
+}
+
+export function saveTransactions(transactions: FinancialTransaction[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+  notifyListeners();
+}
+
+export function addFinancialTransaction(
+  txn: Omit<FinancialTransaction, "id" | "timestamp">
+): FinancialTransaction {
+  const transactions = getStoredTransactions();
+  const newTxn: FinancialTransaction = {
+    ...txn,
+    id: `TXN-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+    timestamp: new Date().toISOString(),
+  };
+  saveTransactions([newTxn, ...transactions]);
+  return newTxn;
+}
+
+// Reconciliations
+export function getStoredReconciliations(): ReconciliationRecord[] {
+  if (!isBrowser()) return initialReconciliations;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.RECONCILIATIONS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.RECONCILIATIONS, JSON.stringify(initialReconciliations));
+      return initialReconciliations;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialReconciliations;
+  }
+}
+
+export function saveReconciliations(records: ReconciliationRecord[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.RECONCILIATIONS, JSON.stringify(records));
+  notifyListeners();
+}
+
+export function reconcilePaymentRecord(
+  recordId: string,
+  officerName: string,
+  notes?: string
+) {
+  const records = getStoredReconciliations();
+  const idx = records.findIndex((r) => r.id === recordId);
+  if (idx === -1) return;
+
+  const current = records[idx];
+  records[idx] = {
+    ...current,
+    status: "MATCHED",
+    varianceNzd: 0,
+    notes: notes || `Reconciled & cleared by ${officerName}`,
+    reconciledDate: new Date().toISOString(),
+    reconciledBy: officerName,
+  };
+  saveReconciliations([...records]);
+}
+
+export function autoMatchReconciliations(officerName: string): number {
+  const records = getStoredReconciliations();
+  const requests = getStoredRequests();
+  let matchedCount = 0;
+  const now = new Date().toISOString();
+
+  const updated = records.map((rec) => {
+    if (rec.status === "MATCHED") return rec;
+    // Check if expected matches request
+    if (rec.requestReference) {
+      const req = requests.find((r) => r.referenceNumber === rec.requestReference);
+      if (req && req.invoice && req.invoice.status === "PAID") {
+        matchedCount++;
+        return {
+          ...rec,
+          status: "MATCHED" as const,
+          varianceNzd: 0,
+          notes: "Auto-reconciled with confirmed paid invoice",
+          reconciledDate: now,
+          reconciledBy: officerName,
+        };
+      }
+    }
+    return rec;
+  });
+
+  saveReconciliations(updated);
+  return matchedCount;
+}
+
+// Refunds & Credit Notes
+export function getStoredRefunds(): RefundRecord[] {
+  if (!isBrowser()) return initialRefunds;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.REFUNDS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.REFUNDS, JSON.stringify(initialRefunds));
+      return initialRefunds;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialRefunds;
+  }
+}
+
+export function saveRefunds(refunds: RefundRecord[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.REFUNDS, JSON.stringify(refunds));
+  notifyListeners();
+}
+
+export function getStoredCreditNotes(): CreditNote[] {
+  if (!isBrowser()) return initialCreditNotes;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CREDIT_NOTES);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.CREDIT_NOTES, JSON.stringify(initialCreditNotes));
+      return initialCreditNotes;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialCreditNotes;
+  }
+}
+
+export function saveCreditNotes(notes: CreditNote[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.CREDIT_NOTES, JSON.stringify(notes));
+  notifyListeners();
+}
+
+// Record Manual Payment against request (Bank Transfer Confirmation)
+export function recordManualPayment(
+  requestId: string,
+  paymentMethod: "BANK_TRANSFER" | "TRADE_CREDIT",
+  amountReceived: number,
+  bankRef: string,
+  officerName: string,
+  notes?: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const totalDue = current.invoice?.totalNzd || current.quote?.totalNzd || amountReceived;
+  const now = new Date().toISOString();
+  const receiptNum = getNextReceiptNumber();
+  const isFullPayment = amountReceived >= totalDue;
+  const newStatus: PaymentStatus = isFullPayment ? "PAID" : "PARTIALLY_PAID";
+
+  const updatedInvoice: TaxInvoice = current.invoice
+    ? {
+        ...current.invoice,
+        receiptNumber: receiptNum,
+        paymentMethod,
+        paymentReference: bankRef || current.referenceNumber,
+        paidDate: now,
+        partiallyPaidAmountNzd: amountReceived,
+        status: newStatus,
+        statusNotes: notes,
+      }
+    : {
+        invoiceNumber: getNextInvoiceNumber(),
+        receiptNumber: receiptNum,
+        dateIssued: now,
+        dueDate: now,
+        paidDate: now,
+        customerName: current.customerName,
+        customerNzbn: current.customerNzbn,
+        customerGstNumber: "128-492-381",
+        billingAddress: `${current.deliveryAddress.street}, ${current.deliveryAddress.city}`,
+        paymentMethod,
+        paymentReference: bankRef || current.referenceNumber,
+        subtotalNzd: totalDue / 1.15,
+        gstRate: 0.15,
+        gstAmountNzd: totalDue - totalDue / 1.15,
+        totalNzd: totalDue,
+        partiallyPaidAmountNzd: amountReceived,
+        status: newStatus,
+        statusNotes: notes,
+      };
+
+  const updated: PartRequest = {
+    ...current,
+    status: isFullPayment ? "PAYMENT_CONFIRMED" : current.status,
+    invoice: updatedInvoice,
+    updatedDate: now,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "FINANCE-TEAM",
+        senderName: officerName,
+        senderRole: "FINANCE_OFFICER",
+        timestamp: now,
+        content: `Payment of $${amountReceived.toFixed(2)} NZD recorded via ${paymentMethod.replace(/_/g, " ")}. Bank ref: ${bankRef}. Official Receipt ${receiptNum} issued. ${isFullPayment ? "Procurement gate released to operations." : "Partial balance received."}`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName: officerName,
+        actorRole: "FINANCE_OFFICER",
+        action: "Manual Payment Confirmed",
+        previousState: current.status,
+        newState: isFullPayment ? "PAYMENT_CONFIRMED" : current.status,
+        details: `Recorded remittance of $${amountReceived.toFixed(2)} NZD (${newStatus}). Bank ref: ${bankRef}. ${notes || ""}`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+
+  // Record in general ledger
+  addFinancialTransaction({
+    type: "PAYMENT_RECEIVED",
+    referenceNumber: current.referenceNumber,
+    invoiceNumber: updatedInvoice.invoiceNumber,
+    receiptNumber: receiptNum,
+    customerName: current.customerName,
+    customerNzbn: current.customerNzbn,
+    amountNzd: amountReceived,
+    paymentMethod,
+    direction: "INFLOW",
+    officerName,
+    status: "SETTLED",
+    notes: `Manual bank transfer confirmed: ${bankRef}. ${notes || ""}`,
+  });
+
+  // Record in reconciliation
+  const reconciliations = getStoredReconciliations();
+  const newRecon: ReconciliationRecord = {
+    id: `REC-${Date.now()}`,
+    bankDate: now.split("T")[0],
+    bankReference: bankRef || `ANZ-TRF-${Math.floor(100000 + Math.random() * 900000)}`,
+    payerName: current.customerName,
+    bankAccount: "06-0801-0498210-00",
+    receivedAmountNzd: amountReceived,
+    invoiceNumber: updatedInvoice.invoiceNumber,
+    requestReference: current.referenceNumber,
+    expectedAmountNzd: totalDue,
+    varianceNzd: amountReceived - totalDue,
+    status: isFullPayment ? "MATCHED" : "VARIANCE",
+    notes: `Direct bank remittance reconciled with ${updatedInvoice.invoiceNumber}`,
+    reconciledDate: now,
+    reconciledBy: officerName,
+  };
+  saveReconciliations([newRecon, ...reconciliations]);
+}
+
+// Update payment status across all 6 statuses
+export function updatePaymentStatus(
+  requestId: string,
+  newStatus: PaymentStatus,
+  reason: string,
+  officerName: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+
+  let reqStatus: RequestStatus = current.status;
+  if (newStatus === "PAID") reqStatus = "PAYMENT_CONFIRMED";
+  if (newStatus === "PENDING") reqStatus = "AWAITING_PAYMENT";
+  if (newStatus === "DISPUTED") reqStatus = "PAYMENT_DISPUTED";
+
+  const updatedInvoice: TaxInvoice = current.invoice
+    ? {
+        ...current.invoice,
+        status: newStatus,
+        statusNotes: reason,
+        paidDate: newStatus === "PAID" ? now : current.invoice.paidDate,
+      }
+    : {
+        invoiceNumber: getNextInvoiceNumber(),
+        dateIssued: now,
+        dueDate: now,
+        customerName: current.customerName,
+        customerNzbn: current.customerNzbn,
+        customerGstNumber: "128-492-381",
+        billingAddress: `${current.deliveryAddress.street}, ${current.deliveryAddress.city}`,
+        paymentMethod: "BANK_TRANSFER",
+        paymentReference: current.referenceNumber,
+        subtotalNzd: 400.0,
+        gstRate: 0.15,
+        gstAmountNzd: 60.0,
+        totalNzd: 460.0,
+        status: newStatus,
+        statusNotes: reason,
+      };
+
+  const updated: PartRequest = {
+    ...current,
+    status: reqStatus,
+    invoice: updatedInvoice,
+    updatedDate: now,
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName: officerName,
+        actorRole: "FINANCE_OFFICER",
+        action: `Payment Status Changed to ${newStatus}`,
+        previousState: current.invoice?.status || "UNKNOWN",
+        newState: newStatus,
+        details: reason,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Validate trade credit and release order
+export function validateAndReleaseCreditOrder(
+  requestId: string,
+  officerName: string,
+  overrideReason?: string
+): { success: boolean; message: string } {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return { success: false, message: "Request not found" };
+
+  const current = requests[index];
+  const customers = getStoredCustomers();
+  const custIdx = customers.findIndex((c) => c.id === current.customerId);
+  const customer = custIdx !== -1 ? customers[custIdx] : null;
+
+  const totalDue = current.invoice?.totalNzd || current.quote?.totalNzd || 0;
+
+  // Validation rules
+  if (!overrideReason && customer) {
+    if (customer.billingDetails.status !== "APPROVED") {
+      return {
+        success: false,
+        message: `Customer credit facility is ${customer.billingDetails.status}. Managerial override required.`,
+      };
+    }
+    if (customer.billingDetails.creditAvailableNzd < totalDue) {
+      return {
+        success: false,
+        message: `Order total ($${totalDue.toFixed(2)}) exceeds customer available credit line ($${customer.billingDetails.creditAvailableNzd.toFixed(2)}). Managerial override required.`,
+      };
+    }
+  }
+
+  // Deduct customer credit
+  if (customer) {
+    const newAvail = Math.max(0, customer.billingDetails.creditAvailableNzd - totalDue);
+    customers[custIdx] = {
+      ...customer,
+      billingDetails: {
+        ...customer.billingDetails,
+        creditAvailableNzd: newAvail,
+      },
+    };
+    saveCustomers([...customers]);
+  }
+
+  const now = new Date().toISOString();
+  const receiptNum = getNextReceiptNumber();
+
+  const updatedInvoice: TaxInvoice = current.invoice
+    ? {
+        ...current.invoice,
+        paymentMethod: "TRADE_CREDIT",
+        receiptNumber: receiptNum,
+        paidDate: now,
+        status: "PAID",
+        statusNotes: overrideReason ? `Managerial override: ${overrideReason}` : "Trade credit validated",
+      }
+    : {
+        invoiceNumber: getNextInvoiceNumber(),
+        receiptNumber: receiptNum,
+        dateIssued: now,
+        dueDate: now,
+        paidDate: now,
+        customerName: current.customerName,
+        customerNzbn: current.customerNzbn,
+        customerGstNumber: "128-492-381",
+        billingAddress: `${current.deliveryAddress.street}, ${current.deliveryAddress.city}`,
+        paymentMethod: "TRADE_CREDIT",
+        paymentReference: current.referenceNumber,
+        subtotalNzd: totalDue / 1.15,
+        gstRate: 0.15,
+        gstAmountNzd: totalDue - totalDue / 1.15,
+        totalNzd: totalDue,
+        status: "PAID",
+      };
+
+  const updated: PartRequest = {
+    ...current,
+    status: "PAYMENT_CONFIRMED",
+    invoice: updatedInvoice,
+    updatedDate: now,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "FINANCE-TEAM",
+        senderName: officerName,
+        senderRole: "FINANCE_OFFICER",
+        timestamp: now,
+        content: `Trade credit release validated for $${totalDue.toFixed(2)} NZD. ${overrideReason ? `Approved via managerial override: ${overrideReason}.` : "Charged against Net 20th Month credit facility."} Procurement PO unlocked.`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName: officerName,
+        actorRole: "FINANCE_OFFICER",
+        action: "Credit Validation & Order Release",
+        previousState: current.status,
+        newState: "PAYMENT_CONFIRMED",
+        details: `Trade credit authorized: $${totalDue.toFixed(2)} NZD. ${overrideReason ? `Override reason: ${overrideReason}` : "Automatic credit line check passed."}`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+
+  // Record in transaction ledger
+  addFinancialTransaction({
+    type: "TRADE_CREDIT_UTILIZED",
+    referenceNumber: current.referenceNumber,
+    invoiceNumber: updatedInvoice.invoiceNumber,
+    receiptNumber: receiptNum,
+    customerName: current.customerName,
+    customerNzbn: current.customerNzbn,
+    amountNzd: totalDue,
+    paymentMethod: "TRADE_CREDIT",
+    direction: "INFLOW",
+    officerName,
+    status: "SETTLED",
+    notes: `Trade credit release authorized. ${overrideReason || "Standard facility execution"}`,
+  });
+
+  return {
+    success: true,
+    message: `Trade credit validated for ${current.referenceNumber}! Order released to sourcing desk.`,
+  };
+}
+
+// Process refund and issue credit note
+export function processRefund(
+  requestId: string,
+  amount: number,
+  refundType: "FULL" | "PARTIAL" | "FREIGHT_CREDIT" | "GOODWILL",
+  reason: string,
+  method: "BANK_DIRECT_CREDIT" | "TRADE_CREDIT_BALANCE",
+  officerName: string,
+  notes?: string
+): RefundRecord {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  const current = index !== -1 ? requests[index] : null;
+
+  const now = new Date().toISOString();
+  const creditNoteNum = getNextCreditNoteNumber();
+  const customerName = current?.customerName || "Trade Customer";
+  const customerNzbn = current?.customerNzbn || "9429041234567";
+  const refNum = current?.referenceNumber || `AH-P-000${Math.floor(100 + Math.random() * 900)}`;
+  const invNum = current?.invoice?.invoiceNumber || `INV-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+
+  const refundRecord: RefundRecord = {
+    id: `REF-${Date.now()}`,
+    creditNoteNumber: creditNoteNum,
+    requestId,
+    requestReference: refNum,
+    customerName,
+    customerNzbn,
+    invoiceNumber: invNum,
+    amountNzd: amount,
+    refundType,
+    reason,
+    refundMethod: method,
+    bankReference: method === "BANK_DIRECT_CREDIT" ? `ANZ-REF-${Math.floor(100000 + Math.random() * 900000)}` : undefined,
+    officerName,
+    timestamp: now,
+    status: "COMPLETED",
+    notes,
+  };
+
+  const refunds = getStoredRefunds();
+  saveRefunds([refundRecord, ...refunds]);
+
+  // Generate credit note document
+  const creditNotes = getStoredCreditNotes();
+  const newCreditNote: CreditNote = {
+    creditNoteNumber: creditNoteNum,
+    invoiceNumber: invNum,
+    requestReference: refNum,
+    dateIssued: now,
+    customerName,
+    customerNzbn,
+    customerGstNumber: "128-492-381",
+    billingAddress: current ? `${current.deliveryAddress.street}, ${current.deliveryAddress.city}` : "Auckland, New Zealand",
+    originalInvoiceTotalNzd: current?.invoice?.totalNzd || amount,
+    creditAmountNzd: amount,
+    refundMethod: method,
+    reason,
+    officerName,
+  };
+  saveCreditNotes([newCreditNote, ...creditNotes]);
+
+  // If trade credit balance, restore credit available
+  if (method === "TRADE_CREDIT_BALANCE" && current) {
+    const customers = getStoredCustomers();
+    const custIdx = customers.findIndex((c) => c.id === current.customerId);
+    if (custIdx !== -1) {
+      const cust = customers[custIdx];
+      customers[custIdx] = {
+        ...cust,
+        billingDetails: {
+          ...cust.billingDetails,
+          creditAvailableNzd: Math.min(
+            cust.billingDetails.creditLimitNzd,
+            cust.billingDetails.creditAvailableNzd + amount
+          ),
+        },
+      };
+      saveCustomers([...customers]);
+    }
+  }
+
+  // Update request if found
+  if (current && index !== -1) {
+    const isFullRefund = refundType === "FULL" || amount >= (current.invoice?.totalNzd || 0);
+    const updated: PartRequest = {
+      ...current,
+      status: isFullRefund ? "CANCELLED" : current.status,
+      invoice: current.invoice
+        ? {
+            ...current.invoice,
+            creditNoteNumber: creditNoteNum,
+            status: isFullRefund ? "REFUNDED" : current.invoice.status,
+            statusNotes: `Refund of $${amount.toFixed(2)} NZD processed (${creditNoteNum}): ${reason}`,
+          }
+        : undefined,
+      updatedDate: now,
+      messages: [
+        ...current.messages,
+        {
+          id: `MSG-${Date.now()}`,
+          senderId: "FINANCE-TEAM",
+          senderName: officerName,
+          senderRole: "FINANCE_OFFICER",
+          timestamp: now,
+          content: `Refund of $${amount.toFixed(2)} NZD processed via ${method.replace(/_/g, " ")}. Credit Note ${creditNoteNum} issued. Reason: ${reason}.`,
+          isInternalOnly: false,
+        },
+      ],
+      auditLogs: [
+        {
+          id: `AUD-${Date.now()}`,
+          timestamp: now,
+          actorName: officerName,
+          actorRole: "FINANCE_OFFICER",
+          action: "Refund Processed & Credit Note Issued",
+          previousState: current.invoice?.status || "PAID",
+          newState: isFullRefund ? "REFUNDED" : "PARTIALLY_REFUNDED",
+          details: `Amount: $${amount.toFixed(2)} NZD (${method}). Credit Note: ${creditNoteNum}. Reason: ${reason}`,
+        },
+        ...current.auditLogs,
+      ],
+    };
+    requests[index] = updated;
+    saveRequests([...requests]);
+  }
+
+  // Record in ledger
+  addFinancialTransaction({
+    type: "REFUND_PROCESSED",
+    referenceNumber: refNum,
+    invoiceNumber: invNum,
+    creditNoteNumber: creditNoteNum,
+    customerName,
+    customerNzbn,
+    amountNzd: amount,
+    paymentMethod: method === "BANK_DIRECT_CREDIT" ? "BANK_TRANSFER" : "TRADE_CREDIT",
+    direction: "OUTFLOW",
+    officerName,
+    status: "SETTLED",
+    notes: `Refund processed: ${reason}. Credit Note: ${creditNoteNum}`,
+  });
+
+  return refundRecord;
+}
+
+// Generate Tax Invoice for approved request
+export function generateTaxInvoiceForRequest(requestId: string, officerName: string): TaxInvoice | null {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return null;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+  const invNum = getNextInvoiceNumber();
+  const subtotal = current.quote?.subtotalNzd || 450.0;
+  const gst = current.quote?.gstAmountNzd || subtotal * 0.15;
+  const total = current.quote?.totalNzd || subtotal + gst;
+
+  const invoice: TaxInvoice = {
+    invoiceNumber: invNum,
+    dateIssued: now,
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    customerName: current.customerName,
+    customerNzbn: current.customerNzbn,
+    customerGstNumber: "128-492-381",
+    billingAddress: `${current.deliveryAddress.street}, ${current.deliveryAddress.city}`,
+    paymentMethod: "BANK_TRANSFER",
+    paymentReference: current.referenceNumber,
+    subtotalNzd: subtotal,
+    gstRate: 0.15,
+    gstAmountNzd: gst,
+    totalNzd: total,
+    status: "PENDING",
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    status: current.status === "AWAITING_CUSTOMER_APPROVAL" ? "AWAITING_PAYMENT" : current.status,
+    invoice,
+    updatedDate: now,
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName: officerName,
+        actorRole: "FINANCE_OFFICER",
+        action: "Tax Invoice Generated",
+        details: `Sequential invoice ${invNum} generated for $${total.toFixed(2)} NZD`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+
+  addFinancialTransaction({
+    type: "INVOICE_ISSUED",
+    referenceNumber: current.referenceNumber,
+    invoiceNumber: invNum,
+    customerName: current.customerName,
+    customerNzbn: current.customerNzbn,
+    amountNzd: total,
+    paymentMethod: "BANK_TRANSFER",
+    direction: "NEUTRAL",
+    officerName,
+    status: "SETTLED",
+    notes: `Sequential Tax Invoice ${invNum} generated`,
+  });
+
+  return invoice;
+}
+
+// Update Trade Customer Credit Facility
+export function updateCustomerCreditFacility(
+  customerId: string,
+  updates: {
+    creditLimitNzd?: number;
+    status?: "APPROVED" | "PENDING_APPROVAL" | "SUSPENDED";
+    paymentTerms?: "STRICT_PREPAYMENT" | "NET_20TH_MONTH" | "NET_30";
+  },
+  officerName: string
+) {
+  const customers = getStoredCustomers();
+  const index = customers.findIndex((c) => c.id === customerId);
+  if (index === -1) return;
+
+  const current = customers[index];
+  const oldLimit = current.billingDetails.creditLimitNzd;
+  const newLimit = updates.creditLimitNzd !== undefined ? updates.creditLimitNzd : oldLimit;
+  const utilized = Math.max(0, oldLimit - current.billingDetails.creditAvailableNzd);
+  const newAvailable = Math.max(0, newLimit - utilized);
+
+  const updated: TradeCustomer = {
+    ...current,
+    billingDetails: {
+      ...current.billingDetails,
+      creditLimitNzd: newLimit,
+      creditAvailableNzd: newAvailable,
+      status: updates.status !== undefined ? updates.status : current.billingDetails.status,
+      paymentTerms: updates.paymentTerms !== undefined ? updates.paymentTerms : current.billingDetails.paymentTerms,
+    },
+  };
+
+  customers[index] = updated;
+  saveCustomers([...customers]);
+
+  // Log transaction
+  if (updates.creditLimitNzd !== undefined && updates.creditLimitNzd !== oldLimit) {
+    addFinancialTransaction({
+      type: "CREDIT_ADJUSTMENT",
+      referenceNumber: `CR-FAC-${current.id}`,
+      customerName: current.tradingName || current.legalBusinessName,
+      customerNzbn: current.nzbn,
+      amountNzd: Math.abs(newLimit - oldLimit),
+      paymentMethod: "CREDIT_ADJUSTMENT",
+      direction: "NEUTRAL",
+      officerName,
+      status: "SETTLED",
+      notes: `Credit facility limit adjusted from $${oldLimit.toLocaleString()} to $${newLimit.toLocaleString()} NZD (${updates.status || current.billingDetails.status})`,
+    });
+  }
+}
+
 

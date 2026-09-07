@@ -43,7 +43,7 @@ const ROLES: {
     id: "FINANCE_OFFICER",
     label: "Finance Desk",
     sublabel: "Billing & Credit Gate",
-    deskUrl: "/admin/finance",
+    deskUrl: "/finance",
     icon: Banknote,
     color: "bg-emerald-700 text-white",
   },

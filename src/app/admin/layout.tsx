@@ -51,8 +51,8 @@ export default function AdminLayout({
   const adminNav = [
     { label: "Overview", href: "/admin", icon: LayoutDashboard },
     { label: "Sourcing Desk", href: "/admin/sourcing", icon: Compass, badge: sourcingCount },
-    { label: "Logistics Desk", href: "/admin/logistics", icon: Truck, badge: logisticsCount },
-    { label: "Finance & Billing", href: "/admin/finance", icon: Banknote, badge: financeCount },
+    { label: "Logistics Desk", href: "/operations", icon: Truck, badge: logisticsCount },
+    { label: "Finance & Billing", href: "/finance", icon: Banknote, badge: financeCount },
     { label: "Customer Approvals", href: "/admin/customers", icon: Users },
     { label: "System Config", href: "/admin/settings", icon: Settings },
   ];

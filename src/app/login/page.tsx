@@ -88,7 +88,7 @@ export default function LoginPage() {
       email: "liam.p@autohub.co.nz",
       badge: "AIR & SEA FREIGHT",
       icon: Truck,
-      path: "/admin/logistics",
+      path: "/operations",
     },
     {
       role: "SOURCING_SPECIALIST" as UserRole,
@@ -110,7 +110,7 @@ export default function LoginPage() {
       email: "clara.j@autohub.co.nz",
       badge: "CREDIT & SETTLEMENTS",
       icon: Banknote,
-      path: "/admin/finance",
+      path: "/finance",
     },
   ];
 
