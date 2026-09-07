@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
   const [emailInput, setEmailInput] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  if (pathname === "/login" || pathname?.startsWith("/portal")) {
+  if (pathname === "/login" || pathname?.startsWith("/portal") || pathname?.startsWith("/procurement")) {
     return null;
   }
 

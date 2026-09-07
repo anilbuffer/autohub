@@ -27,7 +27,7 @@ const ROLES: {
     id: "SOURCING_SPECIALIST",
     label: "Sourcing Desk",
     sublabel: "Nathan Cole (Procurement)",
-    deskUrl: "/admin/sourcing",
+    deskUrl: "/procurement",
     icon: Compass,
     color: "bg-amber-600 text-white",
   },

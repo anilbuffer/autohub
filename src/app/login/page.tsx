@@ -99,7 +99,7 @@ export default function LoginPage() {
       email: "nathan.c@autohub.co.nz",
       badge: "GLOBAL OEM SOURCING",
       icon: Compass,
-      path: "/admin/sourcing",
+      path: "/procurement",
     },
     {
       role: "FINANCE_OFFICER" as UserRole,

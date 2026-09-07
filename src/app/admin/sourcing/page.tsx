@@ -111,6 +111,28 @@ export default function SourcingDeskPage() {
 
   return (
     <div className="space-y-6">
+      {/* Promotion banner to Dedicated Procurement Portal */}
+      <div className="bg-gradient-to-r from-[#070e1e] to-slate-900 text-white rounded-3xl p-5 sm:p-6 border border-slate-800 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-600/30 text-rose-300 border border-rose-500/40 text-[10px] font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+            Dedicated Portal Available
+          </div>
+          <h2 className="text-base sm:text-lg font-bold text-white">
+            Switch to the New Procurement Portal (Sourcing Desk)
+          </h2>
+          <p className="text-xs text-slate-400">
+            Enjoy full symmetric dark navy layout, side-by-side multi-currency quotes, margin calculators, and PO dispatch.
+          </p>
+        </div>
+        <Link
+          href="/procurement"
+          className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow flex items-center justify-center gap-2 whitespace-nowrap"
+        >
+          <span>Launch Procurement Portal</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
       {/* Sourcing Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

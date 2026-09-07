@@ -63,7 +63,15 @@ export function getStoredRequests(): PartRequest[] {
       localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(initialRequests));
       return initialRequests;
     }
-    return JSON.parse(raw);
+    const parsed: PartRequest[] = JSON.parse(raw);
+    // Ensure new initialRequests (e.g. REQ-000140, REQ-000141) are merged if missing
+    const missing = initialRequests.filter((initReq) => !parsed.some((p) => p.id === initReq.id));
+    if (missing.length > 0) {
+      const merged = [...missing, ...parsed];
+      localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(merged));
+      return merged;
+    }
+    return parsed;
   } catch {
     return initialRequests;
   }
@@ -108,10 +116,44 @@ export function getStoredSuppliers(): SupplierProfile[] {
       localStorage.setItem(STORAGE_KEYS.SUPPLIERS, JSON.stringify(initialSuppliers));
       return initialSuppliers;
     }
-    return JSON.parse(raw);
+    const parsed: SupplierProfile[] = JSON.parse(raw);
+    // Sync contact info if missing from older store
+    let changed = false;
+    const enriched = parsed.map((s) => {
+      const match = initialSuppliers.find((i) => i.id === s.id);
+      if (match && (!s.contactPerson || !s.contactEmail)) {
+        changed = true;
+        return {
+          ...s,
+          contactPerson: match.contactPerson,
+          contactEmail: match.contactEmail,
+          contactPhone: match.contactPhone,
+        };
+      }
+      return s;
+    });
+    if (changed) {
+      localStorage.setItem(STORAGE_KEYS.SUPPLIERS, JSON.stringify(enriched));
+    }
+    return enriched;
   } catch {
     return initialSuppliers;
   }
+}
+
+export function saveSuppliers(suppliers: SupplierProfile[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.SUPPLIERS, JSON.stringify(suppliers));
+  notifyListeners();
+}
+
+export function addSupplierProfile(supplier: SupplierProfile) {
+  const current = getStoredSuppliers();
+  const exists = current.some((s) => s.id === supplier.id);
+  const updated = exists
+    ? current.map((s) => (s.id === supplier.id ? supplier : s))
+    : [...current, supplier];
+  saveSuppliers(updated);
 }
 
 export function getStoredSettings(): SystemSettings {
@@ -324,6 +366,104 @@ export function issueCustomerQuote(requestId: string, quote: CustomerQuote) {
         previousState: current.status,
         newState: "AWAITING_CUSTOMER_APPROVAL",
         details: `Quote ${quote.quoteNumber} issued for $${quote.totalNzd.toFixed(2)} NZD (incl GST)`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Reissue revised customer quote
+export function reissueCustomerQuote(requestId: string, quote: CustomerQuote, revisionNotes: string) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+  const revNum = (current.quote?.revisionNumber || 1) + 1;
+
+  const revisedQuote: CustomerQuote = {
+    ...quote,
+    revisionNumber: revNum,
+    revisionNotes,
+    status: "ISSUED",
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    quote: revisedQuote,
+    status: "AWAITING_CUSTOMER_APPROVAL",
+    updatedDate: now,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "SOURCING-TEAM",
+        senderName: "Nathan Cole (Sourcing Desk)",
+        senderRole: "SOURCING_SPECIALIST",
+        timestamp: now,
+        content: `Quotation ${quote.quoteNumber} (Rev ${revNum}) reissued with updated terms: ${revisionNotes}. Revised total: $${quote.totalNzd.toFixed(2)} NZD incl GST.`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName: "Nathan Cole",
+        actorRole: "SOURCING_SPECIALIST",
+        action: `Customer Quote Reissued (Rev ${revNum})`,
+        previousState: current.status,
+        newState: "AWAITING_CUSTOMER_APPROVAL",
+        details: `Rev ${revNum}: ${revisionNotes} ($${quote.totalNzd.toFixed(2)} NZD)`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Resolve sourcing exception and return to active sourcing queue
+export function resolveSourcingException(requestId: string, actorName: string, notes?: string) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+
+  const updated: PartRequest = {
+    ...current,
+    status: "SOURCING",
+    statusReason: undefined,
+    updatedDate: now,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "SOURCING-TEAM",
+        senderName: actorName,
+        senderRole: "SOURCING_SPECIALIST",
+        timestamp: now,
+        content: `Sourcing exception resolved. Request returned to active sourcing queue. ${notes || ""}`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "SOURCING_SPECIALIST",
+        action: "Sourcing Exception Cleared",
+        previousState: current.status,
+        newState: "SOURCING",
+        details: notes || "Exception condition resolved; returned to sourcing queue",
       },
       ...current.auditLogs,
     ],

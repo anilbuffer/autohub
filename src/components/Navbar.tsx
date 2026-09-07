@@ -16,10 +16,11 @@ export const Navbar: React.FC = () => {
   const pathname = usePathname();
 
   const isPortal = pathname.startsWith("/portal");
+  const isProcurement = pathname.startsWith("/procurement");
   const isAdmin = pathname.startsWith("/admin");
   const isLogin = pathname === "/login";
 
-  if (isPortal || isLogin) {
+  if (isPortal || isProcurement || isLogin) {
     return null;
   }
 

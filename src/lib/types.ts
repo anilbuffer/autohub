@@ -41,6 +41,9 @@ export interface SupplierProfile {
   category: string;
   leadTimeDays: number;
   rating: number;
+  contactPerson?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 export interface VehicleInfo {
@@ -118,6 +121,8 @@ export interface CustomerQuote {
   termsAccepted: boolean;
   status: "DRAFT" | "ISSUED" | "ACCEPTED" | "REJECTED" | "REVISION_REQUESTED";
   customerFeedback?: string;
+  revisionNumber?: number;
+  revisionNotes?: string;
 }
 
 export interface LogisticsMilestone {
