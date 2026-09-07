@@ -58,7 +58,7 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-0">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Left: Logo Brand */}
           <div className="flex items-center">
@@ -79,11 +79,10 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition ${
-                    isActive
+                  className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition ${isActive
                       ? "bg-slate-100 text-[#1e3a8a] font-bold"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   {link.label}
                 </Link>

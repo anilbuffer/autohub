@@ -28,6 +28,8 @@ import {
   ExternalLink,
   ShieldAlert,
   Percent,
+  Calculator,
+  Sparkles,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -38,28 +40,140 @@ export default function HomePage() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("ALL");
   const [searchResult, setSearchResult] = useState<any | null>(null);
 
-  // Landed Cost Estimator State
-  const [originCountry, setOriginCountry] = useState<"JAPAN" | "GERMANY" | "USA">("JAPAN");
-  const [partCategory, setPartCategory] = useState("ENGINE");
-  const [partCostNzd, setPartCostNzd] = useState<number>(1400);
-  const [freightType, setFreightType] = useState<"AIR" | "SEA">("AIR");
-
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  // Interactive Calculator Logic
-  const freightRate = freightType === "AIR" ? 0.18 : 0.08;
-  const freightCost = Math.round(partCostNzd * freightRate) + (freightType === "AIR" ? 85 : 45);
-  const mpiCustomsFee = 95; // Fixed biosecurity inspection + entry fee
-  const autohubMargin = Math.round((partCostNzd + freightCost) * 0.12);
-  const subtotalBeforeGst = partCostNzd + freightCost + mpiCustomsFee + autohubMargin;
-  const gstAmount = Math.round(subtotalBeforeGst * 0.15);
-  const totalLandedNzd = subtotalBeforeGst + gstAmount;
+  // Vehicle Preset Data for Live Trade Sourcing Estimates
+  type TradeVehicle = {
+    id: string;
+    label: string;
+    modelName: string;
+    vinChassis: string;
+    airCost: number;
+    seaCost: number;
+    airFreight: number;
+    seaFreight: number;
+    airGst: number;
+    seaGst: number;
+    customsFee: number;
+    airTransit: string;
+    seaTransit: string;
+  };
 
-  // Typical local NZ dealer / distributor markup is 45% to 65% higher
-  const localDistributorPrice = Math.round(totalLandedNzd * 1.48);
-  const totalSavingsNzd = localDistributorPrice - totalLandedNzd;
-  const savingsPercent = Math.round((totalSavingsNzd / localDistributorPrice) * 100);
+  const tradeVehicles: TradeVehicle[] = [
+    {
+      id: "hilux",
+      label: "Toyota Hilux (2021)",
+      modelName: "2021 Toyota Hilux - SR5 Cruiser 4WD Double Cab (Japan)",
+      vinChassis: "Chassis/VIN: JTEBX3EJ9K12...",
+      airCost: 2109.25,
+      seaCost: 1885.0,
+      airFreight: 290.0,
+      seaFreight: 95.0,
+      airGst: 314.25,
+      seaGst: 285.0,
+      customsFee: 55.0,
+      airTransit: "3 - 5 Business Days",
+      seaTransit: "18 - 24 Days",
+    },
+    {
+      id: "ranger",
+      label: "Ford Ranger (2022)",
+      modelName: "2022 Ford Ranger - Wildtrak 2.0L Bi-Turbo 4x4 (Thailand/Japan)",
+      vinChassis: "Chassis/VIN: MNAABFF50NW14...",
+      airCost: 2380.5,
+      seaCost: 2040.0,
+      airFreight: 320.0,
+      seaFreight: 110.0,
+      airGst: 355.5,
+      seaGst: 310.0,
+      customsFee: 55.0,
+      airTransit: "3 - 5 Business Days",
+      seaTransit: "18 - 24 Days",
+    },
+    {
+      id: "leaf",
+      label: "Nissan Leaf (2020)",
+      modelName: "2020 Nissan Leaf - e+ G 62kWh Electric (Japan)",
+      vinChassis: "Chassis/VIN: ZE1-042819...",
+      airCost: 1650.0,
+      seaCost: 1390.0,
+      airFreight: 220.0,
+      seaFreight: 85.0,
+      airGst: 245.0,
+      seaGst: 210.0,
+      customsFee: 55.0,
+      airTransit: "3 - 5 Business Days",
+      seaTransit: "18 - 24 Days",
+    },
+    {
+      id: "bmw",
+      label: "BMW 3 Series (2020)",
+      modelName: "2020 BMW 330i - M Sport G20 Sedan (Germany)",
+      vinChassis: "Chassis/VIN: WBA5R1C51LK9...",
+      airCost: 2795.0,
+      seaCost: 2390.0,
+      airFreight: 360.0,
+      seaFreight: 125.0,
+      airGst: 418.0,
+      seaGst: 360.0,
+      customsFee: 55.0,
+      airTransit: "4 - 6 Business Days",
+      seaTransit: "21 - 28 Days",
+    },
+    {
+      id: "wrx",
+      label: "Subaru WRX STI (2019)",
+      modelName: "2019 Subaru WRX STI - Type S EJ20 Final Edition (Japan)",
+      vinChassis: "Chassis/VIN: VAB-028491...",
+      airCost: 2940.0,
+      seaCost: 2480.0,
+      airFreight: 380.0,
+      seaFreight: 130.0,
+      airGst: 440.0,
+      seaGst: 375.0,
+      customsFee: 55.0,
+      airTransit: "3 - 5 Business Days",
+      seaTransit: "18 - 24 Days",
+    },
+  ];
+
+  const [selectedVehicleId, setSelectedVehicleId] = useState("hilux");
+  const [partCategory, setPartCategory] = useState("engine");
+  const [partCondition, setPartCondition] = useState<"NEW" | "USED">("NEW");
+  const [selectedFreightMethod, setSelectedFreightMethod] = useState<"AIR" | "SEA">("AIR");
+
+  const currentVehicle = tradeVehicles.find((v) => v.id === selectedVehicleId) || tradeVehicles[0];
+  const conditionMultiplier = partCondition === "NEW" ? 1.0 : 0.72;
+
+  const airTotal = (currentVehicle.airCost * conditionMultiplier).toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const seaTotal = (currentVehicle.seaCost * conditionMultiplier).toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const airFreightStr = (currentVehicle.airFreight * conditionMultiplier).toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const seaFreightStr = (currentVehicle.seaFreight * conditionMultiplier).toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const customsFeeStr = currentVehicle.customsFee.toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const airGstStr = (currentVehicle.airGst * conditionMultiplier).toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const seaGstStr = (currentVehicle.seaGst * conditionMultiplier).toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   // Search Engine Sample Data
   const sampleParts = [
@@ -249,7 +363,7 @@ export default function HomePage() {
       </section>
 
       {/* 2. FLOATING INSTANT VIN / PART SEARCH BAR */}
-      <section className="relative z-20 -mt-8 max-w-5xl mx-auto px-4 w-full">
+      <section className="relative z-20 -mt-8 max-w-6xl mx-auto px-4 w-full">
         <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 sm:p-7 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -700,204 +814,309 @@ export default function HomePage() {
       </section>
 
       {/* 6. INTERACTIVE LANDED COST ESTIMATOR / PRICING TRANSPARENCY */}
-      <section id="landed-calculator" className="py-20 bg-slate-900 text-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-0 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-autohub-red bg-red-500/20 px-3.5 py-1 rounded-full border border-red-500/30">
-              Pricing Transparency Engine
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mt-3">
-              Interactive Landed Cost Estimator
+      <section id="landed-calculator" className="py-20 bg-slate-50/70 border-b border-slate-200/80 relative">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Calculate Live Trade Sourcing Estimates
             </h2>
-            <p className="text-sm text-slate-300 mt-2">
-              See the exact mathematical breakdown from overseas supplier purchase to Auckland/Christchurch workshop delivery. No hidden spreads.
+            <p className="text-sm text-slate-500 mt-2">
+              Select a common NZ vehicle to preview our landed cost structure with Air vs Sea freight choices.
             </p>
           </div>
 
-          <div className="bg-slate-800/80 rounded-3xl border border-slate-700 p-6 sm:p-10 shadow-2xl backdrop-blur-md">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Left Column: Interactive Inputs */}
-              <div className="lg:col-span-6 space-y-6">
+          {/* Main Estimator Card */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl overflow-hidden">
+            {/* Top Navy Header Banner */}
+            <div className="bg-[#182759] px-6 py-5 sm:px-8 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-900/40">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 flex-shrink-0">
+                  <Calculator className="w-5 h-5 text-red-400" />
+                </div>
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-2">
-                    1. Supplier Origin Country
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "JAPAN", label: "Japan (JPY)", flag: "🇯🇵" },
-                      { id: "GERMANY", label: "Europe (EUR)", flag: "🇩🇪" },
-                      { id: "USA", label: "USA (USD)", flag: "🇺🇸" },
-                    ].map((c) => (
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    Instant Landed Cost Estimator
+                  </h3>
+                  <p className="text-xs text-blue-200">
+                    Explore transparent NZ landed pricing for popular trade parts
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-xs font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Live NZ Tariff Model</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Card Content */}
+            <div className="p-6 sm:p-8 space-y-7">
+              {/* Popular NZ Trade Vehicles Pills */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-2.5">
+                  POPULAR NZ TRADE VEHICLES (CLICK TO TEST):
+                </label>
+                <div className="flex flex-wrap gap-2.5">
+                  {tradeVehicles.map((vehicle) => {
+                    const isSelected = vehicle.id === selectedVehicleId;
+                    return (
                       <button
-                        key={c.id}
+                        key={vehicle.id}
                         type="button"
-                        onClick={() => setOriginCountry(c.id as any)}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition border ${originCountry === c.id
-                          ? "bg-autohub-red text-white border-autohub-red"
-                          : "bg-slate-700/60 text-slate-300 border-slate-600 hover:bg-slate-700"
-                          }`}
+                        onClick={() => setSelectedVehicleId(vehicle.id)}
+                        className={`text-xs font-bold px-4 py-2 rounded-xl transition ${
+                          isSelected
+                            ? "bg-[#1e3a8a] text-white shadow-sm"
+                            : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                        }`}
                       >
-                        <span>{c.flag}</span>
-                        <span>{c.label}</span>
+                        {vehicle.label}
                       </button>
-                    ))}
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Form Controls Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+                {/* 1. Selected Vehicle */}
+                <div className="md:col-span-5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1.5">
+                    SELECTED VEHICLE
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedVehicleId}
+                      onChange={(e) => setSelectedVehicleId(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
+                    >
+                      {tradeVehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.modelName}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
+                  <p className="text-[11px] font-mono text-slate-400 mt-1.5">{currentVehicle.vinChassis}</p>
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-2">
-                    2. Part Category
+                {/* 2. Part Category */}
+                <div className="md:col-span-4">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1.5">
+                    PART CATEGORY
                   </label>
-                  <select
-                    value={partCategory}
-                    onChange={(e) => setPartCategory(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-700/60 border border-slate-600 rounded-xl text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-autohub-red"
+                  <div className="relative">
+                    <select
+                      value={partCategory}
+                      onChange={(e) => setPartCategory(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
+                    >
+                      <option value="engine">Engine & Mechanical</option>
+                      <option value="brakes">Brakes & Suspension</option>
+                      <option value="transmission">Transmission & Drivetrain</option>
+                      <option value="body">Body Panels & Lighting</option>
+                      <option value="heavy">Commercial Heavy Duty Spares</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1.5">Verified OEM Fitment Guaranteed</p>
+                </div>
+
+                {/* 3. Condition Required */}
+                <div className="md:col-span-3">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1.5">
+                    CONDITION REQUIRED
+                  </label>
+                  <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setPartCondition("NEW")}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition text-center ${
+                        partCondition === "NEW"
+                          ? "bg-[#1e3a8a] text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      New OEM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPartCondition("USED")}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition text-center ${
+                        partCondition === "USED"
+                          ? "bg-[#1e3a8a] text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      Grade A Used
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    {partCondition === "NEW" ? "Factory Sealed Packaging" : "Certified Dismantler Inspected"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Freight Comparison Section */}
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                    SELECT FREIGHT METHOD TO COMPARE
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    CLICK CARD TO SELECT
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Card 1: Priority Air Freight */}
+                  <div
+                    onClick={() => setSelectedFreightMethod("AIR")}
+                    className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border-2 relative ${
+                      selectedFreightMethod === "AIR"
+                        ? "border-red-500 bg-white shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
                   >
-                    <option value="ENGINE">Engine & Turbocharger Components</option>
-                    <option value="BRAKES">Brakes & Suspension Performance</option>
-                    <option value="TRANSMISSION">Transmission & Drivetrain</option>
-                    <option value="BODY">Body Panels, Lighting & Electronics</option>
-                    <option value="HEAVY">Commercial Heavy Fleet Spares</option>
-                  </select>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      3. Overseas Supplier Base Price (NZD Equivalent)
-                    </label>
-                    <span className="font-mono text-sm font-bold text-emerald-400">
-                      ${partCostNzd.toLocaleString()} NZD
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={200}
-                    max={10000}
-                    step={100}
-                    value={partCostNzd}
-                    onChange={(e) => setPartCostNzd(Number(e.target.value))}
-                    className="w-full accent-autohub-red cursor-pointer"
-                  />
-                  <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                    <span>$200 NZD</span>
-                    <span>$5,000 NZD</span>
-                    <span>$10,000 NZD</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-2">
-                    4. Preferred Logistics Channel
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setFreightType("AIR")}
-                      className={`p-3 rounded-2xl border text-left transition ${freightType === "AIR"
-                        ? "bg-autohub-navy/80 border-sky-400 text-white"
-                        : "bg-slate-700/40 border-slate-600 text-slate-300 hover:bg-slate-700/80"
-                        }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-bold">Priority Air Express</span>
-                        <Plane className="w-4 h-4 text-sky-400" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-slate-900">
+                        <div className="w-7 h-7 rounded-lg bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                          <Plane className="w-4 h-4 text-red-500" />
+                        </div>
+                        <span className="font-bold text-sm text-red-600">Priority Air Freight</span>
                       </div>
-                      <span className="text-[11px] text-slate-300 block">3-5 Business Days Door Delivery</span>
-                    </button>
+                      {selectedFreightMethod === "AIR" ? (
+                        <span className="bg-autohub-red text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                          ✓ SELECTED
+                        </span>
+                      ) : (
+                        <span className="bg-slate-100 text-slate-500 text-[11px] font-bold px-2.5 py-1 rounded-full">
+                          SELECT
+                        </span>
+                      )}
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setFreightType("SEA")}
-                      className={`p-3 rounded-2xl border text-left transition ${freightType === "SEA"
-                        ? "bg-autohub-navy/80 border-emerald-400 text-white"
-                        : "bg-slate-700/40 border-slate-600 text-slate-300 hover:bg-slate-700/80"
-                        }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-bold">Sea Freight Consolidated</span>
-                        <Anchor className="w-4 h-4 text-emerald-400" />
+                    <div className="mt-4 flex items-baseline gap-1.5">
+                      <span className="text-3xl font-black text-slate-900 font-sans tracking-tight">
+                        ${airTotal}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500">Landed NZD</span>
+                    </div>
+
+                    <div className="mt-2.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[11px] font-medium text-emerald-700">
+                        <Package className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        <span>Includes GST, Customs & Final Mile Delivery</span>
+                      </span>
+                    </div>
+
+                    <div className="mt-5 space-y-2.5 text-xs border-t border-slate-100 pt-4">
+                      <div className="flex justify-between items-center text-slate-500">
+                        <span>Estimated Transit:</span>
+                        <span className="font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded text-[11px]">
+                          {currentVehicle.airTransit}
+                        </span>
                       </div>
-                      <span className="text-[11px] text-slate-300 block">14-21 Days (Economical Heavy)</span>
-                    </button>
+                      <div className="flex justify-between text-slate-500">
+                        <span>Air Freight & Export:</span>
+                        <span className="font-semibold text-slate-800 font-mono">${airFreightStr}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>NZ Customs, MPI & Duty:</span>
+                        <span className="font-semibold text-slate-800 font-mono">${customsFeeStr}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>GST (15%) & Local Courier:</span>
+                        <span className="font-semibold text-slate-800 font-mono">${airGstStr}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Consolidated Sea Freight */}
+                  <div
+                    onClick={() => setSelectedFreightMethod("SEA")}
+                    className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border-2 relative ${
+                      selectedFreightMethod === "SEA"
+                        ? "border-[#1e3a8a] bg-white shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-slate-900">
+                        <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                          <Anchor className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span className="font-bold text-sm text-slate-800">Consolidated Sea Freight</span>
+                      </div>
+                      {selectedFreightMethod === "SEA" ? (
+                        <span className="bg-[#1e3a8a] text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                          ✓ SELECTED
+                        </span>
+                      ) : (
+                        <span className="bg-slate-100 text-slate-500 text-[11px] font-bold px-2.5 py-1 rounded-full">
+                          SELECT
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-4 flex items-baseline gap-1.5">
+                      <span className="text-3xl font-black text-slate-900 font-sans tracking-tight">
+                        ${seaTotal}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500">Landed NZD</span>
+                    </div>
+
+                    <div className="mt-2.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[11px] font-medium text-emerald-700">
+                        <Package className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        <span>Includes GST, Customs & Final Mile Delivery</span>
+                      </span>
+                    </div>
+
+                    <div className="mt-5 space-y-2.5 text-xs border-t border-slate-100 pt-4">
+                      <div className="flex justify-between items-center text-slate-500">
+                        <span>Estimated Transit:</span>
+                        <span className="font-bold text-slate-800 text-[11px]">
+                          {currentVehicle.seaTransit}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>Sea Freight & Port:</span>
+                        <span className="font-semibold text-slate-800 font-mono">${seaFreightStr}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>NZ Customs, MPI & Duty:</span>
+                        <span className="font-semibold text-slate-800 font-mono">${customsFeeStr}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>GST (15%) & Local Courier:</span>
+                        <span className="font-semibold text-slate-800 font-mono">${seaGstStr}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Live Landed Breakdown */}
-              <div className="lg:col-span-6 bg-slate-950/70 border border-slate-700 rounded-3xl p-6 sm:p-7 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-                    Itemised Landed Breakdown
-                  </h4>
-                  <span className="text-[11px] text-slate-400 font-mono">NZD Currency</span>
+              {/* Card Footer */}
+              <div className="pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2.5 text-xs text-slate-600">
+                  <div className="w-5 h-5 rounded-full border border-red-500 text-red-500 flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
+                  </div>
+                  <span>Quotes include all import brokerage, MPI biosecurity pre-clearance, and direct workshop delivery.</span>
                 </div>
 
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between py-1 border-b border-slate-800/80 text-slate-300">
-                    <span>Base Supplier FOB Cost:</span>
-                    <span className="font-mono font-bold text-white">${partCostNzd.toLocaleString()} NZD</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/80 text-slate-300">
-                    <span>International Freight & Transit Cover:</span>
-                    <span className="font-mono font-bold text-white">${freightCost.toLocaleString()} NZD</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/80 text-slate-300">
-                    <span>Customs Tariff & MPI Biosecurity Pre-Inspection:</span>
-                    <span className="font-mono font-bold text-white">${mpiCustomsFee} NZD</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/80 text-slate-300">
-                    <span>Autohub Coordination & Logistics Handling (12%):</span>
-                    <span className="font-mono font-bold text-white">${autohubMargin.toLocaleString()} NZD</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/80 text-slate-300">
-                    <span>New Zealand Goods & Services Tax (15% Claimable GST):</span>
-                    <span className="font-mono font-bold text-amber-400">${gstAmount.toLocaleString()} NZD</span>
-                  </div>
-                </div>
-
-                {/* Total Landed Summary Card */}
-                <div className="p-4 rounded-2xl bg-slate-800/90 border border-slate-600 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-[11px] uppercase font-bold text-slate-400 block">
-                        Total Landed Cost NZD (To Your Bay)
-                      </span>
-                      <span className="text-2xl font-black text-white font-mono">
-                        ${totalLandedNzd.toLocaleString()} NZD
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block">Est. Local NZ Distributor Price</span>
-                      <span className="text-sm font-semibold text-slate-400 line-through font-mono">
-                        ${localDistributorPrice.toLocaleString()} NZD
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-700 flex items-center justify-between">
-                    <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Net Trade Savings: ${totalSavingsNzd.toLocaleString()} NZD</span>
-                    </span>
-                    <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
-                      Save {savingsPercent}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <Link
-                    href="/register"
-                    className="w-full py-3 bg-autohub-red hover:bg-autohub-red-dark text-white rounded-xl text-xs font-bold transition shadow flex items-center justify-center gap-2"
-                  >
-                    <span>Open Trade Account to Request Quote</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <p className="text-[10px] text-slate-400 text-center mt-2">
-                    Actual prices depend on current foreign exchange rates and exact part volumetric weight.
-                  </p>
-                </div>
+                <Link
+                  href="/portal/new-request"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-autohub-red hover:bg-autohub-red-dark text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-red-500/25 transition flex items-center justify-center gap-2 flex-shrink-0"
+                >
+                  <span>Submit Exact Part Request</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
             </div>
           </div>
@@ -1039,79 +1258,108 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 9. THE AUTOHUB ADVANTAGE: 25+ YEARS OF NEW ZEALAND TRADE TRUST */}
-      <section className="py-20 bg-gradient-to-r from-autohub-navy via-[#1f3373] to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            <div className="lg:col-span-7 space-y-5">
-              <span className="text-xs font-bold uppercase tracking-wider text-autohub-red bg-white/10 px-3.5 py-1 rounded-full border border-white/20">
-                The Autohub Heritage
-              </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
-                25+ Years of New Zealand Automotive Logistics Excellence
-              </h2>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Autohub New Zealand Limited has handled over 250,000 vehicles and containers between Japan, the UK, Europe, Australia, and New Zealand. Procurly brings that established customs infrastructure, ocean consolidation capacity, and biosecurity network directly to your workshop hoist.
-              </p>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
-                <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/15 text-center">
-                  <span className="text-2xl sm:text-3xl font-black text-white font-mono block">
-                    250k+
-                  </span>
-                  <span className="text-[11px] text-slate-300">Vehicles Handled</span>
-                </div>
-                <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/15 text-center">
-                  <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono block">
-                    99.4%
-                  </span>
-                  <span className="text-[11px] text-slate-300">On-Time Delivery</span>
-                </div>
-                <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/15 text-center">
-                  <span className="text-2xl sm:text-3xl font-black text-amber-400 font-mono block">
-                    100%
-                  </span>
-                  <span className="text-[11px] text-slate-300">MPI Compliance</span>
-                </div>
-                <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/15 text-center">
-                  <span className="text-2xl sm:text-3xl font-black text-sky-400 font-mono block">
-                    2 Hubs
-                  </span>
-                  <span className="text-[11px] text-slate-300">AKL & CHC Depots</span>
-                </div>
+      {/* 9. THE AUTOHUB HERITAGE: TRUSTED BY HUNDREDS OF NZ DEALERSHIPS & REPAIRERS */}
+      <section id="heritage" className="py-20 bg-white border-b border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            {/* Left Column: Workshop Bay Photo Card */}
+            <div className="lg:col-span-6 flex justify-center">
+              <div className="relative w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-200/80 group">
+                <img
+                  src="/heritage-workshop.png"
+                  alt="Active NZ Trade Network Bay - NZ Workshop Quality Standard"
+                  className="w-full h-auto object-cover block rounded-3xl transition duration-500 group-hover:scale-[1.01]"
+                  loading="lazy"
+                />
               </div>
             </div>
 
-            <div className="lg:col-span-5 bg-white/10 rounded-3xl p-6 border border-white/20 backdrop-blur-xl space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <span>Trade Compliance Accreditations</span>
-              </h3>
-              <ul className="space-y-3 text-xs text-slate-200">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span>Licensed New Zealand Customs Broker Code</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span>MPI Biosecurity Approved Transitional Facilities</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span>NZBN: 9429041234567 • GST Registered</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span>Air Cargo Regulated Agent Security Approved</span>
-                </li>
-              </ul>
+            {/* Right Column: Autohub Group Heritage Content */}
+            <div className="lg:col-span-6 space-y-6">
+              {/* Eyebrow badge */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-xs font-bold text-blue-900 uppercase tracking-wider">
+                <Building2 className="w-3.5 h-3.5 text-blue-700" />
+                <span>AUTOHUB GROUP HERITAGE</span>
+              </div>
+
+              {/* Heading */}
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                Trusted by Hundreds of New Zealand Dealerships & Repairers
+              </h2>
+
+              {/* Description */}
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                Autohub has pioneered vehicle logistics between Japan, the UK, Australia, and New Zealand for over two decades. Procurly extends this world-class infrastructure directly to parts procurement for trade workshops.
+              </p>
+
+              {/* Supporting Networks Header */}
+              <div className="pt-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-3">
+                  SUPPORTING NZ DEALER & TRADE NETWORKS:
+                </span>
+
+                {/* 6 Network Badges Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {[
+                    "TOYOTA TRADE NZ",
+                    "EURO SPECIALISTS",
+                    "GILTRAP FLEET",
+                    "ARMSTRONG'S NETWORK",
+                    "COMMERCIAL FLEETS NZ",
+                    "MTA NZ CERTIFIED",
+                  ].map((partner) => (
+                    <div
+                      key={partner}
+                      className="bg-white border border-slate-200 rounded-xl py-3 px-3 text-center shadow-xs hover:border-slate-300 hover:shadow-sm transition"
+                    >
+                      <span className="text-[11px] font-extrabold text-slate-700 tracking-wider uppercase block">
+                        {partner}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2 Feature Info Cards */}
+              <div className="space-y-3 pt-2">
+                {/* Direct Customs Bonded Facilities */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-start gap-4 shadow-xs hover:border-blue-200 transition">
+                  <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      Direct Customs Bonded Facilities
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Faster MPI biosecurity clearance and direct tariff filing with NZ Customs Service.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Regional Delivery Hubs */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-start gap-4 shadow-xs hover:border-red-200 transition">
+                  <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                    <Truck className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      Regional Delivery Hubs
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Penrose (Auckland) and Middleton (Christchurch) cross-dock hubs for rapid local delivery.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Button */}
               <div className="pt-2">
                 <Link
-                  href="/about"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-sky-300 hover:text-white transition"
+                  href="/register"
+                  className="inline-block px-7 py-3.5 bg-autohub-red hover:bg-autohub-red-dark text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-red-500/25 transition"
                 >
-                  <span>Learn more about Autohub&apos;s global network</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Open Your Trade Account Today
                 </Link>
               </div>
             </div>
