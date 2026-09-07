@@ -17,12 +17,14 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  const isPortal = pathname.startsWith("/portal");
-  const isProcurement = pathname.startsWith("/procurement");
-  const isAdmin = pathname.startsWith("/admin");
-  const isLogin = pathname === "/login";
+  const isPortal =
+    pathname === "/login" ||
+    pathname?.startsWith("/portal") ||
+    pathname?.startsWith("/procurement") ||
+    pathname?.startsWith("/operations") ||
+    pathname?.startsWith("/admin");
 
-  if (isPortal || isProcurement || isLogin) {
+  if (isPortal) {
     return null;
   }
 

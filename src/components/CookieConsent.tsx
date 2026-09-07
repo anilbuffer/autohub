@@ -2,19 +2,29 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShieldCheck, X } from "lucide-react";
 
 export const CookieConsent: React.FC = () => {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [analyticsConsent, setAnalyticsConsent] = useState(true);
 
+  const isPortal =
+    pathname === "/login" ||
+    pathname?.startsWith("/portal") ||
+    pathname?.startsWith("/procurement") ||
+    pathname?.startsWith("/operations") ||
+    pathname?.startsWith("/admin");
+
   useEffect(() => {
+    if (isPortal) return;
     const consent = localStorage.getItem("autohub_nz_privacy_consent");
     if (!consent) {
       setIsVisible(true);
     }
-  }, []);
+  }, [isPortal]);
 
   const handleAcceptAll = () => {
     localStorage.setItem(
@@ -42,7 +52,7 @@ export const CookieConsent: React.FC = () => {
     setIsVisible(false);
   };
 
-  if (!isVisible) return null;
+  if (isPortal || !isVisible) return null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-lg z-50 bg-slate-900/95 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300">

@@ -100,6 +100,8 @@ export interface FreightOption {
   co2Rating?: string;
   available: boolean;
   manualOverride?: boolean;
+  manualOverrideReason?: string;
+  disabledReason?: string;
 }
 
 export interface CustomerQuote {
@@ -149,6 +151,11 @@ export interface ShipmentDetails {
   eta: string;
   actualDeliveryDate?: string;
   podSignatureUrl?: string;
+  podDocketNumber?: string;
+  podRecipientName?: string;
+  podNotes?: string;
+  exceptionReason?: string;
+  exceptionCategory?: string;
   milestones: LogisticsMilestone[];
 }
 

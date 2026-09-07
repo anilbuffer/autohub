@@ -753,6 +753,511 @@ export function updateShipmentStage(
   saveRequests([...requests]);
 }
 
+// Create shipment record against an order
+export function createShipmentRecord(
+  requestId: string,
+  shipmentData: {
+    carrier: string;
+    trackingNumber: string;
+    originPort: string;
+    destinationPort: string;
+    vesselOrFlightNumber?: string;
+    customsEntryNumber?: string;
+    etd: string;
+    eta: string;
+    initialStage?: RequestStatus;
+  },
+  actorName: string
+): PartRequest | undefined {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return undefined;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+  const initialStage: RequestStatus = shipmentData.initialStage || "RECEIVED_AT_SHIPPING_FACILITY";
+
+  const newShipment: ShipmentDetails = {
+    id: `SHP-${current.referenceNumber.replace("AH-P-", "")}`,
+    carrier: shipmentData.carrier,
+    trackingNumber: shipmentData.trackingNumber,
+    originPort: shipmentData.originPort,
+    destinationPort: shipmentData.destinationPort,
+    vesselOrFlightNumber: shipmentData.vesselOrFlightNumber,
+    customsEntryNumber: shipmentData.customsEntryNumber,
+    etd: shipmentData.etd,
+    eta: shipmentData.eta,
+    milestones: [
+      {
+        id: `M-${Date.now()}`,
+        stage: initialStage.replace(/_/g, " "),
+        status: initialStage,
+        timestamp: now,
+        location: shipmentData.originPort,
+        notes: "Consignment manifest created and checked into export terminal facility.",
+        carrierName: shipmentData.carrier,
+        trackingReference: shipmentData.trackingNumber,
+        completed: true,
+      },
+    ],
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    status: initialStage,
+    updatedDate: now,
+    shipment: newShipment,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "LOGISTICS-TEAM",
+        senderName: actorName,
+        senderRole: "LOGISTICS_COORDINATOR",
+        timestamp: now,
+        content: `Shipment booking created with ${shipmentData.carrier}. Tracking: ${shipmentData.trackingNumber}. Origin: ${shipmentData.originPort} -> Destination: ${shipmentData.destinationPort}. Current Status: ${initialStage.replace(/_/g, " ")}.`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "LOGISTICS_COORDINATOR",
+        action: "Shipment Record Created",
+        previousState: current.status,
+        newState: initialStage,
+        details: `Carrier: ${shipmentData.carrier} | Waybill: ${shipmentData.trackingNumber} | Flight/Vessel: ${shipmentData.vesselOrFlightNumber || "TBD"}`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+  return updated;
+}
+
+// Update existing shipment details (carrier, tracking, ports, etc.)
+export function updateShipmentDetails(
+  requestId: string,
+  updates: Partial<ShipmentDetails>,
+  actorName: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  if (!current.shipment) return;
+  const now = new Date().toISOString();
+
+  const updatedShipment: ShipmentDetails = {
+    ...current.shipment,
+    ...updates,
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    updatedDate: now,
+    shipment: updatedShipment,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "LOGISTICS-TEAM",
+        senderName: actorName,
+        senderRole: "LOGISTICS_COORDINATOR",
+        timestamp: now,
+        content: `Carrier & tracking details updated: ${updates.carrier || current.shipment.carrier} (Tracking: ${updates.trackingNumber || current.shipment.trackingNumber}).`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "LOGISTICS_COORDINATOR",
+        action: "Shipment Details Updated",
+        details: `Carrier: ${updates.carrier || current.shipment.carrier}, Tracking: ${updates.trackingNumber || current.shipment.trackingNumber}`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Enable or disable a freight option per request
+export function toggleFreightOptionAvailability(
+  requestId: string,
+  method: FreightMethod,
+  available: boolean,
+  reason: string,
+  actorName: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  if (!current.quote) return;
+  const now = new Date().toISOString();
+
+  const updatedFreightOptions = current.quote.freightOptions.map((opt) => {
+    if (opt.method === method) {
+      return {
+        ...opt,
+        available,
+        disabledReason: available ? undefined : reason,
+      };
+    }
+    return opt;
+  });
+
+  const updated: PartRequest = {
+    ...current,
+    updatedDate: now,
+    quote: {
+      ...current.quote,
+      freightOptions: updatedFreightOptions,
+    },
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "LOGISTICS_COORDINATOR",
+        action: `Freight Option ${method} ${available ? "Enabled" : "Disabled"}`,
+        details: `Status: ${available ? "Active" : "Disabled"}. Reason: ${reason}`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Override freight calculation manually
+export function overrideFreightOption(
+  requestId: string,
+  method: FreightMethod,
+  costNzd: number,
+  estimatedTransitDays: string,
+  overrideReason: string,
+  actorName: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  if (!current.quote) return;
+  const now = new Date().toISOString();
+
+  const updatedFreightOptions = current.quote.freightOptions.map((opt) => {
+    if (opt.method === method) {
+      return {
+        ...opt,
+        costNzd,
+        estimatedTransitDays,
+        manualOverride: true,
+        manualOverrideReason: overrideReason,
+        available: true,
+      };
+    }
+    return opt;
+  });
+
+  // If this method is selected or default, recalculate totals
+  let newSubtotal = current.quote.subtotalNzd;
+  let newGst = current.quote.gstAmountNzd;
+  let newTotal = current.quote.totalNzd;
+
+  if (current.quote.selectedFreightMethod === method || !current.quote.selectedFreightMethod) {
+    newSubtotal = current.quote.basePartCostNzd + current.quote.marginAmountNzd + current.quote.procurementFeeNzd + costNzd;
+    newGst = newSubtotal * 0.15;
+    newTotal = newSubtotal + newGst;
+  }
+
+  const updatedQuote: CustomerQuote = {
+    ...current.quote,
+    freightOptions: updatedFreightOptions,
+    subtotalNzd: newSubtotal,
+    gstAmountNzd: newGst,
+    totalNzd: newTotal,
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    updatedDate: now,
+    quote: updatedQuote,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "LOGISTICS-TEAM",
+        senderName: actorName,
+        senderRole: "LOGISTICS_COORDINATOR",
+        timestamp: now,
+        content: `Manual freight rate applied for ${method === "AIR_EXPRESS" ? "Air Express" : "Sea Freight"}: $${costNzd.toFixed(2)} NZD (${estimatedTransitDays}). Reason: ${overrideReason}`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "LOGISTICS_COORDINATOR",
+        action: `Freight Override Applied (${method})`,
+        details: `Cost: $${costNzd.toFixed(2)} NZD | Transit: ${estimatedTransitDays} | Reason: ${overrideReason}`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Delivery confirmation with POD docket and recipient details
+export function confirmShipmentDelivery(
+  requestId: string,
+  deliveryDetails: {
+    recipientName: string;
+    podDocket?: string;
+    podNotes?: string;
+    actualDeliveryDate?: string;
+  },
+  actorName: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+  const deliveryDate = deliveryDetails.actualDeliveryDate || now;
+
+  const existingShipment = current.shipment || {
+    id: `SHP-${current.referenceNumber.replace("AH-P-", "")}`,
+    carrier: "Autohub Local Express Fleet",
+    trackingNumber: `POD-${Date.now().toString().slice(-6)}`,
+    originPort: "Auckland Cargo Hub",
+    destinationPort: `${current.deliveryAddress.city} Workshop`,
+    etd: now,
+    eta: now,
+    milestones: [],
+  };
+
+  const deliveryMilestone: LogisticsMilestone = {
+    id: `M-${Date.now()}`,
+    stage: "Delivered",
+    status: "DELIVERED",
+    timestamp: deliveryDate,
+    location: `${current.deliveryAddress.street}, ${current.deliveryAddress.suburb}, ${current.deliveryAddress.city}`,
+    notes: `Official delivery confirmed. Received and signed by ${deliveryDetails.recipientName}. Docket: ${deliveryDetails.podDocket || "N/A"}. ${deliveryDetails.podNotes || ""}`,
+    carrierName: existingShipment.carrier,
+    trackingReference: existingShipment.trackingNumber,
+    completed: true,
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    status: "DELIVERED",
+    updatedDate: now,
+    shipment: {
+      ...existingShipment,
+      actualDeliveryDate: deliveryDate,
+      podRecipientName: deliveryDetails.recipientName,
+      podDocketNumber: deliveryDetails.podDocket,
+      podNotes: deliveryDetails.podNotes,
+      milestones: [...existingShipment.milestones, deliveryMilestone],
+    },
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "LOGISTICS-TEAM",
+        senderName: actorName,
+        senderRole: "LOGISTICS_COORDINATOR",
+        timestamp: now,
+        content: `Consignment DELIVERED to ${current.deliveryAddress.label || current.deliveryAddress.city}. Signed by: ${deliveryDetails.recipientName}. Proof of Delivery docket: ${deliveryDetails.podDocket || "Verified by courier"}.`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "LOGISTICS_COORDINATOR",
+        action: "Consignment Delivered (POD Confirmed)",
+        previousState: current.status,
+        newState: "DELIVERED",
+        details: `Recipient: ${deliveryDetails.recipientName} | Docket: ${deliveryDetails.podDocket || "N/A"} | Location: ${current.deliveryAddress.city}`,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Raise a logistics exception with reason and category
+export function raiseLogisticsException(
+  requestId: string,
+  reason: string,
+  category: string,
+  actorName: string,
+  customerNote?: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+
+  const existingShipment = current.shipment || {
+    id: `SHP-${current.referenceNumber.replace("AH-P-", "")}`,
+    carrier: "Autohub Logistics",
+    trackingNumber: "N/A",
+    originPort: "Origin Export Terminal",
+    destinationPort: "Ports of Auckland",
+    etd: now,
+    eta: now,
+    milestones: [],
+  };
+
+  const exceptionMilestone: LogisticsMilestone = {
+    id: `M-${Date.now()}`,
+    stage: "Logistics Exception Raised",
+    status: "LOGISTICS_EXCEPTION",
+    timestamp: now,
+    location: existingShipment.originPort || "Transit Corridor",
+    notes: `[${category}] ${reason}`,
+    completed: false,
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    status: "LOGISTICS_EXCEPTION",
+    statusReason: `[${category}] ${reason}`,
+    updatedDate: now,
+    shipment: {
+      ...existingShipment,
+      exceptionReason: reason,
+      exceptionCategory: category,
+      milestones: [...existingShipment.milestones, exceptionMilestone],
+    },
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "LOGISTICS-TEAM",
+        senderName: actorName,
+        senderRole: "LOGISTICS_COORDINATOR",
+        timestamp: now,
+        content: `Logistics Exception: ${category}. Reason: ${reason}. ${customerNote ? `Customer update: ${customerNote}` : "Our operations team is actively addressing the hold with the carrier."}`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "LOGISTICS_COORDINATOR",
+        action: `Logistics Exception Raised: ${category}`,
+        previousState: current.status,
+        newState: "LOGISTICS_EXCEPTION",
+        details: reason,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
+// Resolve logistics exception and return to active stage
+export function resolveLogisticsException(
+  requestId: string,
+  targetStage: RequestStatus,
+  resolutionNotes: string,
+  actorName: string
+) {
+  const requests = getStoredRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+  if (index === -1) return;
+
+  const current = requests[index];
+  const now = new Date().toISOString();
+
+  const existingShipment = current.shipment;
+
+  const resolveMilestone: LogisticsMilestone = {
+    id: `M-${Date.now()}`,
+    stage: `Exception Cleared -> ${targetStage.replace(/_/g, " ")}`,
+    status: targetStage,
+    timestamp: now,
+    location: existingShipment?.destinationPort || "Auckland Terminal",
+    notes: `Logistics exception resolved: ${resolutionNotes}`,
+    completed: true,
+  };
+
+  const updated: PartRequest = {
+    ...current,
+    status: targetStage,
+    statusReason: undefined,
+    updatedDate: now,
+    shipment: existingShipment
+      ? {
+          ...existingShipment,
+          exceptionReason: undefined,
+          exceptionCategory: undefined,
+          milestones: [...existingShipment.milestones, resolveMilestone],
+        }
+      : undefined,
+    messages: [
+      ...current.messages,
+      {
+        id: `MSG-${Date.now()}`,
+        senderId: "LOGISTICS-TEAM",
+        senderName: actorName,
+        senderRole: "LOGISTICS_COORDINATOR",
+        timestamp: now,
+        content: `Logistics exception resolved. Consignment resumed at ${targetStage.replace(/_/g, " ")}. Resolution notes: ${resolutionNotes}`,
+        isInternalOnly: false,
+      },
+    ],
+    auditLogs: [
+      {
+        id: `AUD-${Date.now()}`,
+        timestamp: now,
+        actorName,
+        actorRole: "LOGISTICS_COORDINATOR",
+        action: "Logistics Exception Resolved",
+        previousState: "LOGISTICS_EXCEPTION",
+        newState: targetStage,
+        details: resolutionNotes,
+      },
+      ...current.auditLogs,
+    ],
+  };
+
+  requests[index] = updated;
+  saveRequests([...requests]);
+}
+
 // Add message to request with sender details and optional attachments
 export function addRequestMessage(
   requestId: string,

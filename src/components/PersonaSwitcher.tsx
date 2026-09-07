@@ -33,9 +33,9 @@ const ROLES: {
   },
   {
     id: "LOGISTICS_COORDINATOR",
-    label: "Logistics Desk",
-    sublabel: "Liam Patel (Freight & Port)",
-    deskUrl: "/admin/logistics",
+    label: "Operations Desk",
+    sublabel: "Liam Patel (Logistics)",
+    deskUrl: "/operations",
     icon: Truck,
     color: "bg-cyan-700 text-white",
   },
