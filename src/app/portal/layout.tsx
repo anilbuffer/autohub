@@ -19,7 +19,6 @@ import {
   ChevronRight,
   ChevronDown,
   LogOut,
-  User,
   Building2,
   ExternalLink,
   ShieldCheck,
@@ -30,13 +29,11 @@ import {
   Home,
   Compass,
 } from "lucide-react";
-import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import {
   getStoredCustomers,
   getStoredRequests,
   getStoredNotifications,
   subscribeToStore,
-  setActiveRole,
 } from "@/lib/store";
 import { TradeCustomer, PartRequest, CustomerNotification } from "@/lib/types";
 
@@ -380,17 +377,6 @@ export default function CustomerPortalLayout({
                 <span>Public Website</span>
               </Link>
 
-              <Link
-                href="/login"
-                onClick={() => {
-                  setUserMenuOpen(false);
-                  setActiveRole("CUSTOMER");
-                }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Switch Role / Re-login</span>
-              </Link>
 
               <button
                 type="button"
@@ -456,7 +442,7 @@ export default function CustomerPortalLayout({
             </button>
           </div>
 
-          {/* Right: Actions (Cross-Portal Links, PersonaSwitcher, Credit info, Help, Notifications) */}
+          {/* Right: Actions (Cross-Portal Links, Credit info, Help, Notifications) */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
             {/* Quick Sourcing Desk Link */}
             <Link
@@ -477,10 +463,6 @@ export default function CustomerPortalLayout({
               <span>Website</span>
             </Link>
 
-            {/* Persona Switcher */}
-            <div className="hidden sm:block">
-              <PersonaSwitcher variant="light" />
-            </div>
 
             {/* Quick Credit Status Chip */}
             <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">

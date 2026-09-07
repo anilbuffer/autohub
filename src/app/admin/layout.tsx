@@ -16,7 +16,6 @@ import {
   Home,
   Building2,
 } from "lucide-react";
-import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import { getStoredRequests, subscribeToStore } from "@/lib/store";
 import { PartRequest } from "@/lib/types";
 
@@ -112,7 +111,6 @@ export default function AdminLayout({
                 <Home className="w-3.5 h-3.5 text-slate-400" />
                 <span>Website</span>
               </Link>
-              <PersonaSwitcher variant="dark" />
             </div>
           </div>
 

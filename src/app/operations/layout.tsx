@@ -33,7 +33,6 @@ import {
   Anchor,
   FileCheck2,
 } from "lucide-react";
-import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import {
   getStoredRequests,
   getStoredNotifications,
@@ -581,10 +580,6 @@ export default function OperationsPortalLayout({
               )}
             </div>
 
-            {/* Persona Switcher Component */}
-            <div className="border-l border-slate-200 pl-3">
-              <PersonaSwitcher variant="light" />
-            </div>
           </div>
         </header>
 

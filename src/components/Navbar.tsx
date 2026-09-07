@@ -11,8 +11,6 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-import { PersonaSwitcher } from "./PersonaSwitcher";
-
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -49,7 +47,7 @@ export const Navbar: React.FC = () => {
             <span className="text-slate-200">Verified Fitment Guarantees &amp; Landed NZD Quotes</span>
           </div>
 
-          {/* Right: Hotline, Status & Persona Switcher */}
+          {/* Right: Hotline & Status */}
           <div className="flex items-center gap-3 text-slate-300 text-[11px]">
             <a href="tel:08002886482" className="hover:text-white transition hidden md:inline">
               <span>Toll Free: </span>
@@ -58,9 +56,6 @@ export const Navbar: React.FC = () => {
             <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>Direct Freight Active</span>
-            </div>
-            <div className="border-l border-slate-800 pl-3">
-              <PersonaSwitcher />
             </div>
           </div>
         </div>

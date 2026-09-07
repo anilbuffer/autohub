@@ -25,10 +25,7 @@ import {
   LucideIcon,
   RefreshCw,
   Home,
-  Globe,
-  ExternalLink,
 } from "lucide-react";
-import { PersonaSwitcher } from "@/components/PersonaSwitcher";
 import {
   getStoredRequests,
   getStoredSuppliers,
@@ -458,7 +455,7 @@ export default function ProcurementPortalLayout({
             </h1>
           </div>
 
-          {/* Right: Search, Quick Portal Links, PersonaSwitcher, New Action, Notifications */}
+          {/* Right: Search, Quick Portal Links, New Action, Notifications */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
             {/* Quick Cross-Portal Links */}
             <Link
@@ -479,10 +476,7 @@ export default function ProcurementPortalLayout({
               <span>Website</span>
             </Link>
 
-            {/* Persona Switcher */}
-            <div className="hidden sm:block">
-              <PersonaSwitcher variant="light" />
-            </div>
+
             {/* Global Search Bar */}
             <button
               type="button"
