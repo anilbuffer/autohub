@@ -16,10 +16,7 @@ import {
   Plus,
   ChevronDown,
   LogOut,
-  User,
-  ExternalLink,
-  Shield,
-  CreditCard,
+  Settings,
   Bell,
   X,
   Sparkles,
@@ -33,7 +30,6 @@ import {
   getStoredSuppliers,
   getStoredNotifications,
   subscribeToStore,
-  setActiveRole,
 } from "@/lib/store";
 import { PartRequest, SupplierProfile, CustomerNotification } from "@/lib/types";
 
@@ -135,6 +131,7 @@ export default function ProcurementPortalLayout({
     if (pathname === "/procurement/orders") return "Purchase Orders (Payment Cleared Gate)";
     if (pathname === "/procurement/tracking") return "Procurement Progress & Lifecycle Tracking";
     if (pathname === "/procurement/exceptions") return "Procurement Sourcing Exceptions";
+    if (pathname === "/procurement/settings") return "Sourcing Specialist Profile & Preferences";
     return "Procurement Portal";
   };
 
@@ -178,21 +175,6 @@ export default function ProcurementPortalLayout({
           badge: exceptionsCount > 0 ? exceptionsCount : undefined,
           badgeColor: "bg-rose-600",
         },
-      ],
-    },
-    {
-      group: "CROSS-PORTAL SWITCH",
-      items: [
-        { label: "Customer Portal", href: "/portal", icon: ExternalLink },
-        { label: "Admin Operations", href: "/admin", icon: Shield },
-        { label: "Logistics Desk", href: "/admin/logistics", icon: Truck },
-        { label: "Finance & Credit", href: "/admin/finance", icon: CreditCard },
-      ],
-    },
-    {
-      group: "PROCUREMENT SOP",
-      items: [
-        { label: "Sourcing SOP & Rates", href: "#sop", icon: HelpCircle, isModal: true },
       ],
     },
   ];
@@ -383,36 +365,12 @@ export default function ProcurementPortalLayout({
               </div>
 
               <Link
-                href="/portal"
-                onClick={() => {
-                  setUserMenuOpen(false);
-                  setActiveRole("CUSTOMER");
-                }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition"
-              >
-                <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                <span>Switch to Customer Portal</span>
-              </Link>
-
-              <Link
-                href="/admin"
+                href="/procurement/settings"
                 onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
               >
-                <Shield className="w-3.5 h-3.5 text-slate-400" />
-                <span>Operations Administration</span>
-              </Link>
-
-              <Link
-                href="/login"
-                onClick={() => {
-                  setUserMenuOpen(false);
-                  setActiveRole("SOURCING_SPECIALIST");
-                }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Switch Role / Re-login</span>
+                <Settings className="w-3.5 h-3.5 text-amber-400" />
+                <span>Profile Settings</span>
               </Link>
 
               <button
