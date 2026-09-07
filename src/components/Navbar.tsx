@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { PersonaSwitcher } from "./PersonaSwitcher";
+import { ProcurlyLogo } from "./ProcurlyLogo";
 import {
   Car,
   Package,
@@ -54,19 +54,12 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-0">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo Brand */}
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex items-center">
-                <span className="text-2xl sm:text-3xl font-black tracking-tight text-autohub-navy">
-                  AUTO<span className="text-autohub-red">HUB</span>
-                </span>
-                {/* <span className="ml-2 text-xs font-black uppercase tracking-widest bg-gradient-to-r from-autohub-red to-autohub-navy text-white px-2 py-0.5 rounded shadow-sm">
-                  PROURLY
-                </span> */}
-              </div>
+            <Link href="/" className="flex items-center group">
+              <ProcurlyLogo size="md" />
             </Link>
 
             {/* Desktop Navigation Links */}
@@ -124,11 +117,6 @@ export const Navbar: React.FC = () => {
 
           {/* Right Actions: Persona Switcher, Login, Register CTA */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Persona Quick Switcher (for instant testing) */}
-            <div className="hidden xl:block">
-              <PersonaSwitcher />
-            </div>
-
             <Link
               href="/login"
               className="px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-autohub-navy hover:bg-slate-100 rounded-xl transition"
@@ -217,9 +205,6 @@ export const Navbar: React.FC = () => {
             >
               Open Trade Account (NZBN)
             </Link>
-            <div className="pt-2">
-              <PersonaSwitcher />
-            </div>
           </div>
         </div>
       )}

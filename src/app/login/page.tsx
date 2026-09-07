@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ProcurlyLogo } from "@/components/ProcurlyLogo";
 import {
   Lock,
   Mail,
@@ -324,21 +325,8 @@ export default function LoginPage() {
       <div className="w-full lg:w-[44%] bg-white flex flex-col justify-between p-6 sm:p-10 lg:p-14 text-slate-900 relative">
         {/* Top Header: Logo + Badges */}
         <div className="flex items-center justify-between pb-8">
-          <Link href="/" className="inline-flex items-center gap-2 group">
-            {/* 3D Box Logo */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 shadow-md flex items-center justify-center text-white">
-              <div className="w-4 h-4 border-2 border-white transform rotate-45 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 bg-white rounded-full" />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg font-black tracking-tight text-slate-900 leading-none">
-                PROCUR<span className="text-rose-600">ly</span>
-              </div>
-              <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-                BY AUTOHUB
-              </div>
-            </div>
+          <Link href="/" className="group">
+            <ProcurlyLogo size="md" />
           </Link>
 
           <div className="flex items-center gap-2 text-xs">

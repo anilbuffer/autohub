@@ -182,15 +182,25 @@ export default function CustomerPortalLayout({
           <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-800/60">
             <Link href="/portal" className="flex items-center gap-2.5 overflow-hidden">
               {/* 3D Box Logo */}
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 shadow-md flex items-center justify-center text-white flex-shrink-0">
-                <div className="w-3.5 h-3.5 border-2 border-white transform rotate-45 flex items-center justify-center">
-                  <div className="w-1 h-1 bg-white rounded-full" />
-                </div>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-red-600 via-red-600 to-rose-500 shadow-md shadow-red-600/20 flex items-center justify-center text-white flex-shrink-0">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4 text-white"
+                >
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                  <path d="m3.3 7 8.7 5 8.7-5" />
+                  <path d="M12 22V12" />
+                </svg>
               </div>
               {!sidebarCollapsed && (
                 <div>
                   <div className="text-base font-black tracking-tight text-white leading-none">
-                    PROCUR<span className="text-rose-500">ly</span>
+                    PROCUR<span className="text-autohub-red">ly</span>
                   </div>
                   <div className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
                     CUSTOMER PORTAL

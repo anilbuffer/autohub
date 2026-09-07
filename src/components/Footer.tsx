@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Shield, Anchor, Phone, Mail, MapPin, CheckCircle2 } from "lucide-react";
+import { ProcurlyLogo } from "./ProcurlyLogo";
 
 export const Footer: React.FC = () => {
   const pathname = usePathname();
@@ -13,18 +14,11 @@ export const Footer: React.FC = () => {
 
   return (
     <footer className="bg-slate-900 text-slate-400 text-xs border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-0 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           {/* Col 1: Brand & Purpose */}
           <div className="md:col-span-1 space-y-3">
-            <div className="flex items-center">
-              <span className="text-xl font-black tracking-tight text-white">
-                AUTO<span className="text-autohub-red">HUB</span>
-              </span>
-              <span className="ml-2 text-[10px] font-bold uppercase tracking-widest bg-autohub-red text-white px-1.5 py-0.5 rounded">
-                PROURLY
-              </span>
-            </div>
+            <ProcurlyLogo size="md" theme="dark" />
             <p className="text-slate-400 leading-relaxed text-xs">
               Autohub acts as the Coordination Layer, Procurement Facilitator, and Logistics Enabler for New Zealand&apos;s automotive trade.
             </p>

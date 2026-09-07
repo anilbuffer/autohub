@@ -1978,6 +1978,11 @@ video {
   --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
+.from-red-600{
+  --tw-gradient-from: #dc2626 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(220 38 38 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
 .via-\[\#0a1226\]{
   --tw-gradient-to: rgb(10 18 38 / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), #0a1226 var(--tw-gradient-via-position), var(--tw-gradient-to);
@@ -2009,6 +2014,10 @@ video {
 .via-white{
   --tw-gradient-to: rgb(255 255 255 / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), #fff var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.via-red-600{
+  --tw-gradient-to: rgb(220 38 38 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #dc2626 var(--tw-gradient-via-position), var(--tw-gradient-to);
 }
 .to-\[\#0f172a\]{
   --tw-gradient-to: #0f172a var(--tw-gradient-to-position);
@@ -2045,6 +2054,9 @@ video {
 }
 .to-teal-400{
   --tw-gradient-to: #2dd4bf var(--tw-gradient-to-position);
+}
+.to-rose-500{
+  --tw-gradient-to: #f43f5e var(--tw-gradient-to-position);
 }
 .bg-clip-text{
   -webkit-background-clip: text;
@@ -2334,6 +2346,9 @@ video {
   font-size: 0.75rem;
   line-height: 1rem;
 }
+.text-\[7\.5px\]{
+  font-size: 7.5px;
+}
 .font-black{
   font-weight: 900;
 }
@@ -2387,6 +2402,9 @@ video {
 }
 .tracking-widest{
   letter-spacing: 0.1em;
+}
+.tracking-\[0\.2em\]{
+  letter-spacing: 0.2em;
 }
 .text-amber-400{
   --tw-text-opacity: 1;
@@ -2703,6 +2721,10 @@ video {
 }
 .shadow-rose-900\/30{
   --tw-shadow-color: rgb(136 19 55 / 0.3);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+.shadow-red-600\/20{
+  --tw-shadow-color: rgb(220 38 38 / 0.2);
   --tw-shadow: var(--tw-shadow-colored);
 }
 .ring-1{
@@ -3479,6 +3501,11 @@ body {
 
   .md\:items-center{
     align-items: center;
+  }
+
+  .md\:px-0{
+    padding-left: 0px;
+    padding-right: 0px;
   }
 }
 @media (min-width: 1024px){

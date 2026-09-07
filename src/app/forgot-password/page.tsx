@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Mail, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, KeyRound } from "lucide-react";
+import { ProcurlyLogo } from "@/components/ProcurlyLogo";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("marcus@apexmotors.co.nz");
@@ -33,11 +34,10 @@ export default function ForgotPasswordPage() {
 
         {/* Card Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 text-2xl font-black text-autohub-navy">
-            AUTO<span className="text-autohub-red">HUB</span>
-            <span className="text-xs bg-autohub-red text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider ml-1">
-              PROURLY
-            </span>
+          <div className="flex justify-center">
+            <Link href="/">
+              <ProcurlyLogo size="md" />
+            </Link>
           </div>
           <h1 className="text-xl font-bold text-slate-900">
             Reset Trade Account Password

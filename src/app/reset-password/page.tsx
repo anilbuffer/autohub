@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, CheckCircle2, ArrowRight, ShieldCheck, AlertCircle, KeyRound } from "lucide-react";
+import { ProcurlyLogo } from "@/components/ProcurlyLogo";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -51,11 +52,10 @@ function ResetPasswordForm() {
       <div className="max-w-md w-full space-y-6">
         {/* Title */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 text-2xl font-black text-autohub-navy">
-            AUTO<span className="text-autohub-red">HUB</span>
-            <span className="text-xs bg-autohub-red text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider ml-1">
-              PROURLY
-            </span>
+          <div className="flex justify-center">
+            <Link href="/">
+              <ProcurlyLogo size="md" />
+            </Link>
           </div>
           <h1 className="text-xl font-bold text-slate-900">
             Set New Password

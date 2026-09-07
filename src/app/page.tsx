@@ -149,7 +149,7 @@ export default function HomePage() {
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-autohub-red/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 md:px-0 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left Column: Headline, Value Proposition, Action CTAs */}
             <div className="lg:col-span-7 space-y-6 text-left">
@@ -420,7 +420,7 @@ export default function HomePage() {
 
       {/* 3. COMPARISON: THE OLD PROCUREMENT WAY VS THE PROURLY PIPELINE */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-autohub-red bg-red-50 px-3.5 py-1 rounded-full border border-red-100">
               Procurement Transformation
@@ -581,7 +581,7 @@ export default function HomePage() {
 
       {/* 4. COMMERCIAL ADVANTAGES FOR NZ TRADE CLIENTS */}
       <section id="commercial-advantages" className="py-20 bg-slate-50 border-t border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-autohub-navy bg-blue-50 px-3.5 py-1 rounded-full border border-blue-100">
               Why Autohub Procurly
@@ -643,7 +643,7 @@ export default function HomePage() {
 
       {/* 5. RECENT PROCURED ORDERS ACROSS NEW ZEALAND (LIVE ORDER TICKER) */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-autohub-red bg-red-50 px-3 py-1 rounded-full border border-red-100">
@@ -757,7 +757,7 @@ export default function HomePage() {
 
       {/* 6. INTERACTIVE LANDED COST ESTIMATOR / PRICING TRANSPARENCY */}
       <section id="landed-calculator" className="py-20 bg-slate-900 text-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 md:px-0 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-autohub-red bg-red-500/20 px-3.5 py-1 rounded-full border border-red-500/30">
               Pricing Transparency Engine
@@ -788,11 +788,10 @@ export default function HomePage() {
                         key={c.id}
                         type="button"
                         onClick={() => setOriginCountry(c.id as any)}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition border ${
-                          originCountry === c.id
-                            ? "bg-autohub-red text-white border-autohub-red"
-                            : "bg-slate-700/60 text-slate-300 border-slate-600 hover:bg-slate-700"
-                        }`}
+                        className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition border ${originCountry === c.id
+                          ? "bg-autohub-red text-white border-autohub-red"
+                          : "bg-slate-700/60 text-slate-300 border-slate-600 hover:bg-slate-700"
+                          }`}
                       >
                         <span>{c.flag}</span>
                         <span>{c.label}</span>
@@ -851,11 +850,10 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={() => setFreightType("AIR")}
-                      className={`p-3 rounded-2xl border text-left transition ${
-                        freightType === "AIR"
-                          ? "bg-autohub-navy/80 border-sky-400 text-white"
-                          : "bg-slate-700/40 border-slate-600 text-slate-300 hover:bg-slate-700/80"
-                      }`}
+                      className={`p-3 rounded-2xl border text-left transition ${freightType === "AIR"
+                        ? "bg-autohub-navy/80 border-sky-400 text-white"
+                        : "bg-slate-700/40 border-slate-600 text-slate-300 hover:bg-slate-700/80"
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold">Priority Air Express</span>
@@ -867,11 +865,10 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={() => setFreightType("SEA")}
-                      className={`p-3 rounded-2xl border text-left transition ${
-                        freightType === "SEA"
-                          ? "bg-autohub-navy/80 border-emerald-400 text-white"
-                          : "bg-slate-700/40 border-slate-600 text-slate-300 hover:bg-slate-700/80"
-                      }`}
+                      className={`p-3 rounded-2xl border text-left transition ${freightType === "SEA"
+                        ? "bg-autohub-navy/80 border-emerald-400 text-white"
+                        : "bg-slate-700/40 border-slate-600 text-slate-300 hover:bg-slate-700/80"
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold">Sea Freight Consolidated</span>
@@ -965,7 +962,7 @@ export default function HomePage() {
 
       {/* 7. HOW PROURLY WORKS - 4-STEP PIPELINE */}
       <section id="how-it-works" className="py-20 bg-slate-50 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-autohub-navy bg-blue-50 px-3.5 py-1 rounded-full border border-blue-100">
               End-to-End Execution
@@ -1032,7 +1029,7 @@ export default function HomePage() {
 
       {/* 8. TRUSTED BY LEADING NEW ZEALAND TRADE LEADERS (TESTIMONIALS) */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-autohub-red bg-red-50 px-3.5 py-1 rounded-full border border-red-100">
               Verified Workshop Feedback
@@ -1100,7 +1097,7 @@ export default function HomePage() {
 
       {/* 9. THE AUTOHUB ADVANTAGE: 25+ YEARS OF NEW ZEALAND TRADE TRUST */}
       <section className="py-20 bg-gradient-to-r from-autohub-navy via-[#1f3373] to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <div className="lg:col-span-7 space-y-5">
               <span className="text-xs font-bold uppercase tracking-wider text-autohub-red bg-white/10 px-3.5 py-1 rounded-full border border-white/20">
