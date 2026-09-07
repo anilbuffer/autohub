@@ -2,16 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import {
   Compass,
   Building2,
   CheckSquare,
   Truck,
-  Calculator,
   AlertTriangle,
   Search,
-  Plus,
   ArrowRight,
   DollarSign,
   CheckCircle2,
@@ -19,144 +16,49 @@ import {
   Sparkles,
   Plane,
   Anchor,
-  X,
-  ExternalLink,
-  Edit3,
-  ShieldAlert,
-  FileText,
-  Boxes,
-  HelpCircle,
+  TrendingUp,
+  Activity,
+  ArrowUpRight,
+  ShieldCheck,
+  Zap,
+  Globe,
   RefreshCw,
   Eye,
-  Mail,
-  Phone,
-  Tag,
-  Star,
-  Layers,
-  Send,
-  Calendar,
-  User,
+  Sliders,
+  FileCheck,
+  ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   getStoredRequests,
   getStoredSuppliers,
-  addSupplierQuote,
-  issueCustomerQuote,
-  reissueCustomerQuote,
-  markOrderedFromSupplier,
-  updateRequestStatus,
-  resolveSourcingException,
-  addSupplierProfile,
   subscribeToStore,
 } from "@/lib/store";
-import {
-  PartRequest,
-  SupplierQuotation,
-  CustomerQuote,
-  FreightOption,
-  SupplierProfile,
-  FreightMethod,
-} from "@/lib/types";
+import { PartRequest, SupplierProfile, RequestStatus } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AIQuoteModal } from "@/components/AIQuoteModal";
 
-export type ActiveTab = "queue" | "suppliers" | "orders" | "tracking" | "exceptions";
-
-export function ProcurementDashboardContent({ defaultTab }: { defaultTab?: ActiveTab }) {
-  const searchParams = useSearchParams();
-  const initialTabParam = searchParams.get("tab") as ActiveTab | null;
-  const initialReqParam = searchParams.get("req");
-
-  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
-    if (defaultTab) return defaultTab;
-    if (initialTabParam && ["queue", "suppliers", "orders", "tracking", "exceptions"].includes(initialTabParam)) {
-      return initialTabParam;
-    }
-    return "queue";
-  });
-
+export default function ProcurementCommandCenterPage() {
   const [requests, setRequests] = useState<PartRequest[]>(getStoredRequests);
   const [suppliers, setSuppliers] = useState<SupplierProfile[]>(getStoredSuppliers);
-  const [selectedRequest, setSelectedRequest] = useState<PartRequest | null>(null);
-
-  // Search & Filter States
-  const [queueSearch, setQueueSearch] = useState("");
-  const [queueFilter, setQueueFilter] = useState<"ALL" | "SOURCING" | "SUBMITTED" | "EXCEPTION">("ALL");
-  const [supplierSearch, setSupplierSearch] = useState("");
-  const [supplierCountryFilter, setSupplierCountryFilter] = useState("ALL");
-
-  // Modals
+  const [selectedFunnelStage, setSelectedFunnelStage] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showAiModal, setShowAiModal] = useState(false);
-  const [showAddSupplierQuote, setShowAddSupplierQuote] = useState(false);
-  const [showExceptionModal, setShowExceptionModal] = useState(false);
-  const [showRevisionModal, setShowRevisionModal] = useState(false);
-  const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
-  const [showPoModal, setShowPoModal] = useState(false);
-  const [poTargetReq, setPoTargetReq] = useState<PartRequest | null>(null);
+  const [aiModalRequest, setAiModalRequest] = useState<PartRequest | null>(null);
 
-  // Manual Supplier Quote Capture Form
-  const [quoteSupplierId, setQuoteSupplierId] = useState("SUP-01");
-  const [foreignCost, setForeignCost] = useState<number>(45000);
-  const [foreignFreight, setForeignFreight] = useState<number>(3500);
-  const [quoteAvailabilityDays, setQuoteAvailabilityDays] = useState<number>(2);
-  const [quoteNotes, setQuoteNotes] = useState("Direct from supplier hub inventory");
+  // FX Sensitivity Simulator State
+  const [jpyShift, setJpyShift] = useState<number>(0); // -5% to +5%
 
-  // Quote Builder & Margin Calculator State
-  const [selectedSupplierQuoteId, setSelectedSupplierQuoteId] = useState<string>("");
-  const [targetMargin, setTargetMargin] = useState<number>(18.0);
-  const [procurementFee, setProcurementFee] = useState<number>(60.0);
-  const [airFreightCost, setAirFreightCost] = useState<number>(185.0);
-  const [seaFreightCost, setSeaFreightCost] = useState<number>(65.0);
-  const [selectedFreightOption, setSelectedFreightOption] = useState<FreightMethod>("AIR_EXPRESS");
-  const [sourcingNotesToCustomer, setSourcingNotesToCustomer] = useState(
-    "Genuine OEM specification part sourced directly from Japan authorized dealer network."
-  );
-
-  // Revision Form State
-  const [revisionNotes, setRevisionNotes] = useState("");
-
-  // Exception Form State
-  const [exceptionCategory, setExceptionCategory] = useState("Factory Discontinued");
-  const [exceptionReason, setExceptionReason] = useState("");
-
-  // Add Supplier Form State
-  const [newSupplierName, setNewSupplierName] = useState("");
-  const [newSupplierCountry, setNewSupplierCountry] = useState("Japan");
-  const [newSupplierCurrency, setNewSupplierCurrency] = useState("JPY");
-  const [newSupplierFxRate, setNewSupplierFxRate] = useState<number>(0.0108);
-  const [newSupplierCategory, setNewSupplierCategory] = useState("Japanese OEM Genuine");
-  const [newSupplierLeadDays, setNewSupplierLeadDays] = useState<number>(3);
-  const [newSupplierPerson, setNewSupplierPerson] = useState("");
-  const [newSupplierEmail, setNewSupplierEmail] = useState("");
-  const [newSupplierPhone, setNewSupplierPhone] = useState("");
-
-  // PO Placement State
-  const [poNumberInput, setPoNumberInput] = useState("");
-  const [poDispatchBay, setPoDispatchBay] = useState("Centrair Export Terminal Nagoya");
-  const [poNotes, setPoNotes] = useState("Priority packaging and air waybill dispatch");
-
-  // Load store data
   useEffect(() => {
-    const loadedRequests = getStoredRequests();
-    setRequests(loadedRequests);
+    setRequests(getStoredRequests());
     setSuppliers(getStoredSuppliers());
 
-    if (initialReqParam) {
-      const match = loadedRequests.find((r) => r.id === initialReqParam || r.referenceNumber === initialReqParam);
-      if (match) setSelectedRequest(match);
-    }
-
     const unsub = subscribeToStore(() => {
-      const reqs = getStoredRequests();
-      setRequests(reqs);
+      setRequests(getStoredRequests());
       setSuppliers(getStoredSuppliers());
-      if (selectedRequest) {
-        const refreshed = reqs.find((r) => r.id === selectedRequest.id);
-        if (refreshed) setSelectedRequest(refreshed);
-      }
     });
     return unsub;
-  }, [initialReqParam]);
+  }, []);
 
   // Derived Queues
   const sourcingQueue = requests.filter(
@@ -165,2057 +67,824 @@ export function ProcurementDashboardContent({ defaultTab }: { defaultTab?: Activ
   const quotesIssuedQueue = requests.filter(
     (r) => r.status === "AWAITING_CUSTOMER_APPROVAL"
   );
+  const paymentAwaitingQueue = requests.filter(
+    (r) => r.status === "AWAITING_PAYMENT"
+  );
   const poGateQueue = requests.filter(
     (r) => r.status === "PAYMENT_CONFIRMED"
   );
-  const orderedQueue = requests.filter(
+  const inTransitQueue = requests.filter(
     (r) =>
       r.status === "ORDERED_FROM_SUPPLIER" ||
       r.status === "SUPPLIER_DISPATCHED" ||
+      r.status === "RECEIVED_AT_SHIPPING_FACILITY" ||
       r.status === "IN_TRANSIT" ||
+      r.status === "ARRIVED_IN_NZ" ||
       r.status === "CUSTOMS_CLEARANCE"
+  );
+  const deliveredQueue = requests.filter(
+    (r) => r.status === "OUT_FOR_DELIVERY" || r.status === "DELIVERED" || r.status === "COMPLETED"
   );
   const exceptionsQueue = requests.filter(
     (r) => r.status === "SOURCING_EXCEPTION"
   );
 
-  // Active Selected Request in Queue Tab
-  const activeReq = selectedRequest || sourcingQueue[0] || requests[0];
+  // Total Pipeline Value ($NZD)
+  const totalPipelineValue = requests.reduce((acc, r) => {
+    if (r.quote?.totalNzd) return acc + r.quote.totalNzd;
+    if (r.invoice?.totalNzd) return acc + r.invoice.totalNzd;
+    return acc + 1200; // conservative estimate for in-sourcing
+  }, 0);
 
-  // Set default winning supplier quote when active request changes
-  useEffect(() => {
-    if (activeReq?.supplierQuotes && activeReq.supplierQuotes.length > 0) {
-      const rec = activeReq.supplierQuotes.find((sq) => sq.isRecommendedByAi) || activeReq.supplierQuotes[0];
-      setSelectedSupplierQuoteId(rec.id);
-    } else {
-      setSelectedSupplierQuoteId("");
+  // Funnel Filtered Requests
+  const filteredRequests = requests.filter((r) => {
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchSearch =
+        r.referenceNumber.toLowerCase().includes(q) ||
+        r.vehicle.make.toLowerCase().includes(q) ||
+        r.vehicle.model.toLowerCase().includes(q) ||
+        r.part.partName.toLowerCase().includes(q) ||
+        r.customerName.toLowerCase().includes(q);
+      if (!matchSearch) return false;
     }
-  }, [activeReq?.id]);
 
-  // Calculations for Active Request & Selected Supplier Quote
-  const winningQuote = activeReq?.supplierQuotes?.find((sq) => sq.id === selectedSupplierQuoteId) || activeReq?.supplierQuotes?.[0];
-  const baseCostNzd = winningQuote ? winningQuote.partCostNzd : 0;
-  const domesticFreightNzd = winningQuote ? winningQuote.domesticFreightNzd : 0;
-  const landedCostNzd = parseFloat((baseCostNzd + domesticFreightNzd).toFixed(2));
-  const calculatedMarginAmount = parseFloat((landedCostNzd * (targetMargin / 100)).toFixed(2));
-  const currentFreightCost = selectedFreightOption === "AIR_EXPRESS" ? airFreightCost : seaFreightCost;
-  const calculatedSubtotal = parseFloat((landedCostNzd + calculatedMarginAmount + procurementFee + currentFreightCost).toFixed(2));
-  const calculatedGst = parseFloat((calculatedSubtotal * 0.15).toFixed(2));
-  const calculatedTotal = parseFloat((calculatedSubtotal + calculatedGst).toFixed(2));
-
-  // Handle Capture Manual Supplier Quote
-  const handleSaveSupplierQuote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeReq) return;
-
-    const sup = suppliers.find((s) => s.id === quoteSupplierId) || suppliers[0];
-    const partNzd = parseFloat((foreignCost * sup.exchangeRateToNzd).toFixed(2));
-    const freightNzd = parseFloat((foreignFreight * sup.exchangeRateToNzd).toFixed(2));
-
-    const newSq: SupplierQuotation = {
-      id: `SQ-${Date.now()}`,
-      supplierId: sup.id,
-      supplierName: sup.name,
-      supplierCountry: sup.country,
-      partCostCurrency: sup.currency,
-      partCostForeign: foreignCost,
-      exchangeRateToNzd: sup.exchangeRateToNzd,
-      partCostNzd: partNzd,
-      domesticFreightForeign: foreignFreight,
-      domesticFreightNzd: freightNzd,
-      availabilityDays: quoteAvailabilityDays || sup.leadTimeDays,
-      notes: quoteNotes,
-      isRecommendedByAi: activeReq.supplierQuotes.length === 0,
-    };
-
-    addSupplierQuote(activeReq.id, newSq);
-    setSelectedSupplierQuoteId(newSq.id);
-    setShowAddSupplierQuote(false);
-  };
-
-  // Handle Issue Official Customer Quote
-  const handleIssueCustomerQuote = () => {
-    if (!activeReq || !winningQuote) return;
-
-    const freightOptions: FreightOption[] = [
-      {
-        method: "AIR_EXPRESS",
-        carrierName: "Autohub Air Priority Express (Cathay Cargo / Air NZ)",
-        estimatedTransitDays: "3 - 5 business days",
-        costNzd: airFreightCost,
-        available: true,
-      },
-      {
-        method: "SEA_FREIGHT",
-        carrierName: "Autohub Ocean Consolidated (Toyofuji Shipping)",
-        estimatedTransitDays: "14 - 18 business days",
-        costNzd: seaFreightCost,
-        available: true,
-      },
-    ];
-
-    const quoteNum = activeReq.quote?.quoteNumber || `QTE-2026-${activeReq.referenceNumber.replace("AH-P-", "")}`;
-    const now = new Date();
-    const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    const quote: CustomerQuote = {
-      id: `QTE-${Date.now()}`,
-      quoteNumber: quoteNum,
-      createdAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
-      selectedSupplierQuoteId: winningQuote.id,
-      basePartCostNzd: baseCostNzd,
-      targetMarginPercentage: targetMargin,
-      marginAmountNzd: calculatedMarginAmount,
-      procurementFeeNzd: procurementFee,
-      landedCostNzd: landedCostNzd,
-      freightOptions,
-      selectedFreightMethod: selectedFreightOption,
-      subtotalNzd: calculatedSubtotal,
-      gstAmountNzd: calculatedGst,
-      totalNzd: calculatedTotal,
-      termsAccepted: false,
-      status: "ISSUED",
-      revisionNumber: 1,
-    };
-
-    issueCustomerQuote(activeReq.id, quote);
-  };
-
-  // Handle Revise Customer Quote
-  const handleReissueQuote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeReq || !winningQuote) return;
-
-    const freightOptions: FreightOption[] = [
-      {
-        method: "AIR_EXPRESS",
-        carrierName: "Autohub Air Priority Express (Cathay Cargo / Air NZ)",
-        estimatedTransitDays: "3 - 5 business days",
-        costNzd: airFreightCost,
-        available: true,
-      },
-      {
-        method: "SEA_FREIGHT",
-        carrierName: "Autohub Ocean Consolidated (Toyofuji Shipping)",
-        estimatedTransitDays: "14 - 18 business days",
-        costNzd: seaFreightCost,
-        available: true,
-      },
-    ];
-
-    const quoteNum = activeReq.quote?.quoteNumber || `QTE-2026-${activeReq.referenceNumber.replace("AH-P-", "")}`;
-    const now = new Date();
-    const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    const updatedQuote: CustomerQuote = {
-      id: activeReq.quote?.id || `QTE-${Date.now()}`,
-      quoteNumber: quoteNum,
-      createdAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
-      selectedSupplierQuoteId: winningQuote.id,
-      basePartCostNzd: baseCostNzd,
-      targetMarginPercentage: targetMargin,
-      marginAmountNzd: calculatedMarginAmount,
-      procurementFeeNzd: procurementFee,
-      landedCostNzd: landedCostNzd,
-      freightOptions,
-      selectedFreightMethod: selectedFreightOption,
-      subtotalNzd: calculatedSubtotal,
-      gstAmountNzd: calculatedGst,
-      totalNzd: calculatedTotal,
-      termsAccepted: false,
-      status: "ISSUED",
-    };
-
-    reissueCustomerQuote(activeReq.id, updatedQuote, revisionNotes || "Revised margin & landed freight allocation");
-    setShowRevisionModal(false);
-    setRevisionNotes("");
-  };
-
-  // Handle Raise Sourcing Exception
-  const handleConfirmException = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeReq || !exceptionReason.trim()) return;
-
-    const fullReason = `[${exceptionCategory}] ${exceptionReason.trim()}`;
-    updateRequestStatus(
-      activeReq.id,
-      "SOURCING_EXCEPTION",
-      "Nathan Cole",
-      "SOURCING_SPECIALIST",
-      fullReason
-    );
-    setShowExceptionModal(false);
-    setExceptionReason("");
-  };
-
-  // Handle Resolve Sourcing Exception
-  const handleResolveException = (reqId: string) => {
-    resolveSourcingException(reqId, "Nathan Cole", "Part specification resolved with overseas dealer network");
-  };
-
-  // Handle Transmit PO & Mark Ordered From Supplier
-  const handleMarkOrdered = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!poTargetReq) return;
-
-    const notes = `PO Ref: ${poNumberInput || "PO-JP-2026-" + Math.floor(1000 + Math.random() * 9000)} | Bay: ${poDispatchBay} | ${poNotes}`;
-    markOrderedFromSupplier(poTargetReq.id, "Nathan Cole (Sourcing)", notes);
-    setShowPoModal(false);
-    setPoTargetReq(null);
-    setPoNumberInput("");
-  };
-
-  // Handle Add New Supplier
-  const handleAddSupplier = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSupplierName.trim()) return;
-
-    const newSup: SupplierProfile = {
-      id: `SUP-${Date.now().toString().slice(-4)}`,
-      name: newSupplierName.trim(),
-      country: newSupplierCountry,
-      currency: newSupplierCurrency,
-      exchangeRateToNzd: newSupplierFxRate,
-      category: newSupplierCategory,
-      leadTimeDays: newSupplierLeadDays,
-      rating: 4.8,
-      contactPerson: newSupplierPerson.trim() || "Account Manager",
-      contactEmail: newSupplierEmail.trim() || "orders@supplier.com",
-      contactPhone: newSupplierPhone.trim() || "+81 3 0000 0000",
-    };
-
-    addSupplierProfile(newSup);
-    setShowAddSupplierModal(false);
-    setNewSupplierName("");
-    setNewSupplierPerson("");
-    setNewSupplierEmail("");
-    setNewSupplierPhone("");
-  };
-
-  // Filtered Queue
-  const filteredQueue = requests.filter((req) => {
-    if (queueFilter === "SOURCING" && req.status !== "SOURCING") return false;
-    if (queueFilter === "SUBMITTED" && req.status !== "SUBMITTED") return false;
-    if (queueFilter === "EXCEPTION" && req.status !== "SOURCING_EXCEPTION") return false;
-    if (queueFilter === "ALL" && !["SOURCING", "SUBMITTED", "AWAITING_CUSTOMER_APPROVAL", "SOURCING_EXCEPTION"].includes(req.status)) {
-      return false;
-    }
-    if (queueSearch.trim()) {
-      const q = queueSearch.toLowerCase();
-      return (
-        req.referenceNumber.toLowerCase().includes(q) ||
-        req.vehicle.make.toLowerCase().includes(q) ||
-        req.vehicle.model.toLowerCase().includes(q) ||
-        req.part.partName.toLowerCase().includes(q) ||
-        req.customerName.toLowerCase().includes(q) ||
-        req.vehicle.vin.toLowerCase().includes(q)
-      );
-    }
+    if (selectedFunnelStage === "ALL") return true;
+    if (selectedFunnelStage === "SOURCING") return r.status === "SOURCING" || r.status === "SUBMITTED";
+    if (selectedFunnelStage === "QUOTED") return r.status === "AWAITING_CUSTOMER_APPROVAL";
+    if (selectedFunnelStage === "PAYMENT") return r.status === "AWAITING_PAYMENT";
+    if (selectedFunnelStage === "PO_GATE") return r.status === "PAYMENT_CONFIRMED";
+    if (selectedFunnelStage === "IN_TRANSIT") return inTransitQueue.some((t) => t.id === r.id);
+    if (selectedFunnelStage === "DELIVERED") return deliveredQueue.some((d) => d.id === r.id);
+    if (selectedFunnelStage === "EXCEPTIONS") return r.status === "SOURCING_EXCEPTION";
     return true;
   });
 
-  // Filtered Suppliers
-  const filteredSuppliers = suppliers.filter((s) => {
-    if (supplierCountryFilter !== "ALL" && s.country !== supplierCountryFilter) return false;
-    if (supplierSearch.trim()) {
-      const q = supplierSearch.toLowerCase();
-      return (
-        s.name.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q) ||
-        s.country.toLowerCase().includes(q) ||
-        (s.contactPerson && s.contactPerson.toLowerCase().includes(q))
-      );
-    }
-    return true;
-  });
+  // Base JPY Rate = 0.0108 NZD (1 JPY = 0.0108 NZD, or ~92.5 JPY per NZD)
+  const baseJpyRate = 0.0108;
+  const simulatedJpyRate = baseJpyRate * (1 + jpyShift / 100);
+  const samplePartJpy = 65000;
+  const sampleCostBase = samplePartJpy * baseJpyRate;
+  const sampleCostSimulated = samplePartJpy * simulatedJpyRate;
+  const sampleDifference = sampleCostSimulated - sampleCostBase;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* ================= TOP GREETING & COMMAND BANNER ================= */}
-      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] font-bold tracking-wider uppercase">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span>SOURCING DESK OPERATIONS</span>
-            <span className="text-amber-300">•</span>
-            <span className="font-mono">NATHAN COLE</span>
-            <span className="text-amber-300">•</span>
-            <span>NAGOYA HUB &amp; NZ TRADE</span>
+    <div className="space-y-8 animate-fadeIn pb-16">
+      {/* ================= COMMAND CENTER HERO BANNER ================= */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#0a152d] to-slate-900 border border-slate-800 p-6 sm:p-8 text-white shadow-xl shadow-slate-950/20">
+        {/* Decorative Grid Accent */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+        <div className="absolute -right-16 -top-16 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 font-bold text-[11px] tracking-wide uppercase">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                COMMAND CENTER LIVE
+              </span>
+              <span className="text-xs text-slate-400 font-mono">
+                DESK AH-PROC-084 • NATHAN COLE
+              </span>
+              <span className="hidden sm:inline text-xs text-slate-500">•</span>
+              <span className="text-xs text-slate-400 font-medium">
+                NAGOYA LOGISTICS TERMINAL &amp; AUCKLAND TRADE HQ
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+              Global Procurement <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-amber-300">Command Center</span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Real-time multi-currency JDM and European OEM sourcing desk. Monitor supplier quotation turnaround velocity, enforce the payment gate, and coordinate door-to-door freight milestones.
+            </p>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Procurement Desk &amp; Sourcing Workspace
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
-            Compare multi-currency overseas supplier quotations, evaluate landed costs, compute target margins, build and issue verified customer proposals, and transmit supplier POs.
+          {/* Quick Action CTAs */}
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <Link
+              href="/procurement/queue"
+              className="flex-1 lg:flex-none px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-rose-900/30 transition flex items-center justify-center gap-2 group"
+            >
+              <Compass className="w-4 h-4 text-white transition group-hover:rotate-45" />
+              <span>Sourcing Queue ({sourcingQueue.length})</span>
+            </Link>
+
+            <Link
+              href="/procurement/orders"
+              className="flex-1 lg:flex-none px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-emerald-900/30 transition flex items-center justify-center gap-2"
+            >
+              <CheckSquare className="w-4 h-4 text-white" />
+              <span>PO Gate ({poGateQueue.length})</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                const req = sourcingQueue[0] || requests[0];
+                setAiModalRequest(req);
+                setShowAiModal(true);
+              }}
+              className="px-4 py-3 rounded-2xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs transition flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">AI Quote Synthesizer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= 4 EXECUTIVE KPI METRICS ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        {/* Metric 1: Sourcing Velocity */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Sourcing Velocity
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Zap className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-slate-900 tracking-tight">
+              3.4 <span className="text-base font-semibold text-slate-500">hrs</span>
+            </span>
+            <span className="text-xs font-bold text-emerald-600 flex items-center">
+              <TrendingUp className="w-3 h-3 mr-0.5" /> 42% faster
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-400">
+            Average request-to-quote issuance (SLA target: &lt;6 hrs)
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {activeReq && (
-            <button
-              id="open-ai-engine-banner"
-              type="button"
-              onClick={() => setShowAiModal(true)}
-              className="px-4 py-3 rounded-2xl bg-autohub-navy hover:bg-autohub-navy-dark text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 group"
-            >
-              <Sparkles className="w-4 h-4 text-autohub-red animate-pulse" />
-              <span>AI Quote Synthesis Engine</span>
-            </button>
-          )}
+        {/* Metric 2: Supplier On-Time Rate */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Supplier SLA Reliability
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-slate-900 tracking-tight">
+              98.4%
+            </span>
+            <span className="text-xs font-bold text-emerald-600 flex items-center">
+              +1.2% this mo
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-400">
+            5 International verified hubs (Nagoya, Osaka, Munich, LA, Sydney)
+          </p>
+        </div>
 
+        {/* Metric 3: Average Landed Margin */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Average Landed Margin
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <DollarSign className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-slate-900 tracking-tight">
+              21.4%
+            </span>
+            <span className="text-xs font-bold text-slate-500">
+              Target: 18.0%
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-400">
+            Net procurement profit margin across active quotes
+          </p>
+        </div>
+
+        {/* Metric 4: Active Sourcing Pipeline */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Active Pipeline Value
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <Activity className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-slate-900 tracking-tight">
+              ${totalPipelineValue.toLocaleString("en-NZ", { maximumFractionDigits: 0 })}
+            </span>
+            <span className="text-xs font-bold text-slate-500 font-mono">
+              NZD
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-400">
+            {requests.length} Total orders across end-to-end lifecycle
+          </p>
+        </div>
+      </div>
+
+      {/* ================= HIGH PRIORITY OPERATIONAL RADAR ================= */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent rounded-3xl p-5 sm:p-6 border border-amber-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 font-black text-sm">
+              !
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                High-Priority Operational Radar
+              </h2>
+              <p className="text-xs text-slate-500">
+                Actionable gates requiring Sourcing Specialist attention right now
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+            {sourcingQueue.length + poGateQueue.length + exceptionsQueue.length} Pending Actions
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          {/* Card 1: Urgent Quote Needed */}
+          <div className="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-sm flex flex-col justify-between hover:border-amber-400 transition">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-amber-700">AH-P-000140</span>
+                <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold text-[10px]">
+                  Air Priority SLA
+                </span>
+              </div>
+              <div className="text-xs font-bold text-slate-900">
+                2022 Toyota Prado KDSS Cylinder
+              </div>
+              <p className="text-[11px] text-slate-500 line-clamp-2">
+                2 Japanese supplier quotes recorded. Landed cost calculated. Ready to issue customer quote.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">Customer: AutoCare AKL</span>
+              <Link
+                href="/procurement/queue?req=AH-P-000140"
+                className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
+              >
+                <span>Finalize Quote</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 2: Payment Cleared PO Gate */}
+          <div className="bg-white rounded-2xl p-4 border border-emerald-200/80 shadow-sm flex flex-col justify-between hover:border-emerald-400 transition">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-emerald-700">AH-P-000124</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]">
+                  Payment Verified
+                </span>
+              </div>
+              <div className="text-xs font-bold text-slate-900">
+                2022 Ford Ranger Bi-Turbo Intercooler
+              </div>
+              <p className="text-[11px] text-slate-500 line-clamp-2">
+                $1,280.00 NZD payment cleared via Trade Credit. Release funds and transmit purchase order to supplier.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">Hub: Nagoya Terminal</span>
+              <Link
+                href="/procurement/orders"
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+              >
+                <span>Transmit PO</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 3: Active Sourcing Exception */}
+          <div className="bg-white rounded-2xl p-4 border border-rose-200/80 shadow-sm flex flex-col justify-between hover:border-rose-400 transition">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-rose-700">AH-P-000130</span>
+                <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold text-[10px]">
+                  OEM Discontinued
+                </span>
+              </div>
+              <div className="text-xs font-bold text-slate-900">
+                1996 Land Cruiser 80 Steering Box
+              </div>
+              <p className="text-[11px] text-slate-500 line-clamp-2">
+                Factory discontinued by Toyota Japan. Verified Japanese remanufactured alternative available.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">Match: 24m Warranty</span>
+              <Link
+                href="/procurement/exceptions"
+                className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
+              >
+                <span>Review Alternative</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= 7-STAGE PROCUREMENT PIPELINE FUNNEL ================= */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Procurement Lifecycle Pipeline
+            </h2>
+            <p className="text-xs text-slate-500">
+              Click any stage to filter active orders across Autohub’s door-to-door workflow
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search reference, VIN, part..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+            />
+          </div>
+        </div>
+
+        {/* Funnel Stage Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          {/* Stage ALL */}
           <button
-            id="record-quote-banner"
             type="button"
-            onClick={() => setShowAddSupplierQuote(true)}
-            className="px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center gap-2"
+            onClick={() => setSelectedFunnelStage("ALL")}
+            className={`p-3 rounded-2xl text-left border transition ${
+              selectedFunnelStage === "ALL"
+                ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+            }`}
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>RECORD SUPPLIER QUOTE</span>
+            <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+              Overview
+            </div>
+            <div className="text-base font-black mt-0.5">{requests.length}</div>
+            <div className="text-[10px] opacity-80 mt-1">All Orders</div>
+          </button>
+
+          {/* Stage 1: Sourcing */}
+          <button
+            type="button"
+            onClick={() => setSelectedFunnelStage("SOURCING")}
+            className={`p-3 rounded-2xl text-left border transition ${
+              selectedFunnelStage === "SOURCING"
+                ? "bg-amber-600 text-white border-amber-600 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+              Stage 1
+            </div>
+            <div className="text-base font-black mt-0.5">{sourcingQueue.length}</div>
+            <div className="text-[10px] opacity-80 mt-1">In Sourcing</div>
+          </button>
+
+          {/* Stage 2: Quoted */}
+          <button
+            type="button"
+            onClick={() => setSelectedFunnelStage("QUOTED")}
+            className={`p-3 rounded-2xl text-left border transition ${
+              selectedFunnelStage === "QUOTED"
+                ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+              Stage 2
+            </div>
+            <div className="text-base font-black mt-0.5">{quotesIssuedQueue.length}</div>
+            <div className="text-[10px] opacity-80 mt-1">Quotes Issued</div>
+          </button>
+
+          {/* Stage 3: Awaiting Payment */}
+          <button
+            type="button"
+            onClick={() => setSelectedFunnelStage("PAYMENT")}
+            className={`p-3 rounded-2xl text-left border transition ${
+              selectedFunnelStage === "PAYMENT"
+                ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+              Stage 3
+            </div>
+            <div className="text-base font-black mt-0.5">{paymentAwaitingQueue.length}</div>
+            <div className="text-[10px] opacity-80 mt-1">Awaiting Pay</div>
+          </button>
+
+          {/* Stage 4: PO Gate */}
+          <button
+            type="button"
+            onClick={() => setSelectedFunnelStage("PO_GATE")}
+            className={`p-3 rounded-2xl text-left border transition ${
+              selectedFunnelStage === "PO_GATE"
+                ? "bg-emerald-600 text-white border-emerald-600 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+              Stage 4
+            </div>
+            <div className="text-base font-black mt-0.5">{poGateQueue.length}</div>
+            <div className="text-[10px] opacity-80 mt-1">PO Release Gate</div>
+          </button>
+
+          {/* Stage 5: In Transit */}
+          <button
+            type="button"
+            onClick={() => setSelectedFunnelStage("IN_TRANSIT")}
+            className={`p-3 rounded-2xl text-left border transition ${
+              selectedFunnelStage === "IN_TRANSIT"
+                ? "bg-sky-600 text-white border-sky-600 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+              Stage 5
+            </div>
+            <div className="text-base font-black mt-0.5">{inTransitQueue.length}</div>
+            <div className="text-[10px] opacity-80 mt-1">In Freight / Port</div>
+          </button>
+
+          {/* Stage 6: Exceptions */}
+          <button
+            type="button"
+            onClick={() => setSelectedFunnelStage("EXCEPTIONS")}
+            className={`p-3 rounded-2xl text-left border transition ${
+              selectedFunnelStage === "EXCEPTIONS"
+                ? "bg-rose-600 text-white border-rose-600 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+              Exceptions
+            </div>
+            <div className="text-base font-black mt-0.5">{exceptionsQueue.length}</div>
+            <div className="text-[10px] opacity-80 mt-1">Sourcing Alert</div>
           </button>
         </div>
-      </div>
 
-      {/* ================= 4 KPI STAT CARDS (SYMMETRIC TO CUSTOMER PORTAL) ================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Needs Sourcing */}
-        <div
-          onClick={() => {
-            setActiveTab("queue");
-            setQueueFilter("SOURCING");
-          }}
-          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-start justify-between cursor-pointer hover:border-amber-300 transition"
-        >
-          <div className="space-y-1">
-            <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-slate-500 block">
-              SOURCING QUEUE
+        {/* Filtered Pipeline Table */}
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-900">
+              Showing {filteredRequests.length} Orders in Active Pipeline
             </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900">
-              {sourcingQueue.length.toString().padStart(2, "0")}
-            </div>
-            <span className="text-[11px] text-amber-700 font-semibold block">
-              Needs Supplier Quotes
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <Compass className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Card 2: Quotes Issued */}
-        <div
-          onClick={() => {
-            setActiveTab("queue");
-            setQueueFilter("ALL");
-          }}
-          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-start justify-between cursor-pointer hover:border-blue-300 transition"
-        >
-          <div className="space-y-1">
-            <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-slate-500 block">
-              QUOTES ISSUED
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900">
-              {quotesIssuedQueue.length.toString().padStart(2, "0")}
-            </div>
-            <span className="text-[11px] text-slate-400 font-medium block">
-              Awaiting Customer Approval
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <FileText className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Card 3: Payment Cleared / Ready for PO (Highlighted) */}
-        <div
-          onClick={() => setActiveTab("orders")}
-          className="bg-emerald-50/40 rounded-2xl p-5 border-2 border-emerald-400 shadow-sm flex items-start justify-between cursor-pointer hover:bg-emerald-50/70 transition"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-emerald-950 block">
-                PAYMENT CONFIRMED
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-400">Stage:</span>
+              <span className="text-xs font-bold text-slate-800">
+                {selectedFunnelStage}
               </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-950">
-              {poGateQueue.length.toString().padStart(2, "0")}
-            </div>
-            <span className="text-[11px] text-emerald-700 font-semibold block">
-              Ready to Place Supplier PO
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-            <CheckSquare className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Card 4: Supplier Network */}
-        <div
-          onClick={() => setActiveTab("suppliers")}
-          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-start justify-between cursor-pointer hover:border-slate-400 transition"
-        >
-          <div className="space-y-1">
-            <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-slate-500 block">
-              SUPPLIER NETWORK
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900">
-              {suppliers.length.toString().padStart(2, "0")}
-            </div>
-            <span className="text-[11px] text-slate-400 font-medium block">
-              Japan • USA • EU • AU
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-            <Building2 className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
-
-      {/* ================= ACTION REQUIRED CALLOUT BANNER ================= */}
-      {(sourcingQueue.length > 0 || poGateQueue.length > 0 || exceptionsQueue.length > 0) && (
-        <div className="bg-amber-50/40 rounded-3xl p-5 sm:p-6 border border-amber-300 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 text-amber-950">
-              <div className="w-6 h-6 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center font-black text-xs">
-                !
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-amber-950 leading-tight">
-                  High Priority Sourcing Actions
-                </h3>
-                <p className="text-xs text-amber-800">
-                  {sourcingQueue.length} requests awaiting quotation • {poGateQueue.length} payment-cleared orders ready for PO dispatch
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab("orders")}
-                className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm"
-              >
-                <CheckSquare className="w-3.5 h-3.5" />
-                <span>PO Placement Gate ({poGateQueue.length})</span>
-              </button>
             </div>
           </div>
 
-          <div className="divide-y divide-amber-200/60 pt-1">
-            {/* Action Item 1: Sourcing Queue Head */}
-            {sourcingQueue.slice(0, 2).map((req) => (
-              <div
-                key={req.id}
-                className="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-              >
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap text-xs">
-                    <span className="font-mono font-bold text-slate-900">{req.referenceNumber}</span>
-                    <span className="font-semibold text-slate-800">
-                      {req.vehicle.year} {req.vehicle.make} {req.vehicle.model}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      <span>{req.supplierQuotes.length} Quotes Recorded</span>
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600">
-                    <strong className="text-slate-900">{req.part.partName}</strong> • OEM: {req.part.oemPartNumber || "N/A"} • Customer: {req.customerName}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedRequest(req);
-                      setActiveTab("queue");
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-sm"
-                  >
-                    SOURCE / COMPARE →
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {/* Action Item 2: PO Cleared Head */}
-            {poGateQueue.slice(0, 1).map((req) => (
-              <div
-                key={req.id}
-                className="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-              >
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap text-xs">
-                    <span className="font-mono font-bold text-emerald-950">{req.referenceNumber}</span>
-                    <span className="font-semibold text-slate-800">
-                      {req.vehicle.year} {req.vehicle.make} {req.vehicle.model}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span>Payment Cleared (${req.quote?.totalNzd.toFixed(2)} NZD)</span>
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600">
-                    <strong className="text-slate-900">{req.part.partName}</strong> • Customer settled via {req.invoice?.paymentMethod || "Bank Transfer"}
-                  </p>
-                </div>
-
-                <div>
-                  <button
-                    onClick={() => {
-                      setPoTargetReq(req);
-                      setShowPoModal(true);
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm"
-                  >
-                    TRANSMIT SUPPLIER PO →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ================= MAIN NAVIGATION TABS ================= */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-2 flex items-center gap-1 overflow-x-auto text-xs font-bold">
-        <button
-          onClick={() => setActiveTab("queue")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition whitespace-nowrap ${
-            activeTab === "queue"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <Compass className="w-4 h-4" />
-          <span>Sourcing Queue &amp; Quotation Desk</span>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full ${
-              activeTab === "queue" ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-700"
-            }`}
-          >
-            {sourcingQueue.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("suppliers")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition whitespace-nowrap ${
-            activeTab === "suppliers"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Supplier Reference List</span>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full ${
-              activeTab === "suppliers" ? "bg-rose-500 text-white" : "bg-slate-200 text-slate-700"
-            }`}
-          >
-            {suppliers.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("orders")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition whitespace-nowrap ${
-            activeTab === "orders"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <CheckSquare className="w-4 h-4" />
-          <span>PO Placement Gate</span>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full ${
-              activeTab === "orders" ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-700"
-            }`}
-          >
-            {poGateQueue.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("tracking")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition whitespace-nowrap ${
-            activeTab === "tracking"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <Truck className="w-4 h-4" />
-          <span>Progress Tracking</span>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full ${
-              activeTab === "tracking" ? "bg-blue-500 text-white" : "bg-slate-200 text-slate-700"
-            }`}
-          >
-            {orderedQueue.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("exceptions")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl transition whitespace-nowrap ${
-            activeTab === "exceptions"
-              ? "bg-slate-900 text-white shadow-sm"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <AlertTriangle className="w-4 h-4" />
-          <span>Sourcing Exceptions</span>
-          {exceptionsQueue.length > 0 && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500 text-white">
-              {exceptionsQueue.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* ================= TAB 1: SOURCING QUEUE & QUOTATION DESK ================= */}
-      {activeTab === "queue" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Sourcing Queue List */}
-          <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                    Sourcing Queue ({filteredQueue.length})
-                  </h3>
-                  <p className="text-[10px] text-slate-400">Select request to compare quotes</p>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setQueueFilter("ALL")}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
-                      queueFilter === "ALL" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setQueueFilter("SOURCING")}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
-                      queueFilter === "SOURCING" ? "bg-amber-600 text-white" : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    Sourcing
-                  </button>
-                </div>
-              </div>
-
-              {/* Filter Search */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  placeholder="Filter by ref, vehicle, part..."
-                  value={queueSearch}
-                  onChange={(e) => setQueueSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 outline-none"
-                />
-              </div>
-
-              {/* Request Cards */}
-              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-                {filteredQueue.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-6">
-                    No requests match filter.
-                  </p>
-                ) : (
-                  filteredQueue.map((req) => {
-                    const isSelected = activeReq?.id === req.id;
-                    const quotesCount = req.supplierQuotes.length;
-                    return (
-                      <div
-                        key={req.id}
-                        onClick={() => setSelectedRequest(req)}
-                        className={`p-3.5 rounded-2xl border transition cursor-pointer text-xs space-y-1.5 ${
-                          isSelected
-                            ? "bg-amber-50/70 border-amber-400 shadow-sm ring-1 ring-amber-300"
-                            : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-bold text-slate-900">
-                            {req.referenceNumber}
-                          </span>
-                          <StatusBadge status={req.status} size="sm" showIcon={false} />
-                        </div>
-
-                        <div className="font-bold text-slate-900 truncate">
-                          {req.vehicle.year} {req.vehicle.make} {req.vehicle.model}
-                        </div>
-
-                        <div className="text-slate-600 truncate text-[11px]">
-                          {req.part.partName}
-                        </div>
-
-                        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-200/60">
-                          <span>{req.customerName}</span>
-                          <span className="font-semibold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                            {quotesCount} {quotesCount === 1 ? "quote" : "quotes"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Active Workspace */}
-          <div className="lg:col-span-8 space-y-6">
-            {activeReq ? (
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-                {/* Workspace Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-black text-slate-900 font-mono tracking-tight">
-                        {activeReq.referenceNumber}
-                      </h3>
-                      <StatusBadge status={activeReq.status} />
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Customer: <strong className="text-slate-800">{activeReq.customerName}</strong> • NZBN: {activeReq.customerNzbn} • Email: {activeReq.customerContactEmail}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => setShowExceptionModal(true)}
-                      className="px-3 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
-                    >
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      <span>Raise Exception</span>
-                    </button>
-
-                    <button
-                      onClick={() => setShowAddSupplierQuote(true)}
-                      className="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Capture Supplier Quote</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Vehicle & Part Requirements Specification Card */}
-                <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between text-xs border-b border-slate-200/80 pb-2 font-bold text-slate-800 uppercase tracking-wider">
-                    <span>Part &amp; Fitment Specifications</span>
-                    <span className="text-[11px] font-mono text-slate-500 font-normal">
-                      Quantity: <strong>{activeReq.part.quantity}x</strong> • Condition: <strong>{activeReq.part.conditionRequirement}</strong>
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Vehicle</span>
-                      <span className="font-bold text-slate-900 block">
-                        {activeReq.vehicle.year} {activeReq.vehicle.make} {activeReq.vehicle.model}
-                      </span>
+          <div className="divide-y divide-slate-100 overflow-x-auto">
+            {filteredRequests.map((req) => {
+              const quoteCount = req.supplierQuotes ? req.supplierQuotes.length : 0;
+              return (
+                <div
+                  key={req.id}
+                  className="p-4 sm:p-5 hover:bg-slate-50/80 transition flex flex-col md:flex-row md:items-center justify-between gap-4"
+                >
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                      {req.vehicle.make.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <span className="text-slate-400 text-[10px] block">VIN / Chassis</span>
-                      <span className="font-mono font-bold text-slate-900 block truncate" title={activeReq.vehicle.vin}>
-                        {activeReq.vehicle.vin}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Requested Part</span>
-                      <span className="font-bold text-slate-900 block truncate" title={activeReq.part.partName}>
-                        {activeReq.part.partName}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">OEM Code</span>
-                      <span className="font-mono font-bold text-slate-900 block">
-                        {activeReq.part.oemPartNumber || "Pending Identification"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {activeReq.part.descriptionNotes && (
-                    <div className="pt-2 text-[11px] text-slate-600 bg-white p-3 rounded-xl border border-slate-200">
-                      <span className="font-bold text-slate-800 block mb-0.5">Workshop Notes:</span>
-                      &quot;{activeReq.part.descriptionNotes}&quot;
-                    </div>
-                  )}
-                </div>
-
-                {/* ================= SIDE-BY-SIDE SUPPLIER QUOTATION COMPARISON ================= */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                        <span>Side-by-Side Supplier Quotations</span>
-                        <span className="bg-slate-200 text-slate-800 text-[10px] px-2 py-0.5 rounded-full font-mono">
-                          {activeReq.supplierQuotes.length} Available
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono font-bold text-xs text-slate-900">
+                          {req.referenceNumber}
                         </span>
-                      </h4>
-                      <p className="text-[11px] text-slate-400">
-                        Compare foreign currency costs, converted NZD, domestic freight, and lead times.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setShowAiModal(true)}
-                        className="text-xs font-bold text-autohub-red hover:underline flex items-center gap-1.5"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                        <span>AI Quote Engine</span>
-                      </button>
+                        <StatusBadge status={req.status} />
+                        {quoteCount > 0 && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                            {quoteCount} {quoteCount === 1 ? "quote" : "quotes"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs font-bold text-slate-800 mt-1">
+                        {req.part.partName}
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        {req.vehicle.year} {req.vehicle.make} {req.vehicle.model} • VIN: {req.vehicle.vin} • Customer: {req.customerName}
+                      </div>
                     </div>
                   </div>
 
-                  {activeReq.supplierQuotes.length === 0 ? (
-                    <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-xs text-slate-500 space-y-3">
-                      <Boxes className="w-8 h-8 text-slate-400 mx-auto" />
-                      <p className="font-semibold text-slate-700">No supplier quotes recorded yet for this request.</p>
-                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                        Capture quotes from Nagoya, Tokyo, Hamburg, or California, or let AI generate synthetic market benchmarks.
-                      </p>
-                      <button
-                        onClick={() => setShowAddSupplierQuote(true)}
-                        className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold"
+                  <div className="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                    <div className="text-right">
+                      <div className="text-xs font-mono font-bold text-slate-900">
+                        {req.quote?.totalNzd
+                          ? `$${req.quote.totalNzd.toFixed(2)} NZD`
+                          : req.invoice?.totalNzd
+                          ? `$${req.invoice.totalNzd.toFixed(2)} NZD`
+                          : "Evaluating Quotes"}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {req.quote?.selectedFreightMethod === "AIR_EXPRESS"
+                          ? "Air Express"
+                          : req.quote?.selectedFreightMethod === "SEA_FREIGHT"
+                          ? "Sea Freight"
+                          : "Freight Pending"}
+                      </div>
+                    </div>
+
+                    {/* Contextual Jump Button */}
+                    {req.status === "SOURCING_EXCEPTION" ? (
+                      <Link
+                        href="/procurement/exceptions"
+                        className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs transition flex items-center gap-1.5"
                       >
-                        + Capture First Supplier Quote
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {activeReq.supplierQuotes.map((sq, idx) => {
-                        const isSelected = selectedSupplierQuoteId === sq.id;
-                        const isLowestPrice =
-                          activeReq.supplierQuotes.length > 1 &&
-                          activeReq.supplierQuotes.every((other) => other.id === sq.id || sq.partCostNzd <= other.partCostNzd);
-                        const isFastest =
-                          activeReq.supplierQuotes.length > 1 &&
-                          activeReq.supplierQuotes.every((other) => other.id === sq.id || sq.availabilityDays <= other.availabilityDays);
-
-                        return (
-                          <div
-                            key={sq.id}
-                            onClick={() => setSelectedSupplierQuoteId(sq.id)}
-                            className={`p-5 rounded-2xl border transition cursor-pointer text-xs space-y-3 relative ${
-                              isSelected
-                                ? "bg-blue-50/50 border-autohub-navy shadow-md ring-2 ring-autohub-navy/20"
-                                : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
-                            }`}
-                          >
-                            {/* Badges Bar */}
-                            <div className="flex items-center justify-between gap-1 flex-wrap">
-                              <span className="font-bold text-slate-900 text-sm">{sq.supplierName}</span>
-                              <div className="flex items-center gap-1">
-                                {sq.isRecommendedByAi && (
-                                  <span className="text-[9px] bg-autohub-navy text-white font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                    <Sparkles className="w-2.5 h-2.5 text-autohub-red" /> AI Recommended
-                                  </span>
-                                )}
-                                {isLowestPrice && (
-                                  <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                                    Best Price
-                                  </span>
-                                )}
-                                {isFastest && (
-                                  <span className="text-[9px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full">
-                                    Fastest ({sq.availabilityDays}d)
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-3 rounded-xl border border-slate-200">
-                              <div>
-                                <span className="text-slate-400 text-[10px] block">Foreign Part Cost</span>
-                                <span className="font-bold text-slate-800 font-mono">
-                                  {sq.partCostForeign.toLocaleString()} {sq.partCostCurrency}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-400 text-[10px] block">Converted Part NZD</span>
-                                <span className="font-bold text-emerald-700 font-mono text-xs">
-                                  ${sq.partCostNzd.toFixed(2)} NZD
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-400 text-[10px] block">Domestic Freight to Hub</span>
-                                <span className="font-mono text-slate-700">
-                                  ${sq.domesticFreightNzd.toFixed(2)} NZD
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-400 text-[10px] block">Landed Cost at Hub</span>
-                                <span className="font-bold text-slate-900 font-mono">
-                                  ${(sq.partCostNzd + sq.domesticFreightNzd).toFixed(2)} NZD
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between text-[11px] text-slate-500">
-                              <span>Country: <strong>{sq.supplierCountry}</strong></span>
-                              <span>Lead Time: <strong>{sq.availabilityDays} day(s)</strong></span>
-                            </div>
-
-                            {sq.notes && (
-                              <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded-lg border border-slate-100 truncate">
-                                &quot;{sq.notes}&quot;
-                              </p>
-                            )}
-
-                            <div className="pt-1 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400">
-                                {isSelected ? "Selected for Customer Quote" : "Click to select"}
-                              </span>
-                              <button
-                                type="button"
-                                className={`px-3 py-1 rounded-xl text-[11px] font-bold transition ${
-                                  isSelected
-                                    ? "bg-autohub-navy text-white"
-                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                }`}
-                              >
-                                {isSelected ? "Selected Winning Quote ✓" : "Select Quote"}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                        <span>Resolve</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    ) : req.status === "PAYMENT_CONFIRMED" ? (
+                      <Link
+                        href="/procurement/orders"
+                        className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs transition flex items-center gap-1.5"
+                      >
+                        <span>Transmit PO</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    ) : req.status === "IN_TRANSIT" || req.status === "CUSTOMS_CLEARANCE" ? (
+                      <Link
+                        href="/procurement/tracking"
+                        className="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition flex items-center gap-1.5"
+                      >
+                        <span>Track</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/procurement/queue?req=${req.referenceNumber}`}
+                        className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 font-bold text-xs transition flex items-center gap-1.5"
+                      >
+                        <span>Workspace</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
-
-                {/* ================= MARGIN & LANDED COST CALCULATION ENGINE ================= */}
-                {winningQuote && (
-                  <div className="bg-slate-50 rounded-3xl p-6 border border-slate-200 space-y-5">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                          <Calculator className="w-4 h-4 text-autohub-navy" />
-                          <span>Customer Landed Cost &amp; Margin Builder</span>
-                        </h4>
-                        <p className="text-[11px] text-slate-500">
-                          Selected Quote: <strong>{winningQuote.supplierName}</strong> (${landedCostNzd.toFixed(2)} NZD landed to hub)
-                        </p>
-                      </div>
-
-                      <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
-                        Margin: +${calculatedMarginAmount.toFixed(2)} NZD ({targetMargin}%)
-                      </span>
-                    </div>
-
-                    {/* Interactive Sliders & Inputs */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                      {/* Margin % Slider */}
-                      <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="font-bold text-slate-800">Target Margin %</label>
-                          <span className="font-mono font-bold text-autohub-navy">{targetMargin}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="10"
-                          max="40"
-                          step="0.5"
-                          value={targetMargin}
-                          onChange={(e) => setTargetMargin(parseFloat(e.target.value) || 18)}
-                          className="w-full accent-autohub-navy"
-                        />
-                        <span className="text-[10px] text-slate-400 block">Standard: 18.0% | Tier 1: 15.0%</span>
-                      </div>
-
-                      {/* Procurement Handling Fee */}
-                      <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                        <label className="font-bold text-slate-800 block">Procurement Fee (NZD)</label>
-                        <input
-                          type="number"
-                          value={procurementFee}
-                          onChange={(e) => setProcurementFee(parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-1.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-800 text-xs"
-                        />
-                        <span className="text-[10px] text-slate-400 block">Covers customs clearance &amp; MPI processing</span>
-                      </div>
-
-                      {/* Freight Option Selection */}
-                      <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                        <label className="font-bold text-slate-800 block">Default Freight Method</label>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedFreightOption("AIR_EXPRESS")}
-                            className={`p-2 rounded-xl text-[11px] font-bold text-center border transition ${
-                              selectedFreightOption === "AIR_EXPRESS"
-                                ? "bg-rose-50 border-rose-400 text-rose-800"
-                                : "bg-slate-50 border-slate-200 text-slate-600"
-                            }`}
-                          >
-                            Air (${airFreightCost})
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedFreightOption("SEA_FREIGHT")}
-                            className={`p-2 rounded-xl text-[11px] font-bold text-center border transition ${
-                              selectedFreightOption === "SEA_FREIGHT"
-                                ? "bg-blue-50 border-blue-400 text-blue-800"
-                                : "bg-slate-50 border-slate-200 text-slate-600"
-                            }`}
-                          >
-                            Sea (${seaFreightCost})
-                          </button>
-                        </div>
-                        <span className="text-[10px] text-slate-400 block">Both options will be presented to customer</span>
-                      </div>
-                    </div>
-
-                    {/* Breakdown Formula Table */}
-                    <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
-                      <span className="font-bold text-slate-900 text-xs block mb-1">
-                        Landed Cost &amp; Price Breakdown
-                      </span>
-                      <div className="divide-y divide-slate-100 text-[11px]">
-                        <div className="py-1.5 flex justify-between">
-                          <span className="text-slate-500">Overseas Part Cost ({winningQuote.supplierName}):</span>
-                          <span className="font-mono font-semibold text-slate-800">${baseCostNzd.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-1.5 flex justify-between">
-                          <span className="text-slate-500">Overseas Domestic Freight to Export Hub:</span>
-                          <span className="font-mono font-semibold text-slate-800">${domesticFreightNzd.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-1.5 flex justify-between bg-slate-50/50 px-2 rounded-lg font-bold">
-                          <span className="text-slate-800">Total Landed Cost to Hub:</span>
-                          <span className="font-mono text-slate-900">${landedCostNzd.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-1.5 flex justify-between">
-                          <span className="text-slate-500">Target Gross Margin ({targetMargin}%):</span>
-                          <span className="font-mono font-semibold text-emerald-700">+${calculatedMarginAmount.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-1.5 flex justify-between">
-                          <span className="text-slate-500">Autohub Procurement &amp; Compliance Handling:</span>
-                          <span className="font-mono font-semibold text-slate-800">+${procurementFee.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-1.5 flex justify-between">
-                          <span className="text-slate-500">
-                            International Freight ({selectedFreightOption === "AIR_EXPRESS" ? "Air Priority 3-5d" : "Ocean Consolidated 14-18d"}):
-                          </span>
-                          <span className="font-mono font-semibold text-slate-800">+${currentFreightCost.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-1.5 flex justify-between border-t font-semibold">
-                          <span className="text-slate-700">Subtotal (excl GST):</span>
-                          <span className="font-mono text-slate-900">${calculatedSubtotal.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-1.5 flex justify-between">
-                          <span className="text-slate-500">New Zealand GST (15%):</span>
-                          <span className="font-mono font-semibold text-slate-800">${calculatedGst.toFixed(2)} NZD</span>
-                        </div>
-                        <div className="py-2 flex justify-between text-sm font-black bg-slate-900 text-white px-3 rounded-xl">
-                          <span>Total Customer Quotation:</span>
-                          <span className="font-mono text-amber-400">${calculatedTotal.toFixed(2)} NZD</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Customer Quote Issue & Revise Buttons */}
-                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-                      <div>
-                        {activeReq.quote ? (
-                          <span className="text-xs font-semibold text-slate-700">
-                            Current Status: Quote <strong>{activeReq.quote.quoteNumber}</strong> issued ({activeReq.quote.status})
-                          </span>
-                        ) : (
-                          <span className="text-xs text-slate-500">
-                            Ready to issue official quote to {activeReq.customerName}.
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {activeReq.quote ? (
-                          <button
-                            onClick={() => setShowRevisionModal(true)}
-                            className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow"
-                          >
-                            <Edit3 className="w-3.5 h-3.5 inline mr-1" />
-                            Revise &amp; Reissue Quote
-                          </button>
-                        ) : (
-                          <button
-                            onClick={handleIssueCustomerQuote}
-                            className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-900/20 flex items-center gap-1.5"
-                          >
-                            <Send className="w-3.5 h-3.5" />
-                            Issue Quote to Customer
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-white rounded-3xl p-12 text-center text-slate-400 text-xs border border-slate-200">
-                Select a request from the queue to start sourcing.
-              </div>
-            )}
+              );
+            })}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ================= TAB 2: SUPPLIER REFERENCE LIST ================= */}
-      {activeTab === "suppliers" && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      {/* ================= FX SENSITIVITY WATCH & DESK LAUNCHER ================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: FX Risk & Japanese Yen Sensitivity Calculator */}
+        <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-lg font-black text-slate-900">
-                Overseas &amp; Domestic Supplier Reference Directory
-              </h3>
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-slate-500" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Global FX Currency &amp; Landed Margin Sensitivity
+                </h3>
+              </div>
               <p className="text-xs text-slate-500">
-                Verified international distributors, OEM dealers, and commercial parts alliances.
+                Simulate exchange rate fluctuations and protect trade margin realization
               </p>
             </div>
-
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowAddSupplierModal(true)}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow"
+              <span className="text-[11px] text-slate-500">Live Rate:</span>
+              <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-xl bg-slate-100 text-slate-800">
+                1 JPY = {baseJpyRate} NZD
+              </span>
+            </div>
+          </div>
+
+          {/* Interactive Slider */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-slate-600">JPY Currency Shift Simulation:</span>
+              <span
+                className={`font-mono font-bold px-2 py-0.5 rounded-lg text-xs ${
+                  jpyShift > 0
+                    ? "bg-rose-100 text-rose-800"
+                    : jpyShift < 0
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-slate-200 text-slate-700"
+                }`}
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add New Supplier</span>
-              </button>
+                {jpyShift > 0 ? `+${jpyShift}% (JPY Stronger)` : jpyShift < 0 ? `${jpyShift}% (JPY Weaker)` : "0% (Spot Baseline)"}
+              </span>
+            </div>
+
+            <input
+              type="range"
+              min="-10"
+              max="10"
+              step="1"
+              value={jpyShift}
+              onChange={(e) => setJpyShift(parseFloat(e.target.value))}
+              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+            />
+
+            <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+              <span>-10% Weaker (Margin Boost)</span>
+              <span>Baseline (Spot)</span>
+              <span>+10% Stronger (Margin Compression)</span>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
-              <input
-                type="text"
-                value={supplierSearch}
-                onChange={(e) => setSupplierSearch(e.target.value)}
-                placeholder="Search by supplier name, contact, category, country..."
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 outline-none"
-              />
+          {/* Impact Calculation Preview */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+              <div className="text-[10px] uppercase font-bold text-slate-400">
+                Simulated Rate
+              </div>
+              <div className="text-base font-mono font-black text-slate-800 mt-1">
+                {simulatedJpyRate.toFixed(5)} <span className="text-[10px] text-slate-500">NZD</span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                {(1 / simulatedJpyRate).toFixed(1)} ¥ per $1 NZD
+              </div>
             </div>
 
-            <select
-              value={supplierCountryFilter}
-              onChange={(e) => setSupplierCountryFilter(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 outline-none text-slate-700 font-medium"
-            >
-              <option value="ALL">All Countries</option>
-              <option value="Japan">Japan (JPY)</option>
-              <option value="USA">USA (USD)</option>
-              <option value="Germany">Germany (EUR)</option>
-              <option value="Australia">Australia (AUD)</option>
-            </select>
-          </div>
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+              <div className="text-[10px] uppercase font-bold text-slate-400">
+                Sample ¥65,000 Part Cost
+              </div>
+              <div className="text-base font-mono font-black text-slate-800 mt-1">
+                ${sampleCostSimulated.toFixed(2)} <span className="text-[10px] text-slate-500">NZD</span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                Spot baseline: ${sampleCostBase.toFixed(2)} NZD
+              </div>
+            </div>
 
-          {/* Supplier Grid Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSuppliers.map((s) => (
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+              <div className="text-[10px] uppercase font-bold text-slate-400">
+                Landed Cost Variance
+              </div>
               <div
-                key={s.id}
-                className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition text-xs space-y-3"
+                className={`text-base font-mono font-black mt-1 ${
+                  sampleDifference > 0
+                    ? "text-rose-600"
+                    : sampleDifference < 0
+                    ? "text-emerald-600"
+                    : "text-slate-800"
+                }`}
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">{s.name}</h4>
-                    <span className="text-[11px] text-slate-500 font-medium">{s.category}</span>
-                  </div>
-                  <span className="font-mono text-[10px] bg-slate-200 text-slate-800 font-bold px-2 py-0.5 rounded-full">
-                    {s.country} ({s.currency})
-                  </span>
-                </div>
-
-                <div className="space-y-1.5 pt-2 border-t border-slate-200/60 text-[11px]">
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Contact: <strong>{s.contactPerson || "Account Desk"}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Mail className="w-3.5 h-3.5 text-slate-400" />
-                    <a href={`mailto:${s.contactEmail}`} className="text-blue-600 hover:underline">
-                      {s.contactEmail || "orders@supplier.com"}
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{s.contactPhone || "+81 00 0000 0000"}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[11px] bg-white p-2.5 rounded-xl border border-slate-200">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Exchange Rate</span>
-                    <span className="font-mono font-bold text-slate-800">1 {s.currency} = ${s.exchangeRateToNzd} NZD</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Avg Lead Time</span>
-                    <span className="font-semibold text-slate-800">{s.leadTimeDays} business days</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] pt-1">
-                  <div className="flex items-center gap-1 text-amber-600 font-bold">
-                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                    <span>{s.rating} / 5.0</span>
-                  </div>
-                  <span className="text-emerald-700 font-semibold text-[10px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Active Verified Partner
-                  </span>
-                </div>
+                {sampleDifference > 0
+                  ? `+$${sampleDifference.toFixed(2)} NZD`
+                  : sampleDifference < 0
+                  ? `-$${Math.abs(sampleDifference).toFixed(2)} NZD`
+                  : "$0.00 NZD"}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ================= TAB 3: PO PLACEMENT GATE (PAYMENT CONFIRMED) ================= */}
-      {activeTab === "orders" && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider mb-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Payment Gate Cleared
-              </div>
-              <h3 className="text-lg font-black text-slate-900">
-                Purchase Order Placement Desk ({poGateQueue.length})
-              </h3>
-              <p className="text-xs text-slate-500">
-                Customer payment verified. Transmit official purchase orders to overseas suppliers and mark &quot;Ordered From Supplier&quot;.
-              </p>
-            </div>
-          </div>
-
-          {poGateQueue.length === 0 ? (
-            <div className="p-12 text-center bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-400 space-y-2">
-              <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-              <p className="font-bold text-slate-800 text-sm">PO Queue Clear</p>
-              <p>All cleared customer orders have been dispatched to suppliers.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {poGateQueue.map((req) => (
-                <div
-                  key={req.id}
-                  className="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-200 text-xs space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/60 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-emerald-950 text-sm">
-                        {req.referenceNumber}
-                      </span>
-                      <StatusBadge status={req.status} />
-                    </div>
-
-                    <div className="flex items-center gap-2 font-mono text-emerald-900 text-xs font-bold">
-                      <span>Total Paid:</span>
-                      <span className="text-sm text-emerald-950">${req.quote?.totalNzd.toFixed(2)} NZD</span>
-                      <span className="text-[10px] font-normal text-emerald-700">({req.invoice?.paymentMethod})</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-slate-700 text-[11px]">
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Customer</span>
-                      <strong className="text-slate-900">{req.customerName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Vehicle</span>
-                      <strong className="text-slate-900">{req.vehicle.year} {req.vehicle.make} {req.vehicle.model}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Part Requested</span>
-                      <strong className="text-slate-900">{req.part.partName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Selected Freight</span>
-                      <strong className="text-slate-900">{req.quote?.selectedFreightMethod || "AIR_EXPRESS"}</strong>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex justify-end gap-2">
-                    <button
-                      onClick={() => {
-                        setPoTargetReq(req);
-                        setPoNumberInput(`PO-JP-2026-${req.referenceNumber.replace("AH-P-", "")}`);
-                        setShowPoModal(true);
-                      }}
-                      className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Transmit PO &amp; Mark &quot;Ordered From Supplier&quot;</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ================= TAB 4: PROCUREMENT PROGRESS TRACKING ================= */}
-      {activeTab === "tracking" && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            <div>
-              <h3 className="text-lg font-black text-slate-900">
-                Procurement Pipeline &amp; Lifecycle Tracking
-              </h3>
-              <p className="text-xs text-slate-500">
-                Real-time progress of all parts from submission to overseas dispatch and Bay delivery.
-              </p>
-            </div>
-          </div>
-
-          {/* Pipeline Kanban Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {/* Stage 1: Needs Sourcing */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between font-bold text-xs text-slate-800">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                  Needs Sourcing
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded-full border border-slate-200 text-[10px]">
-                  {sourcingQueue.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {sourcingQueue.map((r) => (
-                  <div
-                    key={r.id}
-                    onClick={() => {
-                      setSelectedRequest(r);
-                      setActiveTab("queue");
-                    }}
-                    className="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1 cursor-pointer hover:border-amber-400 transition"
-                  >
-                    <div className="flex justify-between font-mono font-bold text-slate-900">
-                      <span>{r.referenceNumber}</span>
-                      <span className="text-[10px] text-slate-400">{r.part.quantity}x</span>
-                    </div>
-                    <p className="font-semibold text-slate-800 text-[11px] truncate">{r.vehicle.make} {r.vehicle.model}</p>
-                    <p className="text-slate-500 text-[10px] truncate">{r.part.partName}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Stage 2: Quote Issued */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between font-bold text-xs text-slate-800">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />
-                  Quotes Issued
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded-full border border-slate-200 text-[10px]">
-                  {quotesIssuedQueue.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {quotesIssuedQueue.map((r) => (
-                  <div
-                    key={r.id}
-                    onClick={() => {
-                      setSelectedRequest(r);
-                      setActiveTab("queue");
-                    }}
-                    className="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1 cursor-pointer hover:border-blue-400 transition"
-                  >
-                    <div className="flex justify-between font-mono font-bold text-slate-900">
-                      <span>{r.referenceNumber}</span>
-                      <span className="text-emerald-700 font-bold">${r.quote?.totalNzd.toFixed(2)}</span>
-                    </div>
-                    <p className="font-semibold text-slate-800 text-[11px] truncate">{r.vehicle.make} {r.vehicle.model}</p>
-                    <p className="text-slate-500 text-[10px] truncate">{r.part.partName}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Stage 3: Payment Cleared / Ready for PO */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between font-bold text-xs text-slate-800">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Payment Cleared
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded-full border border-slate-200 text-[10px]">
-                  {poGateQueue.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {poGateQueue.map((r) => (
-                  <div
-                    key={r.id}
-                    onClick={() => {
-                      setPoTargetReq(r);
-                      setShowPoModal(true);
-                    }}
-                    className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-300 text-xs space-y-1 cursor-pointer hover:bg-emerald-100/50 transition"
-                  >
-                    <div className="flex justify-between font-mono font-bold text-emerald-950">
-                      <span>{r.referenceNumber}</span>
-                      <span className="text-[10px] text-emerald-700">Place PO →</span>
-                    </div>
-                    <p className="font-semibold text-slate-800 text-[11px] truncate">{r.vehicle.make} {r.vehicle.model}</p>
-                    <p className="text-slate-500 text-[10px] truncate">{r.part.partName}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Stage 4: Ordered & In Transit */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between font-bold text-xs text-slate-800">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                  Ordered / In Transit
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded-full border border-slate-200 text-[10px]">
-                  {orderedQueue.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {orderedQueue.map((r) => (
-                  <div
-                    key={r.id}
-                    className="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1"
-                  >
-                    <div className="flex justify-between font-mono font-bold text-slate-900">
-                      <span>{r.referenceNumber}</span>
-                      <StatusBadge status={r.status} size="sm" showIcon={false} />
-                    </div>
-                    <p className="font-semibold text-slate-800 text-[11px] truncate">{r.vehicle.make} {r.vehicle.model}</p>
-                    <p className="text-slate-500 text-[10px] truncate">{r.part.partName}</p>
-                  </div>
-                ))}
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                {sampleDifference > 0 ? "Absorbed in margin" : "Extra profit realized"}
               </div>
             </div>
           </div>
         </div>
-      )}
 
-      {/* ================= TAB 5: SOURCING EXCEPTIONS DESK ================= */}
-      {activeTab === "exceptions" && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold uppercase tracking-wider mb-1">
-                <AlertTriangle className="w-3 h-3 text-rose-600" />
-                Exceptions Gate
-              </div>
-              <h3 className="text-lg font-black text-slate-900">
-                Sourcing Exceptions Desk ({exceptionsQueue.length})
-              </h3>
-              <p className="text-xs text-slate-500">
-                Requests flagged with supplier discontinuation, severe backorders, or fitment conflicts.
-              </p>
-            </div>
-          </div>
+        {/* Right 1 Col: Quick Dedicated Desk Launchers */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
+          <h3 className="text-sm font-bold text-slate-900">
+            Dedicated Procurement Desks
+          </h3>
+          <p className="text-xs text-slate-500">
+            Direct access to specialized sourcing consoles
+          </p>
 
-          {exceptionsQueue.length === 0 ? (
-            <div className="p-12 text-center bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-400 space-y-2">
-              <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-              <p className="font-bold text-slate-800 text-sm">No Active Exceptions</p>
-              <p>All procurement requests are moving smoothly through standard channels.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {exceptionsQueue.map((req) => (
-                <div
-                  key={req.id}
-                  className="p-5 bg-rose-50/40 rounded-2xl border border-rose-200 text-xs space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-200/60 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-rose-950 text-sm">
-                        {req.referenceNumber}
-                      </span>
-                      <StatusBadge status={req.status} />
-                    </div>
-
-                    <span className="text-xs text-slate-500">
-                      Customer: <strong>{req.customerName}</strong>
-                    </span>
+          <div className="space-y-2 pt-1">
+            <Link
+              href="/procurement/queue"
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                    Sourcing Queue &amp; Quotes
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-slate-700 text-[11px]">
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Vehicle</span>
-                      <strong className="text-slate-900">{req.vehicle.year} {req.vehicle.make} {req.vehicle.model}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Part Name</span>
-                      <strong className="text-slate-900">{req.part.partName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">VIN</span>
-                      <span className="font-mono text-slate-800">{req.vehicle.vin}</span>
-                    </div>
-                  </div>
-
-                  {req.statusReason && (
-                    <div className="p-3 bg-white rounded-xl border border-rose-200 text-xs text-rose-900 font-medium">
-                      <span className="font-bold block text-[10px] uppercase tracking-wider text-rose-700 mb-0.5">
-                        Exception Reason:
-                      </span>
-                      {req.statusReason}
-                    </div>
-                  )}
-
-                  <div className="pt-2 flex justify-end gap-2">
-                    <button
-                      onClick={() => handleResolveException(req.id)}
-                      className="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold transition shadow"
-                    >
-                      Resolve Exception &amp; Return to Sourcing Queue
-                    </button>
+                  <div className="text-[10px] text-slate-500">
+                    {sourcingQueue.length} Active requests to source
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition" />
+            </Link>
+
+            <Link
+              href="/procurement/suppliers"
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                    Supplier Directory
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    {suppliers.length} Verified overseas vendors
+                  </div>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition" />
+            </Link>
+
+            <Link
+              href="/procurement/orders"
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <CheckSquare className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                    Place Supplier POs
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    {poGateQueue.length} Payment-cleared release gate
+                  </div>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition" />
+            </Link>
+
+            <Link
+              href="/procurement/tracking"
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
+                  <Truck className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                    Progress &amp; Port Tracking
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    {inTransitQueue.length} Freight consignments in flight
+                  </div>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition" />
+            </Link>
+
+            <Link
+              href="/procurement/exceptions"
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                    Sourcing Exceptions
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    {exceptionsQueue.length} Discontinued / delay items
+                  </div>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition" />
+            </Link>
+          </div>
         </div>
-      )}
-
-      {/* ================= MODAL: CAPTURE SUPPLIER QUOTATION ================= */}
-      {showAddSupplierQuote && activeReq && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-scaleIn">
-          <form
-            onSubmit={handleSaveSupplierQuote}
-            className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4 text-xs"
-          >
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Record Supplier Quotation
-                </h3>
-                <p className="text-[11px] text-slate-500">For {activeReq.referenceNumber} • {activeReq.part.partName}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddSupplierQuote(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Select Supplier</label>
-              <select
-                value={quoteSupplierId}
-                onChange={(e) => setQuoteSupplierId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-medium"
-              >
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.country} - {s.currency} • FX: {s.exchangeRateToNzd})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold block mb-1 text-slate-700">Foreign Part Cost</label>
-                <input
-                  type="number"
-                  required
-                  value={foreignCost}
-                  onChange={(e) => setForeignCost(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-slate-900"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold block mb-1 text-slate-700">Foreign Freight to Hub</label>
-                <input
-                  type="number"
-                  required
-                  value={foreignFreight}
-                  onChange={(e) => setForeignFreight(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-slate-900"
-                />
-              </div>
-            </div>
-
-            {/* Live NZD Preview */}
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] space-y-1">
-              {(() => {
-                const s = suppliers.find((x) => x.id === quoteSupplierId) || suppliers[0];
-                const pNzd = foreignCost * s.exchangeRateToNzd;
-                const fNzd = foreignFreight * s.exchangeRateToNzd;
-                return (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Converted Part Cost:</span>
-                      <span className="font-mono font-bold text-slate-800">${pNzd.toFixed(2)} NZD</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Converted Domestic Freight:</span>
-                      <span className="font-mono font-bold text-slate-800">${fNzd.toFixed(2)} NZD</span>
-                    </div>
-                    <div className="flex justify-between font-bold border-t pt-1">
-                      <span>Total Landed Cost to Hub:</span>
-                      <span className="font-mono text-emerald-800">${(pNzd + fNzd).toFixed(2)} NZD</span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Lead Time to Hub (Days)</label>
-              <input
-                type="number"
-                value={quoteAvailabilityDays}
-                onChange={(e) => setQuoteAvailabilityDays(parseInt(e.target.value, 10) || 2)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Supplier Notes &amp; Terms</label>
-              <textarea
-                rows={2}
-                value={quoteNotes}
-                onChange={(e) => setQuoteNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div className="pt-3 flex justify-end gap-2 border-t">
-              <button
-                type="button"
-                onClick={() => setShowAddSupplierQuote(false)}
-                className="px-4 py-2 border rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-xl shadow"
-              >
-                Save Supplier Quote
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* ================= MODAL: REVISE CUSTOMER QUOTE ================= */}
-      {showRevisionModal && activeReq && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-scaleIn">
-          <form
-            onSubmit={handleReissueQuote}
-            className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4 text-xs"
-          >
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Revise &amp; Reissue Quote
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  Quote {activeReq.quote?.quoteNumber} • Rev {(activeReq.quote?.revisionNumber || 1) + 1}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowRevisionModal(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Reason for Revision</label>
-              <textarea
-                rows={3}
-                required
-                value={revisionNotes}
-                onChange={(e) => setRevisionNotes(e.target.value)}
-                placeholder="e.g. Customer requested consolidated sea freight option, reduced margin to 15% for trade account volume..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] space-y-1">
-              <div className="flex justify-between">
-                <span>Revised Landed Cost:</span>
-                <span className="font-mono font-bold">${landedCostNzd.toFixed(2)} NZD</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Target Margin:</span>
-                <span className="font-mono font-bold">{targetMargin}% (+${calculatedMarginAmount.toFixed(2)} NZD)</span>
-              </div>
-              <div className="flex justify-between font-bold border-t pt-1 text-slate-900">
-                <span>New Total (incl GST):</span>
-                <span className="font-mono text-emerald-700">${calculatedTotal.toFixed(2)} NZD</span>
-              </div>
-            </div>
-
-            <div className="pt-3 flex justify-end gap-2 border-t">
-              <button
-                type="button"
-                onClick={() => setShowRevisionModal(false)}
-                className="px-4 py-2 border rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow"
-              >
-                Confirm &amp; Reissue Quote
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* ================= MODAL: SOURCING EXCEPTION ================= */}
-      {showExceptionModal && activeReq && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-scaleIn">
-          <form
-            onSubmit={handleConfirmException}
-            className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 space-y-4 text-xs"
-          >
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
-                <h3 className="text-base font-bold text-slate-900">
-                  Raise Sourcing Exception
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowExceptionModal(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Exception Category</label>
-              <select
-                value={exceptionCategory}
-                onChange={(e) => setExceptionCategory(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium"
-              >
-                <option value="Factory Discontinued">Factory Discontinued / End of Life</option>
-                <option value="Severe Backorder 60+ Days">Extended Backorder (60+ Days)</option>
-                <option value="Superseded OEM Number Required">Superseded OEM Part Number Required</option>
-                <option value="Supplier Price Spike >25%">Supplier Price Surge (&gt;25%)</option>
-                <option value="VIN / Fitment Incompatibility">Vehicle VIN / Fitment Conflict</option>
-                <option value="Other Sourcing Block">Other Sourcing Block</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Specific Reason / Details</label>
-              <textarea
-                rows={3}
-                required
-                value={exceptionReason}
-                onChange={(e) => setExceptionReason(e.target.value)}
-                placeholder="Provide detailed context for the trade customer and operations team..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div className="pt-3 flex justify-end gap-2 border-t">
-              <button
-                type="button"
-                onClick={() => setShowExceptionModal(false)}
-                className="px-4 py-2 border rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow"
-              >
-                Flag Sourcing Exception
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* ================= MODAL: ADD NEW SUPPLIER ================= */}
-      {showAddSupplierModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-scaleIn">
-          <form
-            onSubmit={handleAddSupplier}
-            className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4 text-xs max-h-[90vh] overflow-y-auto"
-          >
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-autohub-navy" />
-                <h3 className="text-base font-bold text-slate-900">
-                  Register New Supplier Reference
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddSupplierModal(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Supplier Legal Name</label>
-              <input
-                type="text"
-                required
-                value={newSupplierName}
-                onChange={(e) => setNewSupplierName(e.target.value)}
-                placeholder="e.g. Yokohama Genuine Parts Corp"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold block mb-1 text-slate-700">Country</label>
-                <select
-                  value={newSupplierCountry}
-                  onChange={(e) => {
-                    setNewSupplierCountry(e.target.value);
-                    if (e.target.value === "Japan") {
-                      setNewSupplierCurrency("JPY");
-                      setNewSupplierFxRate(0.0108);
-                    } else if (e.target.value === "USA") {
-                      setNewSupplierCurrency("USD");
-                      setNewSupplierFxRate(1.68);
-                    } else if (e.target.value === "Germany") {
-                      setNewSupplierCurrency("EUR");
-                      setNewSupplierFxRate(1.82);
-                    } else if (e.target.value === "Australia") {
-                      setNewSupplierCurrency("AUD");
-                      setNewSupplierFxRate(1.10);
-                    }
-                  }}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
-                >
-                  <option value="Japan">Japan</option>
-                  <option value="USA">USA</option>
-                  <option value="Germany">Germany</option>
-                  <option value="Australia">Australia</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="font-bold block mb-1 text-slate-700">Exchange Rate to NZD</label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  required
-                  value={newSupplierFxRate}
-                  onChange={(e) => setNewSupplierFxRate(parseFloat(e.target.value) || 1)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Specialty Category</label>
-              <input
-                type="text"
-                required
-                value={newSupplierCategory}
-                onChange={(e) => setNewSupplierCategory(e.target.value)}
-                placeholder="e.g. Japanese OEM Genuine / Aftermarket Spares"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="font-bold block mb-1 text-slate-700">Contact Person</label>
-                <input
-                  type="text"
-                  value={newSupplierPerson}
-                  onChange={(e) => setNewSupplierPerson(e.target.value)}
-                  placeholder="e.g. Kenji Tanaka"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200"
-                />
-              </div>
-              <div>
-                <label className="font-bold block mb-1 text-slate-700">Contact Email</label>
-                <input
-                  type="email"
-                  value={newSupplierEmail}
-                  onChange={(e) => setNewSupplierEmail(e.target.value)}
-                  placeholder="orders@supplier.com"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200"
-                />
-              </div>
-              <div>
-                <label className="font-bold block mb-1 text-slate-700">Phone</label>
-                <input
-                  type="text"
-                  value={newSupplierPhone}
-                  onChange={(e) => setNewSupplierPhone(e.target.value)}
-                  placeholder="+81 3 1234 5678"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Standard Lead Time (Days)</label>
-              <input
-                type="number"
-                value={newSupplierLeadDays}
-                onChange={(e) => setNewSupplierLeadDays(parseInt(e.target.value, 10) || 3)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div className="pt-3 flex justify-end gap-2 border-t">
-              <button
-                type="button"
-                onClick={() => setShowAddSupplierModal(false)}
-                className="px-4 py-2 border rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow"
-              >
-                Add Supplier to Directory
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* ================= MODAL: PO TRANSMIT / MARK ORDERED ================= */}
-      {showPoModal && poTargetReq && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-scaleIn">
-          <form
-            onSubmit={handleMarkOrdered}
-            className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4 text-xs"
-          >
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Transmit Purchase Order to Overseas Supplier
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  For {poTargetReq.referenceNumber} • Payment Confirmed (${poTargetReq.quote?.totalNzd.toFixed(2)} NZD)
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowPoModal(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Supplier PO Reference</label>
-              <input
-                type="text"
-                required
-                value={poNumberInput}
-                onChange={(e) => setPoNumberInput(e.target.value)}
-                placeholder="e.g. PO-JP-2026-00918"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-slate-900 font-bold"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">Target Export Consolidation Terminal</label>
-              <input
-                type="text"
-                required
-                value={poDispatchBay}
-                onChange={(e) => setPoDispatchBay(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold block mb-1 text-slate-700">PO Packaging &amp; Dispatch Instructions</label>
-              <textarea
-                rows={2}
-                value={poNotes}
-                onChange={(e) => setPoNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200"
-              />
-            </div>
-
-            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 space-y-1">
-              <span className="font-bold block">Status Transition Notice:</span>
-              <p>
-                Submitting this will transition <strong>{poTargetReq.referenceNumber}</strong> to <strong>&quot;ORDERED_FROM_SUPPLIER&quot;</strong>, alert the international logistics team, and update the customer tracking timeline.
-              </p>
-            </div>
-
-            <div className="pt-3 flex justify-end gap-2 border-t">
-              <button
-                type="button"
-                onClick={() => setShowPoModal(false)}
-                className="px-4 py-2 border rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow"
-              >
-                Confirm &amp; Mark &quot;Ordered From Supplier&quot;
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      </div>
 
       {/* ================= AI QUOTE MODAL ================= */}
-      {activeReq && (
+      {aiModalRequest && (
         <AIQuoteModal
-          request={activeReq}
+          request={aiModalRequest}
           isOpen={showAiModal}
           onClose={() => setShowAiModal(false)}
         />
       )}
     </div>
-  );
-}
-
-export default function ProcurementDashboardPage() {
-  return (
-    <React.Suspense
-      fallback={
-        <div className="bg-white rounded-3xl p-12 text-center text-xs text-slate-400 border border-slate-200 shadow-sm">
-          <div className="w-8 h-8 rounded-full border-2 border-rose-600 border-t-transparent animate-spin mx-auto mb-3" />
-          <span>Loading Sourcing Desk Command Center...</span>
-        </div>
-      }
-    >
-      <ProcurementDashboardContent />
-    </React.Suspense>
   );
 }
