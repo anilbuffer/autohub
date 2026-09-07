@@ -1,3 +1,12 @@
 {
-  "/about/page": "app/about/page.js"
+  "/login/page": "app/login/page.js",
+  "/portal/new-request/page": "app/portal/new-request/page.js",
+  "/portal/requests/page": "app/portal/requests/page.js",
+  "/portal/shipments/page": "app/portal/shipments/page.js",
+  "/portal/documents/page": "app/portal/documents/page.js",
+  "/portal/payments/page": "app/portal/payments/page.js",
+  "/portal/notifications/page": "app/portal/notifications/page.js",
+  "/portal/messages/page": "app/portal/messages/page.js",
+  "/portal/page": "app/portal/page.js",
+  "/portal/settings/page": "app/portal/settings/page.js"
 }
