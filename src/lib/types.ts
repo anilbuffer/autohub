@@ -335,6 +335,7 @@ export interface PartRequest {
   assignedStaffName?: string;
   vehicle: VehicleInfo;
   part: PartRequirement;
+  freightPreference?: FreightMethod | "NO_PREFERENCE";
   supplierQuotes: SupplierQuotation[];
   quote?: CustomerQuote;
   shipment?: ShipmentDetails;

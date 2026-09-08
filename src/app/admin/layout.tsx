@@ -219,68 +219,67 @@ export default function AdministratorLayout({
   // Search filtering
   const searchResults = searchQuery.trim()
     ? [
-        ...staffUsers
-          .filter(
-            (u) =>
-              u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              u.role.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-          .map((u) => ({
-            type: "Staff User",
-            title: u.name,
-            subtitle: `${u.role.replace(/_/g, " ")} • ${u.email}`,
-            link: "/admin/staff",
-          })),
-        ...customers
-          .filter(
-            (c) =>
-              c.tradingName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              c.nzbn.includes(searchQuery) ||
-              c.businessType.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-          .map((c) => ({
-            type: "Customer Account",
-            title: c.tradingName,
-            subtitle: `NZBN: ${c.nzbn} • ${c.billingDetails.status}`,
-            link: "/admin/customers",
-          })),
-        ...templates
-          .filter(
-            (t) =>
-              t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              t.trigger.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              t.subject.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-          .map((t) => ({
-            type: "Notification Template",
-            title: t.name,
-            subtitle: `Trigger: ${t.trigger} • ${t.channel}`,
-            link: "/admin/notifications",
-          })),
-        ...auditLogs
-          .filter(
-            (a) =>
-              a.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              a.actorName.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-          .slice(0, 5)
-          .map((a) => ({
-            type: "Audit Event",
-            title: a.action,
-            subtitle: `${a.actorName} (${a.actorRole}) • ${new Date(a.timestamp).toLocaleDateString()}`,
-            link: "/admin/audit",
-          })),
-      ]
+      ...staffUsers
+        .filter(
+          (u) =>
+            u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.role.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .map((u) => ({
+          type: "Staff User",
+          title: u.name,
+          subtitle: `${u.role.replace(/_/g, " ")} • ${u.email}`,
+          link: "/admin/staff",
+        })),
+      ...customers
+        .filter(
+          (c) =>
+            c.tradingName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.nzbn.includes(searchQuery) ||
+            c.businessType.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .map((c) => ({
+          type: "Customer Account",
+          title: c.tradingName,
+          subtitle: `NZBN: ${c.nzbn} • ${c.billingDetails.status}`,
+          link: "/admin/customers",
+        })),
+      ...templates
+        .filter(
+          (t) =>
+            t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.trigger.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.subject.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .map((t) => ({
+          type: "Notification Template",
+          title: t.name,
+          subtitle: `Trigger: ${t.trigger} • ${t.channel}`,
+          link: "/admin/notifications",
+        })),
+      ...auditLogs
+        .filter(
+          (a) =>
+            a.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            a.actorName.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .slice(0, 5)
+        .map((a) => ({
+          type: "Audit Event",
+          title: a.action,
+          subtitle: `${a.actorName} (${a.actorRole}) • ${new Date(a.timestamp).toLocaleDateString()}`,
+          link: "/admin/audit",
+        })),
+    ]
     : [];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-row font-sans text-slate-900 antialiased selection:bg-[#ed2025] selection:text-white">
       {/* ================= LEFT SIDEBAR (DARK NAVY #070e1e) ================= */}
       <aside
-        className={`bg-[#070e1e] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${
-          sidebarCollapsed ? "w-20" : "w-64"
-        }`}
+        className={`bg-[#0f172a] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${sidebarCollapsed ? "w-20" : "w-64"
+          }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Top Brand Header */}
@@ -330,9 +329,8 @@ export default function AdministratorLayout({
             <Link
               id="sidebar-primary-action-button"
               href="/admin/staff?action=create"
-              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${
-                sidebarCollapsed ? "px-2" : "px-4"
-              }`}
+              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${sidebarCollapsed ? "px-2" : "px-4"
+                }`}
             >
               <Plus className="w-4 h-4 flex-shrink-0 stroke-[2.5]" />
               {!sidebarCollapsed && <span>INVITE STAFF USER</span>}
@@ -357,28 +355,24 @@ export default function AdministratorLayout({
                       <Link
                         key={nav.label}
                         href={nav.href}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                          sidebarCollapsed ? "justify-center" : ""
-                        } ${
-                          isActive
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${sidebarCollapsed ? "justify-center" : ""
+                          } ${isActive
                             ? "bg-slate-800/90 text-white font-bold shadow-sm border-l-4 border-[#ed2025] pl-2.5"
                             : "text-slate-400 hover:text-white hover:bg-slate-800/40"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon
-                            className={`w-4 h-4 transition ${
-                              isActive ? "text-[#ed2025]" : "text-slate-400"
-                            }`}
+                            className={`w-4 h-4 transition ${isActive ? "text-[#ed2025]" : "text-slate-400"
+                              }`}
                           />
                           {!sidebarCollapsed && <span>{nav.label}</span>}
                         </div>
 
                         {!sidebarCollapsed && nav.badge !== undefined && (
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${
-                              nav.badgeColor || "bg-slate-700"
-                            }`}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${nav.badgeColor || "bg-slate-700"
+                              }`}
                           >
                             {nav.badge}
                           </span>
@@ -530,9 +524,8 @@ export default function AdministratorLayout({
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>Quick Action</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                    actionDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${actionDropdownOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 

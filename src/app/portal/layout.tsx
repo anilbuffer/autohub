@@ -161,22 +161,21 @@ export default function CustomerPortalLayout({
   // Global search filtering
   const searchResults = searchQuery.trim()
     ? requests.filter(
-        (r) =>
-          r.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.part.partName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      (r) =>
+        r.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.part.partName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : [];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-row font-sans text-slate-900 antialiased selection:bg-[#ed2025] selection:text-white">
       {/* ================= LEFT SIDEBAR (DARK NAVY) ================= */}
       <aside
-        className={`bg-[#070e1e] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${
-          sidebarCollapsed ? "w-20" : "w-64"
-        }`}
+        className={`bg-[#0f172a] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${sidebarCollapsed ? "w-20" : "w-64"
+          }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Top Brand Header */}
@@ -226,9 +225,8 @@ export default function CustomerPortalLayout({
             <Link
               id="sidebar-new-request-button"
               href="/portal/new-request"
-              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${
-                sidebarCollapsed ? "px-2" : "px-4"
-              }`}
+              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${sidebarCollapsed ? "px-2" : "px-4"
+                }`}
             >
               <Plus className="w-4 h-4 flex-shrink-0 stroke-[2.5]" />
               {!sidebarCollapsed && <span>NEW PARTS REQUEST</span>}
@@ -255,9 +253,8 @@ export default function CustomerPortalLayout({
                           key={nav.label}
                           type="button"
                           onClick={() => setHelpModalOpen(true)}
-                          className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                            sidebarCollapsed ? "justify-center" : ""
-                          } text-slate-400 hover:text-white hover:bg-slate-800/60`}
+                          className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${sidebarCollapsed ? "justify-center" : ""
+                            } text-slate-400 hover:text-white hover:bg-slate-800/60`}
                         >
                           <div className="flex items-center gap-3">
                             <Icon className="w-4 h-4 text-slate-400" />
@@ -271,28 +268,24 @@ export default function CustomerPortalLayout({
                       <Link
                         key={nav.label}
                         href={nav.href}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                          sidebarCollapsed ? "justify-center" : ""
-                        } ${
-                          isActive
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${sidebarCollapsed ? "justify-center" : ""
+                          } ${isActive
                             ? "bg-slate-800/90 text-white font-bold shadow-sm border-l-4 border-[#ed2025] pl-2.5"
                             : "text-slate-400 hover:text-white hover:bg-slate-800/40"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon
-                            className={`w-4 h-4 transition ${
-                              isActive ? "text-[#ed2025]" : "text-slate-400"
-                            }`}
+                            className={`w-4 h-4 transition ${isActive ? "text-[#ed2025]" : "text-slate-400"
+                              }`}
                           />
                           {!sidebarCollapsed && <span>{nav.label}</span>}
                         </div>
 
                         {!sidebarCollapsed && nav.badge !== undefined && (
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${
-                              nav.badgeColor || "bg-slate-700"
-                            }`}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${nav.badgeColor || "bg-slate-700"
+                              }`}
                           >
                             {nav.badge}
                           </span>
@@ -415,45 +408,27 @@ export default function CustomerPortalLayout({
             </h1>
           </div>
 
-          {/* Center: Global Search Bar */}
-          <div className="flex-1 max-w-md hidden md:block">
-            <button
-              type="button"
-              onClick={() => setSearchModalOpen(true)}
-              className="w-full py-2 pl-3.5 pr-3 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-left text-xs text-slate-500 flex items-center justify-between transition group"
-            >
-              <div className="flex items-center gap-2.5">
-                <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
-                <span>Search requests, orders or shipments...</span>
-              </div>
-              <kbd className="px-1.5 py-0.5 rounded bg-white text-[10px] font-mono font-bold text-slate-400 shadow-sm border border-slate-200">
-                ⌘K
-              </kbd>
-            </button>
-          </div>
+
 
           {/* Right: Actions (Cross-Portal Links, Primary CTA, Credit info, Help, Notifications) */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
-            {/* Quick Sourcing Desk Link */}
-            <Link
-              href="/procurement"
-              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
-              title="Open Procurement Sourcing Desk"
-            >
-              <Compass className="w-3.5 h-3.5 text-amber-600" />
-              <span>Sourcing Desk</span>
-            </Link>
-
-            <Link
-              href="/"
-              className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
-              title="Return to Public Website"
-            >
-              <Home className="w-3.5 h-3.5 text-slate-500" />
-              <span>Website</span>
-            </Link>
-
-            {/* Symmetrical Primary CTA: + New Request */}
+            {/* Center: Global Search Bar */}
+            <div className="flex-1 max-w-md hidden md:block">
+              <button
+                type="button"
+                onClick={() => setSearchModalOpen(true)}
+                className="w-full py-2 pl-3.5 pr-3 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-left text-xs text-slate-500 flex items-center justify-between transition group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
+                  <span>Search requests, orders or shipments...</span>
+                </div>
+                <kbd className="px-1.5 py-0.5 rounded bg-white text-[10px] font-mono font-bold text-slate-400 shadow-sm border border-slate-200">
+                  ⌘K
+                </kbd>
+              </button>
+            </div>
+            {/* Primary CTA: + New Request */}
             <Link
               id="header-new-request-button"
               href="/portal/new-request"
@@ -462,15 +437,6 @@ export default function CustomerPortalLayout({
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span className="hidden sm:inline">New Request</span>
             </Link>
-
-            {/* Quick Credit Status Chip */}
-            <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-slate-500 text-[11px]">Trade Credit:</span>
-              <span className="font-bold text-slate-800">
-                ${(customer?.billingDetails?.creditAvailableNzd || 18450).toLocaleString()} NZD
-              </span>
-            </div>
 
             {/* Help Question Icon */}
             <button
@@ -488,12 +454,12 @@ export default function CustomerPortalLayout({
               <button
                 type="button"
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition relative"
+                className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition relative flex items-center justify-center"
                 title="Notifications"
               >
-                <Bell className="w-4 h-4" />
+                <Bell className="w-5 h-5 text-slate-700" />
                 {unreadNotifsCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#ed2025] text-white rounded-full text-[9px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#ed2025] text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
                     {unreadNotifsCount}
                   </span>
                 )}
@@ -522,11 +488,10 @@ export default function CustomerPortalLayout({
                     {notifications.slice(0, 4).map((notif) => (
                       <div
                         key={notif.id}
-                        className={`p-2.5 rounded-2xl text-xs transition border ${
-                          notif.read
-                            ? "bg-white border-slate-100 text-slate-500"
-                            : "bg-blue-50/50 border-blue-100 text-slate-800"
-                        }`}
+                        className={`p-2.5 rounded-2xl text-xs transition border ${notif.read
+                          ? "bg-white border-slate-100 text-slate-500"
+                          : "bg-blue-50/50 border-blue-100 text-slate-800"
+                          }`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold text-slate-900 text-[11px]">

@@ -16,11 +16,12 @@ import {
   DollarSign,
   Plane,
   Anchor,
+  Truck,
   X,
 } from "lucide-react";
 import { createPartRequest, getStoredCustomers } from "@/lib/store";
 import { calculateEstimatedCost } from "@/lib/aiService";
-import { PartCondition } from "@/lib/types";
+import { PartCondition, FreightMethod } from "@/lib/types";
 
 export default function NewRequestPage() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function NewRequestPage() {
     { name: "toyota_parts_diagram_charging_system.pdf", size: "750 KB" },
   ]);
   const [newFileInput, setNewFileInput] = useState("");
+  const [freightPreference, setFreightPreference] = useState<FreightMethod | "NO_PREFERENCE">("NO_PREFERENCE");
 
   // Predefined Vehicle Catalog for Select Dropdowns
   const VEHICLE_CATALOG: Record<string, string[]> = {
@@ -150,6 +152,7 @@ export default function NewRequestPage() {
           postcode: "1061",
         },
         vehicle,
+        freightPreference,
         part: {
           ...part,
           attachments: attachments.map((a) => ({
@@ -577,12 +580,130 @@ export default function NewRequestPage() {
           </div>
         </div>
 
-        {/* Card 3: Multi-File & Document Upload Simulator */}
+        {/* Card 3: Freight Preference */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-3">
+            <Truck className="w-5 h-5 text-autohub-navy" />
+            <h3 className="text-sm font-bold uppercase tracking-wider">
+              3. Freight Preference
+            </h3>
+          </div>
+
+          <p className="text-xs text-slate-500">
+            Select your preferred freight method. This helps us prioritise the right logistics channel when preparing your quote.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Air Express */}
+            <label
+              className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all ${
+                freightPreference === "AIR_EXPRESS"
+                  ? "border-sky-500 bg-sky-50 shadow-md shadow-sky-100"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+              }`}
+            >
+              <input
+                type="radio"
+                name="freightPreference"
+                value="AIR_EXPRESS"
+                checked={freightPreference === "AIR_EXPRESS"}
+                onChange={() => setFreightPreference("AIR_EXPRESS")}
+                className="sr-only"
+              />
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  freightPreference === "AIR_EXPRESS" ? "bg-sky-500 text-white" : "bg-slate-100 text-slate-500"
+                }`}>
+                  <Plane className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Air Express</span>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Priority air freight — fastest transit, typically 3–7 business days door-to-door.
+              </p>
+              {freightPreference === "AIR_EXPRESS" && (
+                <div className="absolute top-2.5 right-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-sky-500" />
+                </div>
+              )}
+            </label>
+
+            {/* Sea Freight */}
+            <label
+              className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all ${
+                freightPreference === "SEA_FREIGHT"
+                  ? "border-cyan-500 bg-cyan-50 shadow-md shadow-cyan-100"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+              }`}
+            >
+              <input
+                type="radio"
+                name="freightPreference"
+                value="SEA_FREIGHT"
+                checked={freightPreference === "SEA_FREIGHT"}
+                onChange={() => setFreightPreference("SEA_FREIGHT")}
+                className="sr-only"
+              />
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  freightPreference === "SEA_FREIGHT" ? "bg-cyan-500 text-white" : "bg-slate-100 text-slate-500"
+                }`}>
+                  <Anchor className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Sea Freight</span>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Consolidated sea freight — cost-effective option, typically 14–25 business days.
+              </p>
+              {freightPreference === "SEA_FREIGHT" && (
+                <div className="absolute top-2.5 right-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-cyan-500" />
+                </div>
+              )}
+            </label>
+
+            {/* No Preference */}
+            <label
+              className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all ${
+                freightPreference === "NO_PREFERENCE"
+                  ? "border-slate-500 bg-slate-50 shadow-md shadow-slate-100"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+              }`}
+            >
+              <input
+                type="radio"
+                name="freightPreference"
+                value="NO_PREFERENCE"
+                checked={freightPreference === "NO_PREFERENCE"}
+                onChange={() => setFreightPreference("NO_PREFERENCE")}
+                className="sr-only"
+              />
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  freightPreference === "NO_PREFERENCE" ? "bg-slate-600 text-white" : "bg-slate-100 text-slate-500"
+                }`}>
+                  <Package className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">No Preference</span>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Let Autohub recommend the best freight option based on cost, weight, and urgency.
+              </p>
+              {freightPreference === "NO_PREFERENCE" && (
+                <div className="absolute top-2.5 right-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-slate-500" />
+                </div>
+              )}
+            </label>
+          </div>
+        </div>
+
+        {/* Card 4: Multi-File & Document Upload Simulator */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-3">
             <Upload className="w-5 h-5 text-autohub-navy" />
             <h3 className="text-sm font-bold uppercase tracking-wider">
-              3. Supporting Documents & Photos
+              4. Supporting Documents & Photos
             </h3>
           </div>
 

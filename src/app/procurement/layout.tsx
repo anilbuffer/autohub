@@ -191,23 +191,22 @@ export default function ProcurementPortalLayout({
   // Search filtering
   const searchResults = searchQuery.trim()
     ? requests.filter(
-        (r) =>
-          r.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.part.partName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          r.customerName.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      (r) =>
+        r.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.part.partName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : [];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-row font-sans text-slate-900 antialiased selection:bg-[#ed2025] selection:text-white">
       {/* ================= LEFT SIDEBAR (DARK NAVY) ================= */}
       <aside
-        className={`bg-[#070e1e] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${
-          sidebarCollapsed ? "w-20" : "w-64"
-        }`}
+        className={`bg-[#0f172a] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${sidebarCollapsed ? "w-20" : "w-64"
+          }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Top Brand Header */}
@@ -257,9 +256,8 @@ export default function ProcurementPortalLayout({
             <Link
               id="sidebar-sourcing-queue-button"
               href="/procurement/queue"
-              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${
-                sidebarCollapsed ? "px-2" : "px-4"
-              }`}
+              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${sidebarCollapsed ? "px-2" : "px-4"
+                }`}
             >
               <Compass className="w-4 h-4 flex-shrink-0 stroke-[2.5]" />
               {!sidebarCollapsed && <span>OPEN SOURCING QUEUE</span>}
@@ -286,9 +284,8 @@ export default function ProcurementPortalLayout({
                           key={nav.label}
                           type="button"
                           onClick={() => setHelpModalOpen(true)}
-                          className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                            sidebarCollapsed ? "justify-center" : ""
-                          } text-slate-400 hover:text-white hover:bg-slate-800/60`}
+                          className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${sidebarCollapsed ? "justify-center" : ""
+                            } text-slate-400 hover:text-white hover:bg-slate-800/60`}
                         >
                           <div className="flex items-center gap-3">
                             <Icon className="w-4 h-4 text-slate-400" />
@@ -302,28 +299,24 @@ export default function ProcurementPortalLayout({
                       <Link
                         key={nav.label}
                         href={nav.href}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                          sidebarCollapsed ? "justify-center" : ""
-                        } ${
-                          isActive
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${sidebarCollapsed ? "justify-center" : ""
+                          } ${isActive
                             ? "bg-slate-800/90 text-white font-bold shadow-sm border-l-4 border-[#ed2025] pl-2.5"
                             : "text-slate-400 hover:text-white hover:bg-slate-800/40"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon
-                            className={`w-4 h-4 transition ${
-                              isActive ? "text-[#ed2025]" : "text-slate-400"
-                            }`}
+                            className={`w-4 h-4 transition ${isActive ? "text-[#ed2025]" : "text-slate-400"
+                              }`}
                           />
                           {!sidebarCollapsed && <span>{nav.label}</span>}
                         </div>
 
                         {!sidebarCollapsed && nav.badge !== undefined && (
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${
-                              nav.badgeColor || "bg-slate-700"
-                            }`}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${nav.badgeColor || "bg-slate-700"
+                              }`}
                           >
                             {nav.badge}
                           </span>
@@ -447,25 +440,6 @@ export default function ProcurementPortalLayout({
 
           {/* Right: Search, Quick Portal Links, New Action, Notifications */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
-            {/* Quick Cross-Portal Links */}
-            <Link
-              href="/portal"
-              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
-              title="Open Trade Customer Portal"
-            >
-              <Building2 className="w-3.5 h-3.5 text-blue-600" />
-              <span>Customer Portal</span>
-            </Link>
-
-            <Link
-              href="/"
-              className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
-              title="Return to Public Website"
-            >
-              <Home className="w-3.5 h-3.5 text-slate-500" />
-              <span>Website</span>
-            </Link>
-
 
             {/* Global Search Bar */}
             <button
@@ -494,9 +468,8 @@ export default function ProcurementPortalLayout({
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>New Action</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                    actionDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${actionDropdownOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
