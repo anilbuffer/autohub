@@ -529,36 +529,8 @@ export default function AdministratorLayout({
             </h1>
           </div>
 
-          {/* Right: Cross-Portal Links, Search, Primary Action, Notifications */}
+          {/* Right: Search, Primary Action, Notifications */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
-            {/* Quick Cross-Portal Links */}
-            <Link
-              href="/portal"
-              className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
-              title="Open Trade Customer Portal"
-            >
-              <Building2 className="w-3.5 h-3.5 text-blue-600" />
-              <span>Customer</span>
-            </Link>
-
-            <Link
-              href="/procurement"
-              className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
-              title="Open Sourcing Desk"
-            >
-              <Compass className="w-3.5 h-3.5 text-amber-600" />
-              <span>Sourcing</span>
-            </Link>
-
-            <Link
-              href="/finance"
-              className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
-              title="Open Finance Portal"
-            >
-              <Banknote className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Finance</span>
-            </Link>
-
             {/* Global Search Bar */}
             <button
               type="button"
