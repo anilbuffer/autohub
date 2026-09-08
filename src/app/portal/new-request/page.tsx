@@ -54,8 +54,60 @@ export default function NewRequestPage() {
     { name: "alternator_label_denso.jpg", size: "1.8 MB" },
     { name: "toyota_parts_diagram_charging_system.pdf", size: "750 KB" },
   ]);
-
   const [newFileInput, setNewFileInput] = useState("");
+
+  // Predefined Vehicle Catalog for Select Dropdowns
+  const VEHICLE_CATALOG: Record<string, string[]> = {
+    Toyota: ["Hilux", "Land Cruiser", "Land Cruiser Prado", "Hiace", "RAV4", "Aqua", "Prius", "Corolla", "Camry", "Yaris", "Highlander", "C-HR"],
+    Nissan: ["Navara", "Patrol", "Leaf", "X-Trail", "Skyline", "GT-R", "Note", "Tiida", "Qashqai", "Pathfinder", "Serena"],
+    Mazda: ["CX-5", "CX-9", "CX-30", "CX-8", "BT-50", "Axela / Mazda3", "Demio / Mazda2", "Atenza / Mazda6", "MX-5"],
+    Ford: ["Ranger", "Everest", "Transit", "Focus", "Falcon", "Mondeo", "Escape", "Mustang"],
+    Mitsubishi: ["Triton", "Outlander", "Pajero", "Pajero Sport", "ASX", "Eclipse Cross", "Lancer", "Delica D:5"],
+    Subaru: ["Outback", "Forester", "Legacy", "Impreza", "WRX / STI", "XV / Crosstrek", "Levorg"],
+    Honda: ["Civic", "Accord", "CR-V", "Fit / Jazz", "HR-V / Vezel", "Odyssey", "Stepwgn"],
+    Isuzu: ["D-Max", "MU-X", "Elf", "Forward", "Giga"],
+    BMW: ["3 Series", "5 Series", "1 Series", "X3", "X5", "X1", "M3", "M5", "7 Series"],
+    "Mercedes-Benz": ["C-Class", "E-Class", "A-Class", "GLC", "GLE", "Sprinter", "Vito", "S-Class", "G-Class"],
+    Audi: ["A3", "A4", "A6", "Q5", "Q7", "Q3", "RS4", "RS6", "e-tron"],
+    Hyundai: ["Tucson", "Santa Fe", "i30", "Kona", "Staria", "Ioniq 5", "Palisade"],
+    Kia: ["Sportage", "Sorento", "Carnival", "EV6", "Cerato", "Seltos", "Niro"],
+    Suzuki: ["Swift", "Jimny", "Vitara", "SX4 S-Cross", "Baleno", "Ignis", "Carry"],
+    Volkswagen: ["Golf", "Amarok", "Tiguan", "Transporter", "Passat", "Polo", "Touareg"],
+    Lexus: ["RX Series", "NX Series", "IS Series", "GS Series", "LX Series", "ES Series"],
+    Other: ["Other / Custom Model"],
+  };
+
+  const YEARS = Array.from({ length: 2026 - 1985 + 1 }, (_, i) => 2026 - i);
+
+  const [isCustomMake, setIsCustomMake] = useState(false);
+  const [isCustomModel, setIsCustomModel] = useState(false);
+
+  const handleMakeChange = (selectedMake: string) => {
+    if (selectedMake === "Other") {
+      setIsCustomMake(true);
+      setIsCustomModel(true);
+      setVehicle((prev) => ({ ...prev, make: "", model: "" }));
+    } else {
+      setIsCustomMake(false);
+      setIsCustomModel(false);
+      const models = VEHICLE_CATALOG[selectedMake] || [];
+      setVehicle((prev) => ({
+        ...prev,
+        make: selectedMake,
+        model: models[0] || "",
+      }));
+    }
+  };
+
+  const handleModelChange = (selectedModel: string) => {
+    if (selectedModel === "Other / Custom Model") {
+      setIsCustomModel(true);
+      setVehicle((prev) => ({ ...prev, model: "" }));
+    } else {
+      setIsCustomModel(false);
+      setVehicle((prev) => ({ ...prev, model: selectedModel }));
+    }
+  };
 
   // AI Instant Cost Estimator
   const aiEstimate = calculateEstimatedCost(vehicle.make, vehicle.model, part.category);
@@ -148,47 +200,115 @@ export default function NewRequestPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            {/* Make Select */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
                 Make *
               </label>
-              <input
-                type="text"
-                required
-                value={vehicle.make}
-                onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })}
-                placeholder="e.g. Toyota, Mazda, Ford, BMW"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-autohub-navy focus:outline-none"
-              />
+              {!isCustomMake ? (
+                <select
+                  required
+                  value={vehicle.make}
+                  onChange={(e) => handleMakeChange(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-autohub-navy focus:outline-none font-medium text-slate-800"
+                >
+                  <option value="" disabled>Select Make</option>
+                  {Object.keys(VEHICLE_CATALOG).map((make) => (
+                    <option key={make} value={make}>
+                      {make === "Other" ? "Other / Custom Make..." : make}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="space-y-1.5">
+                  <input
+                    type="text"
+                    required
+                    value={vehicle.make}
+                    onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })}
+                    placeholder="Enter Custom Make"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-autohub-navy focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomMake(false);
+                      setIsCustomModel(false);
+                      setVehicle({ ...vehicle, make: "Toyota", model: "Hilux" });
+                    }}
+                    className="text-[10px] text-autohub-red hover:underline font-semibold"
+                  >
+                    ← Choose from catalog
+                  </button>
+                </div>
+              )}
             </div>
 
+            {/* Model Select */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
                 Model *
               </label>
-              <input
-                type="text"
-                required
-                value={vehicle.model}
-                onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })}
-                placeholder="e.g. Hiace, Ranger, CX-5"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-autohub-navy focus:outline-none"
-              />
+              {!isCustomModel && !isCustomMake ? (
+                <select
+                  required
+                  value={vehicle.model}
+                  onChange={(e) => handleModelChange(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-autohub-navy focus:outline-none font-medium text-slate-800"
+                >
+                  <option value="" disabled>Select Model</option>
+                  {(VEHICLE_CATALOG[vehicle.make] || ["Other / Custom Model"]).map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+                  <option value="Other / Custom Model">Other / Custom Model...</option>
+                </select>
+              ) : (
+                <div className="space-y-1.5">
+                  <input
+                    type="text"
+                    required
+                    value={vehicle.model}
+                    onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })}
+                    placeholder="Enter Custom Model"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-autohub-navy focus:outline-none"
+                  />
+                  {!isCustomMake && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomModel(false);
+                        const models = VEHICLE_CATALOG[vehicle.make] || [];
+                        setVehicle({ ...vehicle, model: models[0] || "" });
+                      }}
+                      className="text-[10px] text-autohub-red hover:underline font-semibold"
+                    >
+                      ← Choose from catalog
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
+            {/* Model Year Select */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
                 Model Year *
               </label>
-              <input
-                type="number"
+              <select
                 required
-                min={1980}
-                max={2027}
                 value={vehicle.year}
                 onChange={(e) => setVehicle({ ...vehicle, year: parseInt(e.target.value) || 2020 })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-autohub-navy focus:outline-none"
-              />
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-autohub-navy focus:outline-none font-medium text-slate-800"
+              >
+                {YEARS.map((yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                ))}
+                <option value={1980}>Pre-1985 / Classic</option>
+              </select>
             </div>
           </div>
 

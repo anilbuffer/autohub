@@ -36,6 +36,7 @@ import {
   subscribeToStore,
 } from "@/lib/store";
 import { TradeCustomer, PartRequest, CustomerNotification } from "@/lib/types";
+import { SidebarRoleSwitcher } from "@/components/SidebarRoleSwitcher";
 
 interface NavItem {
   label: string;
@@ -350,23 +351,12 @@ export default function CustomerPortalLayout({
                 <span>Account Settings & Users</span>
               </Link>
 
-              <Link
-                href="/procurement"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Compass className="w-3.5 h-3.5 text-amber-400" />
-                <span>Procurement Sourcing Desk</span>
-              </Link>
-
-              <Link
-                href="/admin"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Building2 className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Operations Admin Desk</span>
-              </Link>
+              <div className="border-t border-slate-800/80 pt-1 mt-1">
+                <SidebarRoleSwitcher
+                  currentRole="CUSTOMER"
+                  onClose={() => setUserMenuOpen(false)}
+                />
+              </div>
 
               <Link
                 href="/"

@@ -40,6 +40,7 @@ import {
   subscribeToStore,
 } from "@/lib/store";
 import { PartRequest, TradeCustomer, CustomerNotification, FinancialTransaction, ReconciliationRecord } from "@/lib/types";
+import { SidebarRoleSwitcher } from "@/components/SidebarRoleSwitcher";
 
 interface NavItem {
   label: string;
@@ -375,32 +376,12 @@ export default function FinancePortalLayout({
                 <span>Finance &amp; GST Settings</span>
               </Link>
 
-              <Link
-                href="/procurement"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Compass className="w-3.5 h-3.5 text-amber-400" />
-                <span>Procurement Sourcing Desk</span>
-              </Link>
-
-              <Link
-                href="/operations"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Truck className="w-3.5 h-3.5 text-blue-400" />
-                <span>Operations &amp; Freight Hub</span>
-              </Link>
-
-              <Link
-                href="/portal"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Building2 className="w-3.5 h-3.5 text-purple-400" />
-                <span>Trade Customer Portal</span>
-              </Link>
+              <div className="border-t border-slate-800/80 pt-1 mt-1">
+                <SidebarRoleSwitcher
+                  currentRole="FINANCE_OFFICER"
+                  onClose={() => setUserMenuOpen(false)}
+                />
+              </div>
 
               <Link
                 href="/"

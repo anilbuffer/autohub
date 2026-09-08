@@ -207,6 +207,12 @@ export default function PaymentsQueuePage() {
     REFUNDED: requests.filter((r) => getEffectivePaymentStatus(r) === "REFUNDED").length,
   };
 
+  const channelCounts = {
+    ALL: requests.length,
+    TRADE_CREDIT: requests.filter((r) => (r.invoice?.paymentMethod || "TRADE_CREDIT") === "TRADE_CREDIT").length,
+    BANK_TRANSFER: requests.filter((r) => (r.invoice?.paymentMethod || "BANK_TRANSFER") === "BANK_TRANSFER").length,
+  };
+
   const totalAwaitingAmount = requests
     .filter((r) => {
       const st = getEffectivePaymentStatus(r);
@@ -355,9 +361,9 @@ export default function PaymentsQueuePage() {
           ))}
         </div>
 
-        {/* Search & Channel Filters */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-96">
+        {/* Search & Trade Credit / Bank Paid Filters */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pt-2">
+          <div className="relative w-full lg:w-96">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -368,17 +374,60 @@ export default function PaymentsQueuePage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <span className="text-xs text-slate-400 font-medium">Channel:</span>
-            <select
-              value={selectedMethod}
-              onChange={(e) => setSelectedMethod(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-xl text-xs py-2 px-3 outline-none font-semibold text-slate-700"
+          {/* Trade Credit & Bank Paid Filter Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-500 font-bold hidden sm:inline">Payment Channel:</span>
+            
+            <button
+              type="button"
+              onClick={() => setSelectedMethod("ALL")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                selectedMethod === "ALL"
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+              }`}
             >
-              <option value="ALL">All Payment Methods</option>
-              <option value="BANK_TRANSFER">ANZ Bank Transfer</option>
-              <option value="TRADE_CREDIT">Trade Credit (Net 20th)</option>
-            </select>
+              <span>All Channels</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 font-bold">
+                {channelCounts.ALL}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedMethod("TRADE_CREDIT")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                selectedMethod === "TRADE_CREDIT"
+                  ? "bg-purple-900 text-white border-purple-800 shadow-sm"
+                  : "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5 text-purple-400" />
+              <span>Trade Credit</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                selectedMethod === "TRADE_CREDIT" ? "bg-purple-700 text-white" : "bg-purple-200 text-purple-800"
+              }`}>
+                {channelCounts.TRADE_CREDIT}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedMethod("BANK_TRANSFER")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                selectedMethod === "BANK_TRANSFER"
+                  ? "bg-emerald-900 text-white border-emerald-800 shadow-sm"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Bank Paid</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                selectedMethod === "BANK_TRANSFER" ? "bg-emerald-700 text-white" : "bg-emerald-200 text-emerald-800"
+              }`}>
+                {channelCounts.BANK_TRANSFER}
+              </span>
+            </button>
           </div>
         </div>
 

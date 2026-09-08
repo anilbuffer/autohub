@@ -81,6 +81,9 @@ export interface SupplierQuotation {
   supplierId: string;
   supplierName: string;
   supplierCountry: string; // e.g., Japan, Germany, USA, Australia
+  quantity?: number; // Quoted quantity
+  unitCostForeign?: number; // Foreign cost per unit
+  unitCostNzd?: number; // NZD cost per unit
   partCostCurrency: string; // JPY, USD, EUR, AUD
   partCostForeign: number;
   exchangeRateToNzd: number;

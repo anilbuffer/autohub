@@ -37,6 +37,7 @@ import {
 import {
   getStoredRequests,
   getStoredSuppliers,
+  getStoredCustomers,
   addSupplierQuote,
   issueCustomerQuote,
   subscribeToStore,
@@ -52,6 +53,7 @@ import {
   CustomerQuote,
   SupplierProfile,
   FreightMethod,
+  TradeCustomer,
 } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AIQuoteModal } from "@/components/AIQuoteModal";
@@ -62,6 +64,7 @@ export default function SourcingQueuePage() {
 
   const [requests, setRequests] = useState<PartRequest[]>(initialRequests);
   const [suppliers, setSuppliers] = useState<SupplierProfile[]>(initialSuppliers);
+  const [customers, setCustomers] = useState<TradeCustomer[]>([]);
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
 
   // Filters
@@ -88,6 +91,8 @@ export default function SourcingQueuePage() {
 
   // Manual Supplier Quote Capture Form State
   const [quoteSupplierId, setQuoteSupplierId] = useState("SUP-01");
+  const [quoteQuantity, setQuoteQuantity] = useState<number>(1);
+  const [quoteUnitCost, setQuoteUnitCost] = useState<number>(48000);
   const [foreignCost, setForeignCost] = useState<number>(48000);
   const [foreignFreight, setForeignFreight] = useState<number>(3200);
   const [quoteAvailabilityDays, setQuoteAvailabilityDays] = useState<number>(2);
@@ -102,6 +107,7 @@ export default function SourcingQueuePage() {
     const loaded = getStoredRequests();
     setRequests(loaded);
     setSuppliers(getStoredSuppliers());
+    setCustomers(getStoredCustomers());
 
     if (initialReqParam) {
       const match = loaded.find((r) => r.id === initialReqParam || r.referenceNumber === initialReqParam);
@@ -112,6 +118,7 @@ export default function SourcingQueuePage() {
       const refreshed = getStoredRequests();
       setRequests(refreshed);
       setSuppliers(getStoredSuppliers());
+      setCustomers(getStoredCustomers());
     });
     return unsub;
   }, [initialReqParam]);
@@ -233,6 +240,9 @@ export default function SourcingQueuePage() {
       supplierId: sup.id,
       supplierName: sup.name,
       supplierCountry: sup.country,
+      quantity: quoteQuantity,
+      unitCostForeign: quoteUnitCost,
+      unitCostNzd: parseFloat((quoteUnitCost * sup.exchangeRateToNzd).toFixed(2)),
       partCostCurrency: sup.currency,
       partCostForeign: foreignCost,
       exchangeRateToNzd: sup.exchangeRateToNzd,
@@ -555,6 +565,65 @@ export default function SourcingQueuePage() {
                   </div>
                 )}
               </div>
+
+              {/* Trade Onboarding Profile & Account Sync Card */}
+              {(() => {
+                const matchedCustomer = customers.find(
+                  (c) => c.id === activeReq.customerId || c.nzbn === activeReq.customerNzbn
+                ) || customers[0];
+
+                return (
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3 text-xs">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-[#ed2025]" />
+                        <h3 className="font-bold uppercase tracking-wider text-slate-900 text-xs">
+                          Trade Onboarding Account Sync
+                        </h3>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                        Synced
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                        <span className="text-slate-500">Trading Entity:</span>
+                        <span className="font-bold text-slate-800">{matchedCustomer?.tradingName || activeReq.customerName}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                        <span className="text-slate-500">Legal Business Name:</span>
+                        <span className="font-medium text-slate-700">{matchedCustomer?.legalBusinessName || "South Pacific Automotive Group Ltd"}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                        <span className="text-slate-500">NZBN Number:</span>
+                        <span className="font-mono font-bold text-slate-800">{matchedCustomer?.nzbn || activeReq.customerNzbn || "9429041234567"}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                        <span className="text-slate-500">Trade Credit Terms:</span>
+                        <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                          {matchedCustomer?.billingDetails?.status === "APPROVED"
+                            ? `Approved ($${(matchedCustomer.billingDetails.creditLimitNzd || 50000).toLocaleString()} • Net 20th)`
+                            : "Prepayment Required"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                        <span className="text-slate-500">Goods Inward Address:</span>
+                        <span className="font-medium text-slate-700 text-right truncate max-w-[200px]" title={`${activeReq.deliveryAddress.street}, ${activeReq.deliveryAddress.city}`}>
+                          {activeReq.deliveryAddress.street}, {activeReq.deliveryAddress.city}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-slate-500">Order Part Quantity:</span>
+                        <span className="font-black text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full">
+                          {activeReq.part.quantity} unit{activeReq.part.quantity > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Right: Quotation Workspace & Landed Margin Calculator (7 Cols) */}
@@ -571,7 +640,11 @@ export default function SourcingQueuePage() {
 
                   <button
                     type="button"
-                    onClick={() => setShowAddSupplierQuote(true)}
+                    onClick={() => {
+                      setQuoteQuantity(activeReq.part.quantity || 1);
+                      setForeignCost((activeReq.part.quantity || 1) * quoteUnitCost);
+                      setShowAddSupplierQuote(true);
+                    }}
                     className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -586,7 +659,11 @@ export default function SourcingQueuePage() {
                       <p>No supplier quotes recorded yet for this request.</p>
                       <button
                         type="button"
-                        onClick={() => setShowAddSupplierQuote(true)}
+                        onClick={() => {
+                          setQuoteQuantity(activeReq.part.quantity || 1);
+                          setForeignCost((activeReq.part.quantity || 1) * quoteUnitCost);
+                          setShowAddSupplierQuote(true);
+                        }}
                         className="mt-2 text-rose-600 font-bold hover:underline inline-block"
                       >
                         + Record overseas vendor quote
@@ -595,6 +672,8 @@ export default function SourcingQueuePage() {
                   ) : (
                     activeReq.supplierQuotes.map((sq) => {
                       const isWinning = selectedSupplierQuoteId === sq.id;
+                      const sqQty = sq.quantity || activeReq.part.quantity || 1;
+                      const unitCost = sq.unitCostForeign || (sq.partCostForeign / sqQty);
 
                       return (
                         <div
@@ -614,6 +693,9 @@ export default function SourcingQueuePage() {
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                                 {sq.supplierCountry}
                               </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                Qty: {sqQty} pcs
+                              </span>
                               {sq.isRecommendedByAi && (
                                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 flex items-center gap-1">
                                   <Sparkles className="w-2.5 h-2.5" />
@@ -623,7 +705,7 @@ export default function SourcingQueuePage() {
                             </div>
 
                             <div className="text-[11px] text-slate-500 mt-1">
-                              Lead Time: {sq.availabilityDays} days • Notes: {sq.notes || "None"}
+                              Unit: {unitCost.toLocaleString()} {sq.partCostCurrency} • Lead Time: {sq.availabilityDays} days • Notes: {sq.notes || "None"}
                             </div>
                           </div>
 
@@ -855,12 +937,54 @@ export default function SourcingQueuePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-700">Part Cost (Foreign Currency):</label>
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Quoted Quantity:</span>
+                    <span className="text-[10px] text-blue-600 font-normal">Req: {activeReq.part.quantity} pcs</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={quoteQuantity}
+                    onChange={(e) => {
+                      const q = parseInt(e.target.value) || 1;
+                      setQuoteQuantity(q);
+                      setForeignCost(q * quoteUnitCost);
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono font-bold text-slate-800"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700">Unit Cost (Foreign):</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={quoteUnitCost}
+                    onChange={(e) => {
+                      const u = parseFloat(e.target.value) || 0;
+                      setQuoteUnitCost(u);
+                      setForeignCost(quoteQuantity * u);
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Total Part Cost:</span>
+                    <span className="text-[10px] text-slate-400">Qty × Unit</span>
+                  </label>
                   <input
                     type="number"
                     value={foreignCost}
-                    onChange={(e) => setForeignCost(parseFloat(e.target.value) || 0)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono"
+                    onChange={(e) => {
+                      const f = parseFloat(e.target.value) || 0;
+                      setForeignCost(f);
+                      if (quoteQuantity > 0) setQuoteUnitCost(parseFloat((f / quoteQuantity).toFixed(2)));
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-emerald-50/50 font-mono font-bold text-emerald-800"
                   />
                 </div>
 

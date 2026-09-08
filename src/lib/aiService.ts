@@ -60,12 +60,15 @@ export function generateAiQuoteRecommendation(request: PartRequest): {
     chosenSupplier = suppliers.find((s) => s.country === "Australia") || suppliers[0];
   }
 
-  // Calculate pricing
+  // Calculate pricing based on requested quantity
+  const qty = request.part.quantity || 1;
   const foreignUnitCost = chosenSupplier.currency === "JPY" ? 48000 : chosenSupplier.currency === "USD" ? 420 : chosenSupplier.currency === "EUR" ? 380 : 520;
+  const foreignTotalCost = foreignUnitCost * qty;
   const domesticFreightForeign = chosenSupplier.currency === "JPY" ? 3000 : 35;
   const exchangeRate = chosenSupplier.exchangeRateToNzd;
 
-  const partCostNzd = parseFloat((foreignUnitCost * exchangeRate).toFixed(2));
+  const unitCostNzd = parseFloat((foreignUnitCost * exchangeRate).toFixed(2));
+  const partCostNzd = parseFloat((foreignTotalCost * exchangeRate).toFixed(2));
   const domesticFreightNzd = parseFloat((domesticFreightForeign * exchangeRate).toFixed(2));
   const landedCostNzd = parseFloat((partCostNzd + domesticFreightNzd).toFixed(2));
 
@@ -74,14 +77,17 @@ export function generateAiQuoteRecommendation(request: PartRequest): {
     supplierId: chosenSupplier.id,
     supplierName: chosenSupplier.name,
     supplierCountry: chosenSupplier.country,
+    quantity: qty,
+    unitCostForeign: foreignUnitCost,
+    unitCostNzd,
     partCostCurrency: chosenSupplier.currency,
-    partCostForeign: foreignUnitCost,
+    partCostForeign: foreignTotalCost,
     exchangeRateToNzd: exchangeRate,
     partCostNzd,
     domesticFreightForeign,
     domesticFreightNzd,
     availabilityDays: chosenSupplier.leadTimeDays,
-    notes: `AI Verified: High-stock availability at ${chosenSupplier.name}. Factory OEM packaging.`,
+    notes: `AI Verified: High-stock availability (${qty} unit${qty > 1 ? "s" : ""}) at ${chosenSupplier.name}. Factory OEM packaging.`,
     isRecommendedByAi: true,
   };
 

@@ -135,6 +135,13 @@ export default function FinanceDashboardPage() {
               <span>Record Payment</span>
             </Link>
             <Link
+              href="/finance/transactions"
+              className="px-4 py-2.5 rounded-xl bg-purple-950/80 hover:bg-purple-900 border border-purple-800 text-purple-200 font-semibold text-xs transition flex items-center gap-2"
+            >
+              <Building2 className="w-4 h-4 text-purple-400" />
+              <span>Party-Wise Ledger</span>
+            </Link>
+            <Link
               href="/finance/reconciliation"
               className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs transition flex items-center gap-2"
             >

@@ -48,6 +48,7 @@ import {
   Microsoft365Config,
   AuditLogEntry,
 } from "@/lib/types";
+import { SidebarRoleSwitcher } from "@/components/SidebarRoleSwitcher";
 
 interface NavItem {
   label: string;
@@ -435,41 +436,12 @@ export default function AdministratorLayout({
                 <span>System Settings</span>
               </Link>
 
-              <Link
-                href="/procurement"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Compass className="w-3.5 h-3.5 text-amber-400" />
-                <span>Procurement Sourcing Desk</span>
-              </Link>
-
-              <Link
-                href="/operations"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Truck className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Logistics &amp; Freight Desk</span>
-              </Link>
-
-              <Link
-                href="/finance"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Banknote className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Finance &amp; Treasury Portal</span>
-              </Link>
-
-              <Link
-                href="/portal"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition"
-              >
-                <Building2 className="w-3.5 h-3.5 text-blue-400" />
-                <span>Trade Customer Portal</span>
-              </Link>
+              <div className="border-t border-slate-800/80 pt-1 mt-1">
+                <SidebarRoleSwitcher
+                  currentRole="SYSTEM_ADMIN"
+                  onClose={() => setUserMenuOpen(false)}
+                />
+              </div>
 
               <div className="border-t border-slate-800 pt-1 mt-1">
                 <Link

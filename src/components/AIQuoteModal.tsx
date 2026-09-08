@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import { PartRequest, CustomerQuote, FreightOption } from "@/lib/types";
 import { generateAiQuoteRecommendation } from "@/lib/aiService";
-import { issueCustomerQuote, addSupplierQuote } from "@/lib/store";
-import { Sparkles, Calculator, Plane, Anchor, CheckCircle2, DollarSign, X } from "lucide-react";
+import { issueCustomerQuote, addSupplierQuote, getStoredCustomers } from "@/lib/store";
+import { Sparkles, Calculator, Plane, Anchor, CheckCircle2, DollarSign, X, Building2, ShieldCheck, Boxes } from "lucide-react";
 
 interface AIQuoteModalProps {
   request: PartRequest;
@@ -26,6 +26,11 @@ export const AIQuoteModal: React.FC<AIQuoteModalProps> = ({
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [aiData, setAiData] = useState(() => generateAiQuoteRecommendation(request));
 
+  const allCustomers = getStoredCustomers();
+  const matchedCustomer = allCustomers.find(
+    (c) => c.id === request.customerId || c.nzbn === request.customerNzbn
+  ) || allCustomers[0];
+
   if (!isOpen) return null;
 
   const handleRecalculate = () => {
@@ -37,9 +42,11 @@ export const AIQuoteModal: React.FC<AIQuoteModalProps> = ({
     }, 400);
   };
 
+  const reqQty = request.part.quantity || 1;
   const baseCost = aiData.recommendedSupplierQuote.partCostNzd;
   const domesticFreight = aiData.recommendedSupplierQuote.domesticFreightNzd;
   const landedCost = baseCost + domesticFreight;
+  const unitLandedCost = landedCost / reqQty;
   const marginAmt = parseFloat((landedCost * (targetMargin / 100)).toFixed(2));
 
   // Air option totals
@@ -121,12 +128,56 @@ export const AIQuoteModal: React.FC<AIQuoteModalProps> = ({
             Build Quotation for {request.referenceNumber}
           </h3>
           <p className="text-xs text-slate-300 mt-1">
-            Vehicle: {request.vehicle.year} {request.vehicle.make} {request.vehicle.model} • Part: {request.part.partName}
+            Vehicle: {request.vehicle.year} {request.vehicle.make} {request.vehicle.model} • Part: {request.part.partName} (Qty: {reqQty})
           </p>
         </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-6">
+          {/* Trade Onboarding Account Sync Banner */}
+          <div className="bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#ed2025]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Trade Customer Onboarding Sync
+                </span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                Verified Commercial Account
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1 border-t border-slate-800">
+              <div>
+                <span className="text-[10px] text-slate-400 block">Trading Party</span>
+                <span className="font-bold text-white truncate block">
+                  {matchedCustomer?.tradingName || request.customerName}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block">NZBN</span>
+                <span className="font-mono text-slate-300 block">
+                  {matchedCustomer?.nzbn || request.customerNzbn || "9429041234567"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block">Credit Facility</span>
+                <span className="font-bold text-emerald-400 block">
+                  {matchedCustomer?.billingDetails?.status === "APPROVED"
+                    ? `Approved ($${(matchedCustomer.billingDetails.creditLimitNzd || 50000).toLocaleString()})`
+                    : "Prepayment Required"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block">Delivery Depot</span>
+                <span className="text-slate-300 truncate block">
+                  {matchedCustomer?.deliveryAddresses?.[0]?.city || request.deliveryAddress?.city || "Auckland"}
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* AI Recommendation Banner */}
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
             <Sparkles className="w-5 h-5 text-autohub-navy flex-shrink-0 mt-0.5" />
@@ -140,42 +191,52 @@ export const AIQuoteModal: React.FC<AIQuoteModalProps> = ({
 
           {/* Supplier Cost Breakdown */}
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-autohub-navy" />
-              Supplier Sourcing Details (Nagoya / Overseas Hub)
-            </h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-autohub-navy" />
+                Supplier Sourcing Details (Nagoya / Overseas Hub)
+              </h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-blue-100 text-blue-800">
+                Order Qty: {reqQty} unit{reqQty > 1 ? "s" : ""}
+              </span>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block text-[10px]">Supplier</span>
+                <span className="text-slate-400 block text-[10px]">Supplier & Qty</span>
                 <span className="font-bold text-slate-800 truncate block">
                   {aiData.recommendedSupplierQuote.supplierName}
                 </span>
                 <span className="text-[10px] text-slate-500">
-                  {aiData.recommendedSupplierQuote.supplierCountry}
+                  {aiData.recommendedSupplierQuote.supplierCountry} • {reqQty} pcs
                 </span>
               </div>
               <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block text-[10px]">Foreign Cost</span>
+                <span className="text-slate-400 block text-[10px]">Foreign Cost ({aiData.recommendedSupplierQuote.partCostCurrency})</span>
                 <span className="font-bold text-slate-800 block">
                   {aiData.recommendedSupplierQuote.partCostForeign.toLocaleString()} {aiData.recommendedSupplierQuote.partCostCurrency}
                 </span>
                 <span className="text-[10px] text-slate-500">
-                  Rate: {aiData.recommendedSupplierQuote.exchangeRateToNzd}
+                  Unit: {(aiData.recommendedSupplierQuote.unitCostForeign || (aiData.recommendedSupplierQuote.partCostForeign / reqQty)).toLocaleString()} {aiData.recommendedSupplierQuote.partCostCurrency}
                 </span>
               </div>
               <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block text-[10px]">Converted NZD</span>
+                <span className="text-slate-400 block text-[10px]">Total Part NZD</span>
                 <span className="font-bold text-slate-900 block">
                   ${baseCost.toFixed(2)}
                 </span>
-                <span className="text-[10px] text-slate-500">Part base</span>
+                <span className="text-[10px] text-slate-500">
+                  ${(baseCost / reqQty).toFixed(2)} / unit
+                </span>
               </div>
               <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                 <span className="text-slate-400 block text-[10px]">Total Landed Cost</span>
                 <span className="font-bold text-emerald-700 block">
                   ${landedCost.toFixed(2)}
                 </span>
-                <span className="text-[10px] text-slate-500">Incl. overseas freight</span>
+                <span className="text-[10px] text-slate-500">
+                  ${unitLandedCost.toFixed(2)} / unit landed
+                </span>
               </div>
             </div>
           </div>
