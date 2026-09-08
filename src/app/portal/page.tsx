@@ -174,7 +174,7 @@ export default function CustomerDashboardPage() {
           <Link
             id="dashboard-header-new-request"
             href="/portal/new-request"
-            className="px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 group"
+            className="px-5 py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition flex items-center gap-2 group"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>NEW PARTS REQUEST</span>
@@ -261,7 +261,7 @@ export default function CustomerDashboardPage() {
       </div>
 
       {/* ================= ACTION REQUIRED WARNING CARD ================= */}
-      <div className="bg-amber-50/30 rounded-3xl p-5 sm:p-6 border border-amber-300 shadow-sm space-y-4">
+      <div className="bg-amber-50/30 rounded-2xl p-5 sm:p-6 border border-amber-300 shadow-sm space-y-4">
         <div className="flex items-center gap-2.5 text-amber-900">
           <div className="w-6 h-6 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center font-black text-xs">
             !
@@ -294,12 +294,12 @@ export default function CustomerDashboardPage() {
                     className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                       item.statusType === "amber"
                         ? "bg-amber-100 text-amber-800 border-amber-300"
-                        : "bg-rose-100 text-rose-800 border-rose-300"
+                        : "bg-red-100 text-[#ed2025] border-red-300"
                     }`}
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        item.statusType === "amber" ? "bg-amber-500" : "bg-rose-500"
+                        item.statusType === "amber" ? "bg-amber-500" : "bg-[#ed2025]"
                       }`}
                     />
                     <span>{item.status}</span>
@@ -317,7 +317,7 @@ export default function CustomerDashboardPage() {
               <div>
                 <Link
                   href={item.targetPath}
-                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-sm inline-flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white text-xs font-bold transition shadow-xs inline-flex items-center gap-1.5"
                 >
                   <span>{item.buttonText}</span>
                 </Link>
@@ -330,7 +330,7 @@ export default function CustomerDashboardPage() {
       {/* ================= BOTTOM SPLIT: RECENT REQUESTS & PROCUREMENT ACTIVITY ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 Cols): Recent Requests Table */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-2">
             <div>
               <h3 className="font-bold text-sm sm:text-base text-slate-900">
@@ -353,13 +353,13 @@ export default function CustomerDashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-100 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  <th className="pb-3 font-bold">REQUEST</th>
-                  <th className="pb-3 font-bold">VEHICLE</th>
-                  <th className="pb-3 font-bold">PART</th>
-                  <th className="pb-3 font-bold">STATUS</th>
-                  <th className="pb-3 font-bold">VALUE</th>
-                  <th className="pb-3 font-bold">DATE</th>
+                <tr className="border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500 tracking-wider bg-slate-50/90">
+                  <th className="py-3 px-3 pl-4 font-bold">REQUEST</th>
+                  <th className="py-3 px-3 font-bold">VEHICLE</th>
+                  <th className="py-3 px-3 font-bold">PART</th>
+                  <th className="py-3 px-3 font-bold">STATUS</th>
+                  <th className="py-3 px-3 font-bold">VALUE</th>
+                  <th className="py-3 px-3 pr-4 font-bold">DATE</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
@@ -369,18 +369,18 @@ export default function CustomerDashboardPage() {
                     className="hover:bg-slate-50/70 transition group cursor-pointer"
                     onClick={() => (window.location.href = `/portal/requests/${row.reqId}`)}
                   >
-                    <td className="py-3.5 font-mono font-bold text-slate-900">
-                      <Link href={`/portal/requests/${row.reqId}`} className="hover:text-rose-600">
+                    <td className="py-3.5 px-3 pl-4 font-mono font-bold text-slate-900">
+                      <Link href={`/portal/requests/${row.reqId}`} className="hover:text-[#ed2025]">
                         {row.ref}
                       </Link>
                     </td>
-                    <td className="py-3.5 font-semibold text-slate-900 whitespace-nowrap">
+                    <td className="py-3.5 px-3 font-semibold text-slate-900 whitespace-nowrap">
                       {row.vehicle}
                     </td>
-                    <td className="py-3.5 text-slate-600 max-w-[220px] truncate" title={row.part}>
+                    <td className="py-3.5 px-3 text-slate-600 max-w-[220px] truncate" title={row.part}>
                       {row.part}
                     </td>
-                    <td className="py-3.5 whitespace-nowrap">
+                    <td className="py-3.5 px-3 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${row.statusColor}`}
                       >
@@ -388,10 +388,10 @@ export default function CustomerDashboardPage() {
                         <span>{row.status}</span>
                       </span>
                     </td>
-                    <td className="py-3.5 font-bold text-slate-900 font-mono">
+                    <td className="py-3.5 px-3 font-bold text-slate-900 font-mono">
                       {row.value}
                     </td>
-                    <td className="py-3.5 text-slate-400 whitespace-nowrap font-medium">
+                    <td className="py-3.5 px-3 pr-4 text-slate-400 whitespace-nowrap font-medium">
                       {row.date}
                     </td>
                   </tr>
@@ -402,7 +402,7 @@ export default function CustomerDashboardPage() {
         </div>
 
         {/* Right Column (1 Col): Procurement Activity Feed */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-6">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-6">
           <div className="space-y-4">
             <div>
               <h3 className="font-bold text-sm sm:text-base text-slate-900">

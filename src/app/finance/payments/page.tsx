@@ -319,7 +319,7 @@ export default function PaymentsQueuePage() {
       </div>
 
       {/* Six Statuses Filter Navigation */}
-      <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
         {/* Status Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-100">
           {[
@@ -385,16 +385,16 @@ export default function PaymentsQueuePage() {
         {/* Requests Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+            <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3 px-4">Order Ref &amp; Invoice</th>
-                <th className="py-3 px-4">Trade Customer</th>
-                <th className="py-3 px-4">Vehicle &amp; Part</th>
-                <th className="py-3 px-4 text-right">Total Due (NZD)</th>
-                <th className="py-3 px-4">Channel</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4">Due Date</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4 pl-6">Order Ref &amp; Invoice</th>
+                <th className="py-3.5 px-4">Trade Customer</th>
+                <th className="py-3.5 px-4">Vehicle &amp; Part</th>
+                <th className="py-3.5 px-4 text-right">Total Due (NZD)</th>
+                <th className="py-3.5 px-4">Channel</th>
+                <th className="py-3.5 px-4 text-center">Status</th>
+                <th className="py-3.5 px-4">Due Date</th>
+                <th className="py-3.5 px-4 pr-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -413,7 +413,7 @@ export default function PaymentsQueuePage() {
                   return (
                     <tr key={req.id} className="hover:bg-slate-50/70 transition">
                       {/* Ref & Invoice */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4 pl-6">
                         <div className="font-mono font-bold text-slate-900 text-xs">
                           {req.referenceNumber}
                         </div>
@@ -429,7 +429,7 @@ export default function PaymentsQueuePage() {
                       </td>
 
                       {/* Customer */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-900 truncate max-w-[180px]">
                           {req.customerName}
                         </div>
@@ -439,7 +439,7 @@ export default function PaymentsQueuePage() {
                       </td>
 
                       {/* Vehicle & Part */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-800 truncate max-w-[200px]">
                           {req.part.partName}
                         </div>
@@ -449,7 +449,7 @@ export default function PaymentsQueuePage() {
                       </td>
 
                       {/* Amount */}
-                      <td className="py-3 px-4 text-right font-mono font-bold">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold">
                         <div className="text-sm text-slate-900">
                           ${totalDue.toFixed(2)}
                         </div>
@@ -459,7 +459,7 @@ export default function PaymentsQueuePage() {
                       </td>
 
                       {/* Method */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                             method === "TRADE_CREDIT"
@@ -472,7 +472,7 @@ export default function PaymentsQueuePage() {
                       </td>
 
                       {/* Status across 6 statuses */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <button
                           type="button"
                           onClick={() => openStatusChangeModal(req)}
@@ -496,7 +496,7 @@ export default function PaymentsQueuePage() {
                       </td>
 
                       {/* Due Date */}
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600">
                         {req.invoice?.dueDate
                           ? new Date(req.invoice.dueDate).toLocaleDateString("en-NZ", {
                               month: "short",
@@ -506,16 +506,16 @@ export default function PaymentsQueuePage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 pr-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {effectiveStatus !== "PAID" && (
                             <button
                               type="button"
                               onClick={() => openRecordModal(req)}
-                              className="px-2.5 py-1 bg-[#ed2025] hover:bg-[#d3181d] text-white text-[10px] font-bold rounded-lg transition shadow-2xs flex items-center gap-1"
+                              className="px-3.5 py-1.5 bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
                               title="Record bank transfer remittance"
                             >
-                              <Check className="w-3 h-3" />
+                              <Check className="w-3.5 h-3.5" />
                               <span>Record</span>
                             </button>
                           )}

@@ -101,7 +101,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <CheckSquare className="w-12 h-12 text-slate-300 mx-auto mb-3" />
@@ -109,16 +109,16 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/50">
-                  <th className="py-3 px-6">Order Ref</th>
-                  <th className="py-3 px-6">Vehicle & Specs</th>
-                  <th className="py-3 px-6">Part Information</th>
-                  <th className="py-3 px-6">Status</th>
-                  <th className="py-3 px-6">Delivery Depot</th>
-                  <th className="py-3 px-6 text-right">Value (NZD)</th>
-                  <th className="py-3 px-6 text-right">Documents</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="py-3.5 px-4 pl-6">Order Ref</th>
+                  <th className="py-3.5 px-4">Vehicle &amp; Specs</th>
+                  <th className="py-3.5 px-4">Part Information</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Delivery Depot</th>
+                  <th className="py-3.5 px-4 text-right">Value (NZD)</th>
+                  <th className="py-3.5 px-4 pr-6 text-right">Documents</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">

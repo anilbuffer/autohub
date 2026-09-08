@@ -103,7 +103,7 @@ export default function RequestsHistoryPage() {
           </button>
           <Link
             href="/portal/new-request"
-            className="px-4 py-2 bg-autohub-red hover:bg-autohub-red-dark text-white rounded-xl text-xs font-bold transition shadow"
+            className="px-4 py-2 bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white rounded-xl text-xs font-bold transition shadow-xs"
           >
             + New Request
           </Link>
@@ -145,18 +145,18 @@ export default function RequestsHistoryPage() {
       </div>
 
       {/* Requests Table */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+            <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3.5 px-4">Reference</th>
+                <th className="py-3.5 px-4 pl-6">Reference</th>
                 <th className="py-3.5 px-4">Vehicle Specs</th>
                 <th className="py-3.5 px-4">Part Requirement</th>
                 <th className="py-3.5 px-4">Lifecycle Status</th>
                 <th className="py-3.5 px-4">Submitted</th>
                 <th className="py-3.5 px-4 text-right">Total Landed (NZD)</th>
-                <th className="py-3.5 px-4 text-center">Action</th>
+                <th className="py-3.5 px-4 pr-6 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -168,11 +168,11 @@ export default function RequestsHistoryPage() {
                 </tr>
               ) : (
                 filtered.map((req) => (
-                  <tr key={req.id} className="hover:bg-blue-50/30 transition">
-                    <td className="py-3.5 px-4">
+                  <tr key={req.id} className="hover:bg-slate-50/70 transition">
+                    <td className="py-3.5 px-4 pl-6">
                       <Link
                         href={`/portal/requests/${req.id}`}
-                        className="font-mono font-bold text-autohub-navy hover:text-autohub-red block"
+                        className="font-mono font-bold text-slate-900 hover:text-[#ed2025] block transition"
                       >
                         {req.referenceNumber}
                       </Link>
@@ -212,13 +212,13 @@ export default function RequestsHistoryPage() {
                       {req.quote ? `$${req.quote.totalNzd.toFixed(2)}` : "Pending Quote"}
                     </td>
 
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-3.5 px-4 pr-6 text-right">
                       <Link
                         href={`/portal/requests/${req.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-autohub-navy hover:text-white text-slate-700 text-xs font-semibold transition"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white text-xs font-bold transition shadow-xs"
                       >
                         <span>Manage</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </td>
                   </tr>

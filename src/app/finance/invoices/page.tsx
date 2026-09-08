@@ -226,7 +226,7 @@ export default function InvoicesAndReceiptsPage() {
       </div>
 
       {/* Main Tabbed Desk */}
-      <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
         {/* Navigation Tabs & Search */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-1.5 w-full sm:w-auto">
@@ -286,17 +286,17 @@ export default function InvoicesAndReceiptsPage() {
         {activeTab === "INVOICES" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+              <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th className="py-3 px-4">Invoice #</th>
-                  <th className="py-3 px-4">Date Issued</th>
-                  <th className="py-3 px-4">Trade Customer</th>
-                  <th className="py-3 px-4">Order Ref &amp; Part</th>
-                  <th className="py-3 px-4 text-right">Subtotal</th>
-                  <th className="py-3 px-4 text-right">15% GST</th>
-                  <th className="py-3 px-4 text-right">Total (NZD)</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-3.5 px-4 pl-6">Invoice #</th>
+                  <th className="py-3.5 px-4">Date Issued</th>
+                  <th className="py-3.5 px-4">Trade Customer</th>
+                  <th className="py-3.5 px-4">Order Ref &amp; Part</th>
+                  <th className="py-3.5 px-4 text-right">Subtotal</th>
+                  <th className="py-3.5 px-4 text-right">15% GST</th>
+                  <th className="py-3.5 px-4 text-right">Total (NZD)</th>
+                  <th className="py-3.5 px-4 text-center">Status</th>
+                  <th className="py-3.5 px-4 pr-6 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -304,23 +304,23 @@ export default function InvoicesAndReceiptsPage() {
                   const inv = req.invoice!;
                   return (
                     <tr key={req.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900 text-xs">
+                      <td className="py-3.5 px-4 pl-6 font-mono font-bold text-slate-900 text-xs">
                         {inv.invoiceNumber}
                       </td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-500">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
                         {new Date(inv.dateIssued).toLocaleDateString("en-NZ", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-900">{inv.customerName}</div>
                         <div className="text-[10px] font-mono text-slate-400">
                           NZBN: {inv.customerNzbn}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="font-mono font-semibold text-slate-800">
                           {req.referenceNumber}
                         </div>
@@ -328,16 +328,16 @@ export default function InvoicesAndReceiptsPage() {
                           {req.part.partName}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right font-mono text-slate-600">
+                      <td className="py-3.5 px-4 text-right font-mono text-slate-600">
                         ${inv.subtotalNzd.toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono text-slate-600">
+                      <td className="py-3.5 px-4 text-right font-mono text-slate-600">
                         ${inv.gstAmountNzd.toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
                         ${inv.totalNzd.toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                             inv.status === "PAID"
@@ -350,7 +350,7 @@ export default function InvoicesAndReceiptsPage() {
                           {inv.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 pr-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
@@ -360,9 +360,9 @@ export default function InvoicesAndReceiptsPage() {
                                 request: req,
                               })
                             }
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1"
+                            className="px-3 py-1.5 bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
                           >
-                            <Eye className="w-3 h-3" />
+                            <Eye className="w-3.5 h-3.5" />
                             <span>View Tax Invoice</span>
                           </button>
                         </div>
@@ -379,16 +379,16 @@ export default function InvoicesAndReceiptsPage() {
         {activeTab === "RECEIPTS" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+              <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th className="py-3 px-4">Receipt #</th>
-                  <th className="py-3 px-4">Date Cleared</th>
-                  <th className="py-3 px-4">Related Invoice</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Settlement Channel</th>
-                  <th className="py-3 px-4 text-right">Amount Cleared</th>
-                  <th className="py-3 px-4 text-center">Receipt Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-3.5 px-4 pl-6">Receipt #</th>
+                  <th className="py-3.5 px-4">Date Cleared</th>
+                  <th className="py-3.5 px-4">Related Invoice</th>
+                  <th className="py-3.5 px-4">Customer</th>
+                  <th className="py-3.5 px-4">Settlement Channel</th>
+                  <th className="py-3.5 px-4 text-right">Amount Cleared</th>
+                  <th className="py-3.5 px-4 text-center">Receipt Status</th>
+                  <th className="py-3.5 px-4 pr-6 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -398,10 +398,10 @@ export default function InvoicesAndReceiptsPage() {
 
                   return (
                     <tr key={req.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-emerald-800 text-xs">
+                      <td className="py-3.5 px-4 pl-6 font-mono font-bold text-emerald-800 text-xs">
                         {receiptNum}
                       </td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-500">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
                         {inv.paidDate
                           ? new Date(inv.paidDate).toLocaleDateString("en-NZ", {
                               month: "short",
@@ -410,13 +410,13 @@ export default function InvoicesAndReceiptsPage() {
                             })
                           : "Cleared"}
                       </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-700">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-slate-700">
                         {inv.invoiceNumber}
                       </td>
-                      <td className="py-3 px-4 font-bold text-slate-900">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
                         {inv.customerName}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                             inv.paymentMethod === "TRADE_CREDIT"
@@ -427,15 +427,15 @@ export default function InvoicesAndReceiptsPage() {
                           {inv.paymentMethod === "TRADE_CREDIT" ? "Trade Credit" : "Bank Transfer"}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-emerald-700 text-sm">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-700 text-sm">
                         ${inv.totalNzd.toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">
                           PAID IN FULL
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 pr-6 text-right">
                         <button
                           type="button"
                           onClick={() =>
@@ -444,9 +444,9 @@ export default function InvoicesAndReceiptsPage() {
                               request: req,
                             })
                           }
-                          className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1 ml-auto"
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 ml-auto"
                         >
-                          <ReceiptIcon className="w-3 h-3" />
+                          <ReceiptIcon className="w-3.5 h-3.5" />
                           <span>View Official Receipt</span>
                         </button>
                       </td>
@@ -467,42 +467,42 @@ export default function InvoicesAndReceiptsPage() {
               </div>
             ) : (
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
-                    <th className="py-3 px-4">Order Ref</th>
-                    <th className="py-3 px-4">Customer</th>
-                    <th className="py-3 px-4">Vehicle &amp; Part</th>
-                    <th className="py-3 px-4">Quote Number</th>
-                    <th className="py-3 px-4 text-right">Quote Total (NZD)</th>
-                    <th className="py-3 px-4 text-right">Action</th>
+                    <th className="py-3.5 px-4 pl-6">Order Ref</th>
+                    <th className="py-3.5 px-4">Customer</th>
+                    <th className="py-3.5 px-4">Vehicle &amp; Part</th>
+                    <th className="py-3.5 px-4">Quote Number</th>
+                    <th className="py-3.5 px-4 text-right">Quote Total (NZD)</th>
+                    <th className="py-3.5 px-4 pr-6 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {pendingGenerationRequests.map((req) => (
                     <tr key={req.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-4 pl-6 font-mono font-bold text-slate-900">
                         {req.referenceNumber}
                       </td>
-                      <td className="py-3 px-4 font-bold text-slate-800">
+                      <td className="py-3.5 px-4 font-bold text-slate-800">
                         {req.customerName}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-900">{req.part.partName}</div>
                         <div className="text-[11px] text-slate-500">
                           {req.vehicle.year} {req.vehicle.make} {req.vehicle.model}
                         </div>
                       </td>
-                      <td className="py-3 px-4 font-mono text-slate-600">
+                      <td className="py-3.5 px-4 font-mono text-slate-600">
                         {req.quote?.quoteNumber}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
                         ${(req.quote?.totalNzd || 0).toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 pr-6 text-right">
                         <button
                           type="button"
                           onClick={() => handleGenerateInvoice(req)}
-                          className="px-3 py-1.5 bg-[#ed2025] hover:bg-[#d3181d] text-white rounded-lg text-xs font-bold transition flex items-center gap-1 ml-auto"
+                          className="px-3.5 py-1.5 bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 ml-auto"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Generate Tax Invoice</span>

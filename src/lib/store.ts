@@ -20,6 +20,13 @@ import {
   TaxInvoice,
   ShipmentDetails,
   LogisticsMilestone,
+  AuditLogEntry,
+  StaffUser,
+  NotificationTemplate,
+  Microsoft365Config,
+  PolicyVersion,
+  ReferenceBusinessType,
+  ReferencePartCategory,
 } from "./types";
 import {
   initialRequests,
@@ -31,6 +38,12 @@ import {
   initialReconciliations,
   initialRefunds,
   initialCreditNotes,
+  initialStaffUsers,
+  initialNotificationTemplates,
+  initialM365Config,
+  initialPolicyVersions,
+  initialBusinessTypes,
+  initialPartCategories,
 } from "./mockData";
 
 const STORAGE_KEYS = {
@@ -48,6 +61,13 @@ const STORAGE_KEYS = {
   INVOICE_SEQ: "autohub_procurly_inv_seq_v2",
   RECEIPT_SEQ: "autohub_procurly_rec_seq_v2",
   CREDIT_NOTE_SEQ: "autohub_procurly_cn_seq_v2",
+  STAFF: "autohub_procurly_staff_v2",
+  NOTIFICATION_TEMPLATES: "autohub_procurly_notif_templates_v2",
+  M365_CONFIG: "autohub_procurly_m365_config_v2",
+  POLICY_VERSIONS: "autohub_procurly_policy_versions_v2",
+  BUSINESS_TYPES: "autohub_procurly_business_types_v2",
+  PART_CATEGORIES: "autohub_procurly_part_categories_v2",
+  GLOBAL_AUDIT_LOGS: "autohub_procurly_global_audit_logs_v2",
 };
 
 // Simple event bus for reactivity
@@ -211,6 +231,17 @@ export function setActiveRole(role: UserRole) {
   if (!isBrowser()) return;
   localStorage.setItem(STORAGE_KEYS.ACTIVE_ROLE, role);
   notifyListeners();
+}
+
+export function setActiveStaffMember(staffId: string) {
+  if (!isBrowser()) return;
+  localStorage.setItem("autohub_procurly_active_staff_id_v2", staffId);
+  notifyListeners();
+}
+
+export function getActiveStaffMember(): string | null {
+  if (!isBrowser()) return null;
+  return localStorage.getItem("autohub_procurly_active_staff_id_v2");
 }
 
 // Generate unique sequential reference number
@@ -2371,5 +2402,467 @@ export function updateCustomerCreditFacility(
     });
   }
 }
+
+// =========================================================================
+// ADMINISTRATOR (SYSTEM CONTROL) STORE METHODS
+// =========================================================================
+
+// --- 1. Staff User Management & 5-Role Assignment ---
+export function getStoredStaffUsers(): StaffUser[] {
+  if (!isBrowser()) return initialStaffUsers;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.STAFF);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(initialStaffUsers));
+      return initialStaffUsers;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialStaffUsers;
+  }
+}
+
+export function saveStaffUsers(users: StaffUser[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(users));
+  notifyListeners();
+}
+
+export function addStaffUser(
+  userData: Omit<StaffUser, "id" | "createdDate" | "lastActive">
+): StaffUser {
+  const current = getStoredStaffUsers();
+  const nextId = `STAFF-0${current.length + 1}`;
+  const newUser: StaffUser = {
+    ...userData,
+    id: nextId,
+    createdDate: new Date().toISOString().split("T")[0],
+    lastActive: "Just now",
+  };
+  const updated = [newUser, ...current];
+  saveStaffUsers(updated);
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Staff Member Created: ${newUser.name} (${newUser.role})`,
+    previousState: "None",
+    newState: `${newUser.status} - ${newUser.role}`,
+    details: `Created in department ${newUser.department} with email ${newUser.email}`,
+  });
+
+  return newUser;
+}
+
+export function updateStaffUser(id: string, updates: Partial<StaffUser>) {
+  const current = getStoredStaffUsers();
+  const index = current.findIndex((u) => u.id === id);
+  if (index === -1) return;
+
+  const old = current[index];
+  const updated: StaffUser = {
+    ...old,
+    ...updates,
+  };
+  current[index] = updated;
+  saveStaffUsers([...current]);
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Staff Member Updated: ${updated.name}`,
+    previousState: `${old.role} - ${old.status}`,
+    newState: `${updated.role} - ${updated.status}`,
+    details: `Updated details for staff ID ${id}`,
+  });
+}
+
+export function deactivateStaffUser(id: string) {
+  const current = getStoredStaffUsers();
+  const user = current.find((u) => u.id === id);
+  if (!user) return;
+
+  updateStaffUser(id, { status: "INACTIVE" });
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Staff Account Deactivated: ${user.name}`,
+    previousState: "ACTIVE",
+    newState: "INACTIVE",
+    details: `Deactivated system credentials and session for ${user.email}`,
+  });
+}
+
+export function reactivateStaffUser(id: string) {
+  const current = getStoredStaffUsers();
+  const user = current.find((u) => u.id === id);
+  if (!user) return;
+
+  updateStaffUser(id, { status: "ACTIVE" });
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Staff Account Reactivated: ${user.name}`,
+    previousState: "INACTIVE",
+    newState: "ACTIVE",
+    details: `Restored active access privileges for role ${user.role}`,
+  });
+}
+
+export function changeStaffRole(id: string, newRole: UserRole) {
+  const current = getStoredStaffUsers();
+  const user = current.find((u) => u.id === id);
+  if (!user) return;
+
+  const oldRole = user.role;
+  updateStaffUser(id, { role: newRole });
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Staff Role Changed: ${user.name}`,
+    previousState: oldRole,
+    newState: newRole,
+    details: `Permission tier changed across the 5 system roles for ${user.email}`,
+  });
+}
+
+// --- 2. Customer Governance (Suspend / Reactivate) ---
+export function suspendCustomerAccount(id: string, reason: string = "Administrative Credit & Compliance Review") {
+  const customers = getStoredCustomers();
+  const cust = customers.find((c) => c.id === id);
+  if (!cust) return;
+
+  const updated = customers.map((c) =>
+    c.id === id
+      ? {
+          ...c,
+          billingDetails: {
+            ...c.billingDetails,
+            status: "SUSPENDED" as const,
+          },
+        }
+      : c
+  );
+  saveCustomers(updated);
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Customer Account Suspended: ${cust.tradingName}`,
+    previousState: cust.billingDetails.status,
+    newState: "SUSPENDED",
+    details: `Suspension Reason: ${reason}. NZBN: ${cust.nzbn}`,
+  });
+}
+
+export function reactivateCustomerAccount(id: string) {
+  const customers = getStoredCustomers();
+  const cust = customers.find((c) => c.id === id);
+  if (!cust) return;
+
+  const updated = customers.map((c) =>
+    c.id === id
+      ? {
+          ...c,
+          billingDetails: {
+            ...c.billingDetails,
+            status: "APPROVED" as const,
+          },
+        }
+      : c
+  );
+  saveCustomers(updated);
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Customer Account Reactivated: ${cust.tradingName}`,
+    previousState: "SUSPENDED",
+    newState: "APPROVED",
+    details: `Trade purchasing and credit line restored for NZBN ${cust.nzbn}`,
+  });
+}
+
+// --- 3. Notification Template Management ---
+export function getStoredNotificationTemplates(): NotificationTemplate[] {
+  if (!isBrowser()) return initialNotificationTemplates;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFICATION_TEMPLATES);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.NOTIFICATION_TEMPLATES, JSON.stringify(initialNotificationTemplates));
+      return initialNotificationTemplates;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialNotificationTemplates;
+  }
+}
+
+export function saveNotificationTemplates(templates: NotificationTemplate[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.NOTIFICATION_TEMPLATES, JSON.stringify(templates));
+  notifyListeners();
+}
+
+export function updateNotificationTemplate(id: string, updates: Partial<NotificationTemplate>) {
+  const current = getStoredNotificationTemplates();
+  const index = current.findIndex((t) => t.id === id);
+  if (index === -1) return;
+
+  current[index] = {
+    ...current[index],
+    ...updates,
+    updatedDate: new Date().toISOString().split("T")[0],
+    updatedBy: "Sarah Jenkins",
+  };
+  saveNotificationTemplates([...current]);
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `Notification Template Updated: ${current[index].name}`,
+    previousState: "Configured",
+    newState: current[index].isActive ? "Active" : "Disabled",
+    details: `Trigger: ${current[index].trigger}, Channel: ${current[index].channel}`,
+  });
+}
+
+export function toggleNotificationTemplate(id: string) {
+  const current = getStoredNotificationTemplates();
+  const tmpl = current.find((t) => t.id === id);
+  if (!tmpl) return;
+  updateNotificationTemplate(id, { isActive: !tmpl.isActive });
+}
+
+export function addNotificationTemplate(
+  data: Omit<NotificationTemplate, "id" | "updatedDate" | "updatedBy">
+): NotificationTemplate {
+  const current = getStoredNotificationTemplates();
+  const nextId = `TMPL-0${current.length + 1}`;
+  const newTmpl: NotificationTemplate = {
+    ...data,
+    id: nextId,
+    updatedDate: new Date().toISOString().split("T")[0],
+    updatedBy: "Sarah Jenkins",
+  };
+  saveNotificationTemplates([newTmpl, ...current]);
+  return newTmpl;
+}
+
+// --- 4. Microsoft 365 Email Configuration ---
+export function getStoredM365Config(): Microsoft365Config {
+  if (!isBrowser()) return initialM365Config;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.M365_CONFIG);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.M365_CONFIG, JSON.stringify(initialM365Config));
+      return initialM365Config;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialM365Config;
+  }
+}
+
+export function saveM365Config(config: Microsoft365Config) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.M365_CONFIG, JSON.stringify(config));
+  notifyListeners();
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: "Microsoft 365 Email Configuration Updated",
+    previousState: "Configured",
+    newState: config.connected ? "Connected (Healthy)" : "Disconnected",
+    details: `Sender: ${config.senderEmail}, Tenant ID: ${config.tenantId.slice(0, 8)}...`,
+  });
+}
+
+// --- 5. Terms & Privacy Policy Versions ---
+export function getStoredPolicyVersions(): PolicyVersion[] {
+  if (!isBrowser()) return initialPolicyVersions;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.POLICY_VERSIONS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.POLICY_VERSIONS, JSON.stringify(initialPolicyVersions));
+      return initialPolicyVersions;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialPolicyVersions;
+  }
+}
+
+export function savePolicyVersions(versions: PolicyVersion[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.POLICY_VERSIONS, JSON.stringify(versions));
+  notifyListeners();
+}
+
+export function publishPolicyVersion(
+  versionData: Omit<PolicyVersion, "id" | "publishedDate" | "isCurrent">
+): PolicyVersion {
+  const current = getStoredPolicyVersions();
+  const nextId = `POL-${versionData.type === "TERMS_AND_CONDITIONS" ? "TC" : "PP"}-0${current.length + 1}`;
+  
+  // Mark previous versions of same type as not current
+  const updatedCurrent = current.map((p) =>
+    p.type === versionData.type ? { ...p, isCurrent: false } : p
+  );
+
+  const newPolicy: PolicyVersion = {
+    ...versionData,
+    id: nextId,
+    publishedDate: new Date().toISOString().split("T")[0],
+    isCurrent: true,
+  };
+
+  const updated = [newPolicy, ...updatedCurrent];
+  savePolicyVersions(updated);
+
+  recordGlobalAuditLog({
+    actorName: "Sarah Jenkins",
+    actorRole: "SYSTEM_ADMIN",
+    action: `New Policy Version Published: ${newPolicy.type} ${newPolicy.version}`,
+    previousState: "Draft",
+    newState: "CURRENT (Active)",
+    details: `Effective Date: ${newPolicy.effectiveDate}. Changelog: ${newPolicy.changelog}`,
+  });
+
+  return newPolicy;
+}
+
+// --- 6. Reference Data (Business Types & Part Categories) ---
+export function getStoredBusinessTypes(): ReferenceBusinessType[] {
+  if (!isBrowser()) return initialBusinessTypes;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.BUSINESS_TYPES);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.BUSINESS_TYPES, JSON.stringify(initialBusinessTypes));
+      return initialBusinessTypes;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialBusinessTypes;
+  }
+}
+
+export function saveBusinessTypes(types: ReferenceBusinessType[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.BUSINESS_TYPES, JSON.stringify(types));
+  notifyListeners();
+}
+
+export function updateBusinessType(id: string, updates: Partial<ReferenceBusinessType>) {
+  const current = getStoredBusinessTypes();
+  const index = current.findIndex((b) => b.id === id);
+  if (index === -1) return;
+  current[index] = { ...current[index], ...updates };
+  saveBusinessTypes([...current]);
+}
+
+export function addBusinessType(data: Omit<ReferenceBusinessType, "id" | "customerCount">): ReferenceBusinessType {
+  const current = getStoredBusinessTypes();
+  const nextId = `BT-0${current.length + 1}`;
+  const newType: ReferenceBusinessType = {
+    ...data,
+    id: nextId,
+    customerCount: 0,
+  };
+  saveBusinessTypes([...current, newType]);
+  return newType;
+}
+
+export function getStoredPartCategories(): ReferencePartCategory[] {
+  if (!isBrowser()) return initialPartCategories;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.PART_CATEGORIES);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.PART_CATEGORIES, JSON.stringify(initialPartCategories));
+      return initialPartCategories;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return initialPartCategories;
+  }
+}
+
+export function savePartCategories(cats: ReferencePartCategory[]) {
+  if (!isBrowser()) return;
+  localStorage.setItem(STORAGE_KEYS.PART_CATEGORIES, JSON.stringify(cats));
+  notifyListeners();
+}
+
+export function updatePartCategory(id: string, updates: Partial<ReferencePartCategory>) {
+  const current = getStoredPartCategories();
+  const index = current.findIndex((c) => c.id === id);
+  if (index === -1) return;
+  current[index] = { ...current[index], ...updates };
+  savePartCategories([...current]);
+}
+
+export function addPartCategory(data: Omit<ReferencePartCategory, "id">): ReferencePartCategory {
+  const current = getStoredPartCategories();
+  const nextId = `CAT-0${current.length + 1}`;
+  const newCat: ReferencePartCategory = {
+    ...data,
+    id: nextId,
+  };
+  savePartCategories([...current, newCat]);
+  return newCat;
+}
+
+// --- 7. Full System Unified Audit Logs ---
+export function recordGlobalAuditLog(entry: Omit<AuditLogEntry, "id" | "timestamp">) {
+  if (!isBrowser()) return;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.GLOBAL_AUDIT_LOGS);
+    const logs: AuditLogEntry[] = raw ? JSON.parse(raw) : [];
+    const newLog: AuditLogEntry = {
+      ...entry,
+      id: `AUDIT-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      timestamp: new Date().toISOString(),
+    };
+    logs.unshift(newLog);
+    // Keep last 500 audit entries
+    localStorage.setItem(STORAGE_KEYS.GLOBAL_AUDIT_LOGS, JSON.stringify(logs.slice(0, 500)));
+    notifyListeners();
+  } catch (e) {
+    console.error("Failed to write audit log:", e);
+  }
+}
+
+export function getAllSystemAuditLogs(): AuditLogEntry[] {
+  const requests = getStoredRequests();
+  const requestAuditLogs = requests.flatMap((r) =>
+    r.auditLogs.map((log) => ({
+      ...log,
+      details: log.details || `Order ${r.referenceNumber} (${r.part.partName})`,
+    }))
+  );
+
+  let globalLogs: AuditLogEntry[] = [];
+  if (isBrowser()) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.GLOBAL_AUDIT_LOGS);
+      if (raw) {
+        globalLogs = JSON.parse(raw);
+      }
+    } catch {
+      globalLogs = [];
+    }
+  }
+
+  // Combine and sort descending
+  const combined = [...globalLogs, ...requestAuditLogs];
+  return combined.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+}
+
 
 

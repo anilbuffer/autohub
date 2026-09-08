@@ -168,7 +168,7 @@ export default function ProcurementCommandCenterPage() {
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             <Link
               href="/procurement/queue"
-              className="flex-1 lg:flex-none px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-rose-900/30 transition flex items-center justify-center gap-2 group"
+              className="flex-1 lg:flex-none px-5 py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs tracking-wide shadow-lg shadow-red-950/30 transition flex items-center justify-center gap-2 group"
             >
               <Compass className="w-4 h-4 text-white transition group-hover:rotate-45" />
               <span>Sourcing Queue ({sourcingQueue.length})</span>
@@ -536,7 +536,7 @@ export default function ProcurementCommandCenterPage() {
             onClick={() => setSelectedFunnelStage("EXCEPTIONS")}
             className={`p-3 rounded-2xl text-left border transition ${
               selectedFunnelStage === "EXCEPTIONS"
-                ? "bg-rose-600 text-white border-rose-600 shadow-md"
+                ? "bg-[#ed2025] text-white border-[#ed2025] shadow-md"
                 : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
             }`}
           >
@@ -549,7 +549,7 @@ export default function ProcurementCommandCenterPage() {
         </div>
 
         {/* Filtered Pipeline Table */}
-        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm">
           <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900">
               Showing {filteredRequests.length} Orders in Active Pipeline

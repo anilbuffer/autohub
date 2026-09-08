@@ -444,7 +444,7 @@ export default function FinanceDashboardPage() {
       </div>
 
       {/* Bottom Section: Recent Transactions Ledger */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
             <h3 className="text-base font-bold text-slate-900">
@@ -465,17 +465,17 @@ export default function FinanceDashboardPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+            <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3 px-4">Transaction ID</th>
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4">Reference</th>
-                <th className="py-3 px-4">Client</th>
-                <th className="py-3 px-4 text-right">Amount (NZD)</th>
-                <th className="py-3 px-4">Channel</th>
-                <th className="py-3 px-4">Officer</th>
-                <th className="py-3 px-4 text-center">Status</th>
+                <th className="py-3.5 px-4 pl-6">Transaction ID</th>
+                <th className="py-3.5 px-4">Timestamp</th>
+                <th className="py-3.5 px-4">Type</th>
+                <th className="py-3.5 px-4">Reference</th>
+                <th className="py-3.5 px-4">Client</th>
+                <th className="py-3.5 px-4 text-right">Amount (NZD)</th>
+                <th className="py-3.5 px-4">Channel</th>
+                <th className="py-3.5 px-4">Officer</th>
+                <th className="py-3.5 px-4 pr-6 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

@@ -170,7 +170,7 @@ export default function CustomerPortalLayout({
     : [];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-row font-sans text-slate-900 antialiased selection:bg-rose-500 selection:text-white">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-row font-sans text-slate-900 antialiased selection:bg-[#ed2025] selection:text-white">
       {/* ================= LEFT SIDEBAR (DARK NAVY) ================= */}
       <aside
         className={`bg-[#070e1e] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${
@@ -182,7 +182,7 @@ export default function CustomerPortalLayout({
           <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-800/60">
             <Link href="/portal" className="flex items-center gap-2.5 overflow-hidden">
               {/* 3D Box Logo */}
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-red-600 via-red-600 to-rose-500 shadow-md shadow-red-600/20 flex items-center justify-center text-white flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#ed2025] shadow-md shadow-red-600/30 flex items-center justify-center text-white flex-shrink-0">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -200,7 +200,7 @@ export default function CustomerPortalLayout({
               {!sidebarCollapsed && (
                 <div>
                   <div className="text-base font-black tracking-tight text-white leading-none">
-                    PROCUR<span className="text-autohub-red">ly</span>
+                    PROCUR<span className="text-[#ed2025]">ly</span>
                   </div>
                   <div className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
                     CUSTOMER PORTAL
@@ -225,7 +225,7 @@ export default function CustomerPortalLayout({
             <Link
               id="sidebar-new-request-button"
               href="/portal/new-request"
-              className={`w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-lg shadow-rose-900/30 transition flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${
                 sidebarCollapsed ? "px-2" : "px-4"
               }`}
             >
@@ -274,14 +274,14 @@ export default function CustomerPortalLayout({
                           sidebarCollapsed ? "justify-center" : ""
                         } ${
                           isActive
-                            ? "bg-slate-800/90 text-white font-bold shadow-sm"
+                            ? "bg-slate-800/90 text-white font-bold shadow-sm border-l-4 border-[#ed2025] pl-2.5"
                             : "text-slate-400 hover:text-white hover:bg-slate-800/40"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon
                             className={`w-4 h-4 transition ${
-                              isActive ? "text-rose-500" : "text-slate-400"
+                              isActive ? "text-[#ed2025]" : "text-slate-400"
                             }`}
                           />
                           {!sidebarCollapsed && <span>{nav.label}</span>}
@@ -416,11 +416,11 @@ export default function CustomerPortalLayout({
                 Customer Portal
               </Link>
               <span className="text-slate-400">/</span>
-              <span className="text-rose-600 font-semibold truncate">
+              <span className="text-[#ed2025] font-semibold truncate">
                 {getPageTitle()}
               </span>
             </div>
-            <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight truncate">
               {getPageTitle()}
             </h1>
           </div>
@@ -442,7 +442,7 @@ export default function CustomerPortalLayout({
             </button>
           </div>
 
-          {/* Right: Actions (Cross-Portal Links, Credit info, Help, Notifications) */}
+          {/* Right: Actions (Cross-Portal Links, Primary CTA, Credit info, Help, Notifications) */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
             {/* Quick Sourcing Desk Link */}
             <Link
@@ -463,6 +463,15 @@ export default function CustomerPortalLayout({
               <span>Website</span>
             </Link>
 
+            {/* Symmetrical Primary CTA: + New Request */}
+            <Link
+              id="header-new-request-button"
+              href="/portal/new-request"
+              className="px-3.5 py-2 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-xs transition"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span className="hidden sm:inline">New Request</span>
+            </Link>
 
             {/* Quick Credit Status Chip */}
             <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
@@ -494,7 +503,7 @@ export default function CustomerPortalLayout({
               >
                 <Bell className="w-4 h-4" />
                 {unreadNotifsCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#ed2025] text-white rounded-full text-[9px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
                     {unreadNotifsCount}
                   </span>
                 )}

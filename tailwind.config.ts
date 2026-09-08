@@ -24,6 +24,7 @@ const config: Config = {
             subtle: "#dbe4ff",
             dark: "#19285c",
             darker: "#101a3e",
+            sidebar: "#070e1e",
           },
         },
       },

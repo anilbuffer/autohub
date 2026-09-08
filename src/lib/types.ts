@@ -417,4 +417,88 @@ export interface SystemSettings {
     accountNumber: string; // e.g. "12-3101-0495821-00"
     swiftBic: string;
   };
+  microsoft365Config?: Microsoft365Config;
 }
+
+export interface StaffUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  department: string;
+  status: "ACTIVE" | "INACTIVE";
+  lastActive: string;
+  mfaEnabled: boolean;
+  phone?: string;
+  avatarInitials: string;
+  createdDate: string;
+}
+
+export interface NotificationTemplate {
+  id: string;
+  name: string;
+  trigger: 
+    | "REQUEST_SUBMITTED" 
+    | "QUOTE_ISSUED" 
+    | "PAYMENT_CONFIRMED" 
+    | "ORDER_DISPATCHED" 
+    | "CUSTOMS_CLEARED" 
+    | "OUT_FOR_DELIVERY" 
+    | "ACCOUNT_APPROVED" 
+    | "ACCOUNT_SUSPENDED";
+  recipientRole: UserRole;
+  channel: "EMAIL_M365" | "IN_APP" | "BOTH";
+  subject: string;
+  body: string;
+  variables: string[];
+  updatedDate: string;
+  updatedBy: string;
+  isActive: boolean;
+}
+
+export interface Microsoft365Config {
+  tenantId: string;
+  clientId: string;
+  clientSecretMasked: string;
+  senderEmail: string;
+  senderName: string;
+  connected: boolean;
+  lastSync: string;
+  authMethod: "OAUTH2_GRAPH" | "SMTP_MODERN_AUTH";
+  dailyQuotaUsed: number;
+  dailyQuotaLimit: number;
+}
+
+export interface PolicyVersion {
+  id: string;
+  type: "TERMS_AND_CONDITIONS" | "PRIVACY_POLICY";
+  version: string;
+  title: string;
+  effectiveDate: string;
+  publishedDate: string;
+  publishedBy: string;
+  isCurrent: boolean;
+  changelog: string;
+  content: string;
+}
+
+export interface ReferenceBusinessType {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  defaultCreditLimitNzd: number;
+  isActive: boolean;
+  customerCount: number;
+}
+
+export interface ReferencePartCategory {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  defaultFreightMode: FreightMethod;
+  customsTariffCode: string;
+  isActive: boolean;
+}
+

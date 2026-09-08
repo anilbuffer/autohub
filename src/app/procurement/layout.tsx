@@ -201,7 +201,7 @@ export default function ProcurementPortalLayout({
     : [];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-row font-sans text-slate-900 antialiased selection:bg-rose-500 selection:text-white">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-row font-sans text-slate-900 antialiased selection:bg-[#ed2025] selection:text-white">
       {/* ================= LEFT SIDEBAR (DARK NAVY) ================= */}
       <aside
         className={`bg-[#070e1e] text-slate-300 flex flex-col justify-between border-r border-slate-800/80 transition-all duration-300 z-30 sticky top-0 h-screen ${
@@ -213,7 +213,7 @@ export default function ProcurementPortalLayout({
           <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-800/60">
             <Link href="/procurement" className="flex items-center gap-2.5 overflow-hidden">
               {/* 3D Box Logo */}
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-red-600 via-red-600 to-rose-500 shadow-md shadow-red-600/20 flex items-center justify-center text-white flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#ed2025] shadow-md shadow-red-600/30 flex items-center justify-center text-white flex-shrink-0">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -231,10 +231,10 @@ export default function ProcurementPortalLayout({
               {!sidebarCollapsed && (
                 <div>
                   <div className="text-base font-black tracking-tight text-white leading-none">
-                    PROCUR<span className="text-rose-500">ly</span>
+                    PROCUR<span className="text-[#ed2025]">ly</span>
                   </div>
                   <div className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
-                    PROCUREMENT PORTAL
+                    PROCUREMENT SOURCING DESK
                   </div>
                 </div>
               )}
@@ -256,7 +256,7 @@ export default function ProcurementPortalLayout({
             <Link
               id="sidebar-sourcing-queue-button"
               href="/procurement/queue"
-              className={`w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-lg shadow-rose-900/30 transition flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 ${
                 sidebarCollapsed ? "px-2" : "px-4"
               }`}
             >
@@ -305,14 +305,14 @@ export default function ProcurementPortalLayout({
                           sidebarCollapsed ? "justify-center" : ""
                         } ${
                           isActive
-                            ? "bg-slate-800/90 text-white font-bold shadow-sm"
+                            ? "bg-slate-800/90 text-white font-bold shadow-sm border-l-4 border-[#ed2025] pl-2.5"
                             : "text-slate-400 hover:text-white hover:bg-slate-800/40"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon
                             className={`w-4 h-4 transition ${
-                              isActive ? "text-rose-500" : "text-slate-400"
+                              isActive ? "text-[#ed2025]" : "text-slate-400"
                             }`}
                           />
                           {!sidebarCollapsed && <span>{nav.label}</span>}
@@ -455,7 +455,7 @@ export default function ProcurementPortalLayout({
                 Procurement
               </Link>
               <span className="text-slate-400">/</span>
-              <span className="text-blue-600 font-semibold truncate">
+              <span className="text-[#ed2025] font-semibold truncate">
                 {getPageTitle()}
               </span>
             </div>
@@ -508,7 +508,7 @@ export default function ProcurementPortalLayout({
               <button
                 type="button"
                 onClick={() => setActionDropdownOpen(!actionDropdownOpen)}
-                className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm shadow-red-600/25 transition active:scale-[0.98]"
+                className="px-3.5 py-2 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-xs transition"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>New Action</span>
@@ -530,7 +530,7 @@ export default function ProcurementPortalLayout({
                     onClick={() => setActionDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-medium transition"
                   >
-                    <Compass className="w-4 h-4 text-red-600" />
+                    <Compass className="w-4 h-4 text-[#ed2025]" />
                     <span>Process Sourcing Queue</span>
                   </Link>
                   <Link
@@ -570,7 +570,7 @@ export default function ProcurementPortalLayout({
                 title="Notifications"
               >
                 <Bell className="w-5 h-5 text-slate-700" />
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#ed2025] text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white shadow-sm">
                   24
                 </span>
               </button>

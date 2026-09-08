@@ -366,18 +366,18 @@ export default function SourcingQueuePage() {
           </div>
 
           {/* Full Width Table View */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
-                    <th className="p-4 pl-6">Reference &amp; Date</th>
-                    <th className="p-4">Requested Part</th>
-                    <th className="p-4">Target Vehicle &amp; VIN</th>
-                    <th className="p-4">Customer</th>
-                    <th className="p-4">Quotes Recorded</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 pr-6 text-right">Action</th>
+                    <th className="py-3.5 px-4 pl-6">Reference &amp; Date</th>
+                    <th className="py-3.5 px-4">Requested Part</th>
+                    <th className="py-3.5 px-4">Target Vehicle &amp; VIN</th>
+                    <th className="py-3.5 px-4">Customer</th>
+                    <th className="py-3.5 px-4">Quotes Recorded</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 pr-6 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-800">
@@ -392,37 +392,37 @@ export default function SourcingQueuePage() {
                       const quoteCount = req.supplierQuotes ? req.supplierQuotes.length : 0;
                       return (
                         <tr key={req.id} className="hover:bg-slate-50/70 transition group">
-                          <td className="p-4 pl-6">
+                          <td className="py-3.5 px-4 pl-6">
                             <div className="font-mono font-bold text-slate-900">{req.referenceNumber}</div>
                             <div className="text-[11px] text-slate-400">{new Date(req.submittedDate).toLocaleDateString()}</div>
                           </td>
-                          <td className="p-4">
+                          <td className="py-3.5 px-4">
                             <div className="font-bold text-slate-900">{req.part.partName}</div>
                             <div className="font-mono text-[11px] text-slate-400">{req.part.oemPartNumber || "OEM Genuine Spec"}</div>
                           </td>
-                          <td className="p-4">
+                          <td className="py-3.5 px-4">
                             <div className="font-medium text-slate-800">{req.vehicle.year} {req.vehicle.make} {req.vehicle.model}</div>
                             <div className="font-mono text-[10px] text-slate-400">VIN: {req.vehicle.vin}</div>
                           </td>
-                          <td className="p-4">
+                          <td className="py-3.5 px-4">
                             <div className="font-medium text-slate-700">{req.customerName}</div>
-                            <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md mt-0.5 ${req.part.genuinePreference === "GENUINE_ONLY" ? "bg-red-50 text-red-700 font-bold" : "bg-slate-100 text-slate-600"}`}>
+                            <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md mt-0.5 ${req.part.genuinePreference === "GENUINE_ONLY" ? "bg-red-50 text-[#ed2025] font-bold" : "bg-slate-100 text-slate-600"}`}>
                               {req.part.genuinePreference}
                             </span>
                           </td>
-                          <td className="p-4">
+                          <td className="py-3.5 px-4">
                             <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${quoteCount > 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500"}`}>
                               {quoteCount} {quoteCount === 1 ? "Quote" : "Quotes"}
                             </span>
                           </td>
-                          <td className="p-4">
-                            <StatusBadge status={req.status} />
+                          <td className="py-3.5 px-4">
+                            <StatusBadge status={req.status} size="sm" />
                           </td>
-                          <td className="p-4 pr-6 text-right">
+                          <td className="py-3.5 px-4 pr-6 text-right">
                             <button
                               type="button"
                               onClick={() => setSelectedRequestId(req.id)}
-                              className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5"
+                              className="px-3.5 py-1.5 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5"
                             >
                               <span>Source &amp; Quote</span>
                               <ArrowRight className="w-3.5 h-3.5" />

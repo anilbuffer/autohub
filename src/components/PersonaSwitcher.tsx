@@ -49,9 +49,9 @@ const ROLES: {
   },
   {
     id: "SYSTEM_ADMIN",
-    label: "Admin & Approvals",
-    sublabel: "Customer Queue & Settings",
-    deskUrl: "/admin/customers",
+    label: "Admin & Operations",
+    sublabel: "Shared Staff Queue & Dashboard",
+    deskUrl: "/admin",
     icon: Shield,
     color: "bg-slate-900 text-white",
   },
@@ -109,7 +109,7 @@ export const PersonaSwitcher: React.FC<PersonaSwitcherProps> = ({
           Role:
         </span>
         <span className={`font-semibold flex items-center gap-1.5 ${isLight ? "text-slate-900" : "text-white"}`}>
-          <ActiveIcon className="w-3.5 h-3.5 text-rose-600" />
+          <ActiveIcon className="w-3.5 h-3.5 text-[#ed2025]" />
           {activeConfig.label}
         </span>
         <span
@@ -152,7 +152,7 @@ export const PersonaSwitcher: React.FC<PersonaSwitcherProps> = ({
                     onClick={() => handleSelectRole(r.id, r.deskUrl)}
                     className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-3 transition-all ${
                       isCurrent
-                        ? "bg-rose-50 border border-rose-200 text-slate-900"
+                        ? "bg-red-50 border border-red-200 text-slate-900"
                         : "hover:bg-slate-50 text-slate-700 border border-transparent"
                     }`}
                   >
@@ -165,7 +165,7 @@ export const PersonaSwitcher: React.FC<PersonaSwitcherProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold truncate">{r.label}</span>
                         {isCurrent && (
-                          <span className="text-[9px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                          <span className="text-[9px] bg-[#ed2025] text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
                             Active
                           </span>
                         )}
@@ -190,7 +190,7 @@ export const PersonaSwitcher: React.FC<PersonaSwitcherProps> = ({
               <Link
                 href="/login"
                 onClick={() => setIsOpen(false)}
-                className="text-rose-600 hover:underline font-semibold"
+                className="text-[#ed2025] hover:underline font-semibold"
               >
                 Sign In Page →
               </Link>

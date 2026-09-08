@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import {
   setActiveRole,
+  setActiveStaffMember,
   getLockoutStatus,
   recordFailedLogin,
   clearFailedLogins,
@@ -34,8 +35,8 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Selected workspace role for demo quick-access
-  const [selectedRole, setSelectedRole] = useState<UserRole>("CUSTOMER");
-  const [email, setEmail] = useState("james@autocareauckland.co.nz");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("SYSTEM_ADMIN");
+  const [email, setEmail] = useState("david.vance@autohub.co.nz");
   const [password, setPassword] = useState("ProcurlyTrade2026!#");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -54,8 +55,120 @@ export default function LoginPage() {
   });
   const [authError, setAuthError] = useState("");
 
+  const rolesConfig = [
+    {
+      role: "SYSTEM_ADMIN" as UserRole,
+      title: "Admin",
+      subtitle: "Central Operations",
+      persona: "David Vance",
+      staffId: "STF-004",
+      org: "Autohub Executive Hub",
+      email: "david.vance@autohub.co.nz",
+      badge: "SHARED STAFF QUEUE & RBAC",
+      icon: Shield,
+      path: "/admin",
+      accent: "text-purple-400 bg-purple-500/10 border-purple-500/40",
+      description: "Cross-desk triage, SLA monitoring, multi-specialist queue dispatch, trade customers & RBAC.",
+      quickLinks: [
+        { label: "Dashboard", href: "/admin" },
+        { label: "Staff Matrix", href: "/admin/staff" },
+        { label: "Trade Customers", href: "/admin/customers" },
+      ],
+    },
+    {
+      role: "CUSTOMER" as UserRole,
+      title: "Customer",
+      subtitle: "Trade Desk",
+      persona: "James Wilson",
+      org: "AutoCare Auckland",
+      email: "james@autocareauckland.co.nz",
+      badge: "DEALERSHIP / REPAIRER",
+      icon: Building2,
+      path: "/portal",
+      accent: "text-blue-400 bg-blue-500/10 border-blue-500/40",
+      description: "Submit part RFQs, view instant landed quotes, approve orders, and track active imports.",
+      quickLinks: [
+        { label: "Trade Portal", href: "/portal" },
+        { label: "New Request", href: "/portal/new-request" },
+      ],
+    },
+    {
+      role: "LOGISTICS_COORDINATOR" as UserRole,
+      title: "Operations",
+      subtitle: "Logistics & MPI",
+      persona: "Elena Rostova",
+      staffId: "STF-002",
+      org: "Autohub Auckland Terminal",
+      email: "elena.rostova@autohub.co.nz",
+      badge: "AIR & SEA FREIGHT",
+      icon: Truck,
+      path: "/operations",
+      accent: "text-cyan-400 bg-cyan-500/10 border-cyan-500/40",
+      description: "Customs & MPI biosecurity clearance, carrier booking, milestone tracking, logistics exceptions.",
+      quickLinks: [
+        { label: "Logistics Desk", href: "/operations" },
+        { label: "MPI Clearance", href: "/operations/exceptions" },
+      ],
+    },
+    {
+      role: "SOURCING_SPECIALIST" as UserRole,
+      title: "Procurement",
+      subtitle: "Sourcing Desk",
+      persona: "Marcus Chen",
+      staffId: "STF-001",
+      org: "Autohub Nagoya Hub",
+      email: "marcus.chen@autohub.co.nz",
+      badge: "GLOBAL OEM SOURCING",
+      icon: Compass,
+      path: "/procurement",
+      accent: "text-amber-400 bg-amber-500/10 border-amber-500/40",
+      description: "Japan OEM bidding, parts catalog verification, supplier quotation pricing, procurement queue.",
+      quickLinks: [
+        { label: "Sourcing Desk", href: "/procurement" },
+        { label: "RFQ Queue", href: "/procurement/queue" },
+      ],
+    },
+    {
+      role: "FINANCE_OFFICER" as UserRole,
+      title: "Finance",
+      subtitle: "Billing & Credit",
+      persona: "Sarah Jenkins",
+      staffId: "STF-003",
+      org: "Autohub Finance NZ",
+      email: "sarah.jenkins@autohub.co.nz",
+      badge: "CREDIT & SETTLEMENTS",
+      icon: Banknote,
+      path: "/finance",
+      accent: "text-emerald-400 bg-emerald-500/10 border-emerald-500/40",
+      description: "Tax invoicing, 20th-of-month credit limits, bank reconciliation, payment gate approvals.",
+      quickLinks: [
+        { label: "Finance Desk", href: "/finance" },
+        { label: "Reconciliation", href: "/finance/payments" },
+      ],
+    },
+  ];
+
+  const currentRoleConfig = rolesConfig.find((r) => r.role === selectedRole) || rolesConfig[0];
+
   useEffect(() => {
     setLockout(getLockoutStatus());
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get("role");
+      if (roleParam) {
+        const lower = roleParam.toLowerCase();
+        const matched = rolesConfig.find(
+          (r) =>
+            r.role.toLowerCase() === lower ||
+            r.title.toLowerCase() === lower ||
+            (lower === "admin" && r.role === "SYSTEM_ADMIN")
+        );
+        if (matched) {
+          handleSelectRole(matched.role);
+        }
+      }
+    }
   }, []);
 
   // Countdown timer for MFA
@@ -67,61 +180,25 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [showMfaModal, mfaTimer]);
 
-  const rolesConfig = [
-    {
-      role: "CUSTOMER" as UserRole,
-      title: "Customer",
-      subtitle: "Trade Desk",
-      persona: "James Wilson",
-      org: "AutoCare Auckland",
-      email: "james@autocareauckland.co.nz",
-      badge: "DEALERSHIP / REPAIRER",
-      icon: Building2,
-      path: "/portal",
-    },
-    {
-      role: "LOGISTICS_COORDINATOR" as UserRole,
-      title: "Operations",
-      subtitle: "Logistics & MPI",
-      persona: "Liam Patel",
-      org: "Autohub Auckland Terminal",
-      email: "liam.p@autohub.co.nz",
-      badge: "AIR & SEA FREIGHT",
-      icon: Truck,
-      path: "/operations",
-    },
-    {
-      role: "SOURCING_SPECIALIST" as UserRole,
-      title: "Procurement",
-      subtitle: "Sourcing Desk",
-      persona: "Nathan Cole",
-      org: "Autohub Nagoya Hub",
-      email: "nathan.c@autohub.co.nz",
-      badge: "GLOBAL OEM SOURCING",
-      icon: Compass,
-      path: "/procurement",
-    },
-    {
-      role: "FINANCE_OFFICER" as UserRole,
-      title: "Finance",
-      subtitle: "Billing & Credit",
-      persona: "Clara Jenkins",
-      org: "Autohub Finance NZ",
-      email: "clara.j@autohub.co.nz",
-      badge: "CREDIT & SETTLEMENTS",
-      icon: Banknote,
-      path: "/finance",
-    },
-  ];
-
-  const currentRoleConfig = rolesConfig.find((r) => r.role === selectedRole) || rolesConfig[0];
-
   const handleSelectRole = (role: UserRole) => {
     setSelectedRole(role);
     const cfg = rolesConfig.find((r) => r.role === role);
     if (cfg) {
       setEmail(cfg.email);
+      setActiveRole(role);
+      if (cfg.staffId) {
+        setActiveStaffMember(cfg.staffId);
+      }
     }
+  };
+
+  const handleDirectLaunch = (path: string, role: UserRole, staffId?: string) => {
+    clearFailedLogins();
+    setActiveRole(role);
+    if (staffId) {
+      setActiveStaffMember(staffId);
+    }
+    router.push(path);
   };
 
   const handleSignInSubmit = (e: React.FormEvent) => {
@@ -170,6 +247,9 @@ export default function LoginPage() {
     // Success
     clearFailedLogins();
     setActiveRole(selectedRole);
+    if (currentRoleConfig.staffId) {
+      setActiveStaffMember(currentRoleConfig.staffId);
+    }
     router.push(currentRoleConfig.path);
   };
 
@@ -198,49 +278,50 @@ export default function LoginPage() {
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top: Select Workspace Role */}
-        <div className="relative z-10 space-y-3">
+        <div className="relative z-10 space-y-3.5">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 font-bold tracking-wider uppercase text-cyan-400">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               <span>SELECT WORKSPACE ROLE:</span>
             </div>
             <span className="text-slate-400 text-[11px] hidden sm:inline">
-              Auto-fills credentials & portal destinations
+              Auto-fills credentials &amp; routes to designated portal
             </span>
           </div>
 
-          {/* 4 Role Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {/* 5 Workspace Role Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             {rolesConfig.map((item) => {
               const Icon = item.icon;
               const isSelected = selectedRole === item.role;
               return (
                 <button
                   key={item.role}
+                  id={`role-select-${item.role.toLowerCase()}`}
                   type="button"
                   onClick={() => handleSelectRole(item.role)}
-                  className={`relative p-3 rounded-2xl text-left transition-all duration-200 border ${
+                  className={`relative p-3 rounded-2xl text-left transition-all duration-200 border group ${
                     isSelected
-                      ? "bg-[#0b162c] border-cyan-400/80 shadow-[0_0_20px_rgba(34,211,238,0.2)] ring-1 ring-cyan-400/50"
-                      : "bg-[#0a1224]/80 border-slate-800/80 hover:border-slate-700 hover:bg-[#0d172e] text-slate-400"
+                      ? "bg-[#0b162c] border-cyan-400/90 shadow-[0_0_22px_rgba(34,211,238,0.22)] ring-1 ring-cyan-400/60 scale-[1.02]"
+                      : "bg-[#0a1224]/85 border-slate-800/80 hover:border-slate-700 hover:bg-[#0d172e] text-slate-400"
                   }`}
                 >
                   {/* Selected Indicator Dot */}
                   {isSelected && (
-                    <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+                    <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-pulse" />
                   )}
                   <div
                     className={`w-7 h-7 rounded-xl flex items-center justify-center mb-2.5 transition ${
                       isSelected
-                        ? "bg-cyan-500/20 text-cyan-300"
-                        : "bg-slate-800/60 text-slate-400"
+                        ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/30"
+                        : "bg-slate-800/60 text-slate-400 group-hover:text-slate-200"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <span
                     className={`block text-xs font-bold leading-tight ${
-                      isSelected ? "text-white" : "text-slate-300"
+                      isSelected ? "text-white" : "text-slate-300 group-hover:text-white"
                     }`}
                   >
                     {item.title}
@@ -248,6 +329,12 @@ export default function LoginPage() {
                   <span className="block text-[10px] text-slate-400 truncate mt-0.5">
                     {item.subtitle}
                   </span>
+                  <div className="mt-2 pt-1.5 border-t border-slate-800/60 flex items-center justify-between">
+                    <span className="font-mono text-[9px] text-cyan-400/80 truncate">
+                      {item.path}
+                    </span>
+                    <ArrowRight className={`w-2.5 h-2.5 text-slate-500 transition-transform ${isSelected ? "text-cyan-400 translate-x-0.5" : "group-hover:translate-x-0.5"}`} />
+                  </div>
                 </button>
               );
             })}
@@ -383,25 +470,53 @@ export default function LoginPage() {
           )}
 
           {/* Active Role Card */}
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0">
-                <currentRoleConfig.icon className="w-4 h-4 text-cyan-400" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>Role:</span>
-                  <span className="text-rose-600 font-bold">{currentRoleConfig.title}</span>
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0">
+                  <currentRoleConfig.icon className="w-4 h-4 text-cyan-400" />
                 </div>
-                <div className="text-[11px] text-slate-500">
-                  {currentRoleConfig.subtitle} • {currentRoleConfig.persona}
+                <div>
+                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>Role:</span>
+                    <span className="text-rose-600 font-bold">{currentRoleConfig.title}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {currentRoleConfig.subtitle} • {currentRoleConfig.persona}
+                  </div>
                 </div>
               </div>
+
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                {currentRoleConfig.badge}
+              </span>
             </div>
 
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-              {currentRoleConfig.badge}
-            </span>
+            {/* Destination & Quick Access Shortcuts */}
+            <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+              <div className="flex items-center gap-1.5 text-slate-500">
+                <span>Landing:</span>
+                <code className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[10px] font-bold">
+                  {currentRoleConfig.path}
+                </code>
+              </div>
+
+              {currentRoleConfig.quickLinks && currentRoleConfig.quickLinks.length > 0 && (
+                <div className="flex items-center gap-1">
+                  {currentRoleConfig.quickLinks.map((link) => (
+                    <button
+                      key={link.href}
+                      type="button"
+                      onClick={() => handleDirectLaunch(link.href, currentRoleConfig.role, currentRoleConfig.staffId)}
+                      className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-[10px] font-bold text-slate-700 transition flex items-center gap-1 shadow-2xs"
+                    >
+                      <span>{link.label}</span>
+                      <ArrowRight className="w-2.5 h-2.5 text-slate-400" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Authentication Form */}
@@ -501,6 +616,18 @@ export default function LoginPage() {
             >
               <span>SIGN IN TO WORKSPACE</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+            </button>
+
+            {/* Direct Instant Launch Button (One-Click Workspace Access) */}
+            <button
+              id="login-instant-launch-button"
+              type="button"
+              onClick={() => handleDirectLaunch(currentRoleConfig.path, currentRoleConfig.role, currentRoleConfig.staffId)}
+              className="w-full py-2.5 px-4 rounded-xl border border-cyan-300 bg-cyan-50/70 hover:bg-cyan-100/80 text-cyan-950 text-xs font-bold transition flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-600 animate-pulse" />
+              <span>Instant Launch: {currentRoleConfig.title} Workspace (One-Click)</span>
+              <ArrowRight className="w-3.5 h-3.5 text-cyan-600" />
             </button>
           </form>
 

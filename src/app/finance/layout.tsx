@@ -223,17 +223,29 @@ export default function FinancePortalLayout({
           {/* Top Brand Header */}
           <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-800/60">
             <Link href="/finance" className="flex items-center gap-2.5 overflow-hidden">
-              {/* Autohub Red / Emerald Finance Logo */}
+              {/* Procurly 3D Box Logo */}
               <div className="w-8 h-8 rounded-xl bg-[#ed2025] shadow-md shadow-red-600/30 flex items-center justify-center text-white flex-shrink-0">
-                <DollarSign className="w-4 h-4 text-white stroke-[2.4]" />
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4 text-white"
+                >
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                  <path d="m3.3 7 8.7 5 8.7-5" />
+                  <path d="M12 22V12" />
+                </svg>
               </div>
               {!sidebarCollapsed && (
                 <div>
                   <div className="text-base font-black tracking-tight text-white leading-none">
-                    FINAN<span className="text-[#ed2025]">ce</span>
+                    PROCUR<span className="text-[#ed2025]">ly</span>
                   </div>
                   <div className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
-                    BILLING &amp; CREDIT PORTAL
+                    FINANCE &amp; BILLING PORTAL
                   </div>
                 </div>
               )}
@@ -286,7 +298,7 @@ export default function FinancePortalLayout({
                           sidebarCollapsed ? "justify-center" : ""
                         } ${
                           isActive
-                            ? "bg-slate-800/90 text-white font-bold shadow-sm border-l-2 border-[#ed2025]"
+                            ? "bg-slate-800/90 text-white font-bold shadow-sm border-l-4 border-[#ed2025] pl-2.5"
                             : "text-slate-400 hover:text-white hover:bg-slate-800/40"
                         }`}
                       >
@@ -478,11 +490,11 @@ export default function FinancePortalLayout({
                 id="finance-quick-actions-button"
                 type="button"
                 onClick={() => setActionDropdownOpen(!actionDropdownOpen)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] text-white text-xs font-bold transition shadow-xs"
+                className="px-3.5 py-2 rounded-xl bg-[#ed2025] hover:bg-[#d3181d] active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-xs transition"
               >
-                <Plus className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+                <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span className="hidden sm:inline">Actions</span>
-                <ChevronDown className="w-3 h-3 text-white/80" />
+                <ChevronDown className="w-3.5 h-3.5 text-white/90" />
               </button>
 
               {actionDropdownOpen && (
